@@ -19,10 +19,21 @@ const DEFAULT_INCLUDE = {
  */
 export async function generateParentId() {
   const year = new Date().getFullYear();
-  const count = await prisma.parent.count({
-    where: { parentId: { startsWith: `PAR-${year}-` }, deletedAt: null },
+  const prefix = `PAR-${year}-`;
+  const latest = await prisma.parent.findFirst({
+    where: { parentId: { startsWith: prefix } },
+    orderBy: { parentId: 'desc' },
+    select: { parentId: true },
   });
-  return `PAR-${year}-${String(count + 1).padStart(4, '0')}`;
+
+  let nextNum = 1;
+  if (latest && latest.parentId) {
+    const numPart = parseInt(latest.parentId.replace(prefix, ''), 10);
+    if (!isNaN(numPart)) {
+      nextNum = numPart + 1;
+    }
+  }
+  return `${prefix}${String(nextNum).padStart(4, '0')}`;
 }
 
 export async function listParents(query = {}) {
@@ -104,8 +115,19 @@ export async function getParentByUserId(userId) {
 export async function createParent(data) {
   const parentId = data.parentId || (await generateParentId());
 
+  const emailQuery = data.email
+    ? [{ email: { equals: data.email, mode: 'insensitive' } }]
+    : [];
+
   const existing = await prisma.parent.findFirst({
-    where: { OR: [{ parentId }, ...(data.email ? [{ email: data.email }] : [])] },
+    where: {
+      AND: [
+        notDeleted(),
+        {
+          OR: [{ parentId }, ...emailQuery],
+        },
+      ],
+    },
   });
   if (existing) {
     throw ApiError.conflict('A parent with this ID or email already exists.');

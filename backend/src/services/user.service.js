@@ -108,7 +108,7 @@ export async function getUser(id) {
 export async function createUser(data) {
   const existing = await prisma.user.findFirst({
     where: {
-      deletedAt: null,
+      ...notDeleted(),
       OR: [{ email: data.email }, { username: data.username }],
     },
   });
@@ -153,7 +153,7 @@ export async function updateUser(id, data) {
   if (data.email || data.username) {
     const existing = await prisma.user.findFirst({
       where: {
-        deletedAt: null,
+        ...notDeleted(),
         id: { not: id },
         OR: [
           ...(data.email ? [{ email: data.email }] : []),
@@ -189,7 +189,7 @@ export async function deleteUser(id) {
     throw ApiError.notFound('User not found.');
   }
   if (user.role === ROLES.ADMIN) {
-    const adminCount = await prisma.user.count({ where: { role: ROLES.ADMIN, deletedAt: null, isActive: true } });
+    const adminCount = await prisma.user.count({ where: { role: ROLES.ADMIN, ...notDeleted(), isActive: true } });
     if (adminCount <= 1) {
       throw ApiError.badRequest('Cannot delete the last active administrator account.');
     }

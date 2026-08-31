@@ -1,18 +1,87 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { Bell, Menu, PanelLeftClose, PanelLeftOpen, ChevronDown, LogOut, UserCircle, Settings } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import {
+  Bell,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ChevronDown,
+  LogOut,
+  UserCircle,
+  Settings,
+  GraduationCap,
+  Plus,
+  Users,
+  FilePlus2,
+  CalendarCheck,
+  Wallet,
+  Megaphone,
+  ClipboardList,
+  Zap,
+  ArrowRight,
+} from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useNotifications } from '../../context/NotificationContext'
 import { PAGE_TITLES } from '../../utils/constants'
 import { cn } from '../../utils/helpers'
 
+const QUICK_ACTIONS = [
+  { label: 'Add Student', to: '/students/add', icon: GraduationCap, color: 'text-indigo-600 bg-indigo-50' },
+  { label: 'Add Teacher', to: '/teachers/add', icon: Users, color: 'text-emerald-600 bg-emerald-50' },
+  { label: 'Create Exam', to: '/exams/create', icon: FilePlus2, color: 'text-violet-600 bg-violet-50' },
+  { label: 'Mark Attendance', to: '/attendance/students', icon: CalendarCheck, color: 'text-amber-600 bg-amber-50' },
+  { label: 'Collect Fees', to: '/fees', icon: Wallet, color: 'text-rose-600 bg-rose-50' },
+  { label: 'Post Notice', to: '/notices/create', icon: Megaphone, color: 'text-sky-600 bg-sky-50' },
+]
+
+const STUDENT_QUICK_ACTIONS = [
+  { label: 'View Results', to: '/marks/results', icon: ClipboardList, color: 'text-emerald-600 bg-emerald-50' },
+  { label: 'View Notices', to: '/notices', icon: Bell, color: 'text-sky-600 bg-sky-50' },
+  { label: 'My Profile', to: '/profile', icon: UserCircle, color: 'text-indigo-600 bg-indigo-50' },
+]
+
 function Navbar({ collapsed, onToggleSidebar }) {
-  const { user, logout } = useAuth()
+  const { user, login, logout } = useAuth()
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    sendTestNotification,
+    requestPermissionAndRegister,
+    permission,
+  } = useNotifications()
   const location = useLocation()
+  const navigate = useNavigate()
   const [profileOpen, setProfileOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false)
+  const [switcherOpen, setSwitcherOpen] = useState(false)
+
+  const handleSwitchRole = async (role) => {
+    let credentials
+    if (role === 'Super Admin' || role === 'Super Administrator') {
+      credentials = { email: 'superadmin@school.com', password: 'superadmin123' }
+    } else if (role === 'Admin' || role === 'Administrator') {
+      credentials = { email: 'admin@school.com', password: 'admin123' }
+    } else if (role === 'Teacher') {
+      credentials = { email: 'teacher@school.com', password: 'teacher123' }
+    } else if (role === 'Student') {
+      credentials = { email: 'student@school.com', password: 'student123' }
+    }
+
+    if (credentials) {
+      setProfileOpen(false)
+      setSwitcherOpen(false)
+      setQuickActionsOpen(false)
+      await login(credentials.email, credentials.password)
+      navigate('/dashboard')
+    }
+  }
 
   const notificationRef = useRef(null)
   const profileRef = useRef(null)
+  const quickActionsRef = useRef(null)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -21,6 +90,10 @@ function Navbar({ collapsed, onToggleSidebar }) {
       }
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setProfileOpen(false)
+        setSwitcherOpen(false)
+      }
+      if (quickActionsRef.current && !quickActionsRef.current.contains(event.target)) {
+        setQuickActionsOpen(false)
       }
     }
 
@@ -43,14 +116,35 @@ function Navbar({ collapsed, onToggleSidebar }) {
 
   const currentTitle = resolveTitle(location.pathname)
 
+  const filteredQuickActions = user?.role === 'Student'
+    ? STUDENT_QUICK_ACTIONS
+    : QUICK_ACTIONS.filter((action) => {
+        if (user?.role === 'Teacher') {
+          const forbidden = ['/teachers/add', '/fees']
+          return !forbidden.includes(action.to)
+        }
+        return true
+      })
+
   const toggleProfile = () => {
     setProfileOpen((open) => !open)
     setNotificationsOpen(false)
+    setSwitcherOpen(false)
+    setQuickActionsOpen(false)
   }
 
   const toggleNotifications = () => {
     setNotificationsOpen((open) => !open)
     setProfileOpen(false)
+    setSwitcherOpen(false)
+    setQuickActionsOpen(false)
+  }
+
+  const toggleQuickActions = () => {
+    setQuickActionsOpen((open) => !open)
+    setProfileOpen(false)
+    setSwitcherOpen(false)
+    setNotificationsOpen(false)
   }
 
   return (
@@ -79,6 +173,47 @@ function Navbar({ collapsed, onToggleSidebar }) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
+        <div className="relative" ref={quickActionsRef}>
+          <button
+            type="button"
+            onClick={toggleQuickActions}
+            className={cn(
+              "relative flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-slate-600 transition hover:bg-slate-100",
+              quickActionsOpen && "bg-slate-100"
+            )}
+            title="Quick Actions"
+            aria-label="Quick Actions"
+          >
+            <Zap size={20} className={cn(quickActionsOpen ? "fill-amber-500 text-amber-500" : "")} />
+            <span className="hidden text-sm font-semibold text-slate-700 sm:inline">Quick Actions</span>
+          </button>
+          {quickActionsOpen && (
+            <div className="animate-scale-in absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+              <div className="border-b border-slate-100 px-4 py-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Quick Actions</p>
+              </div>
+              <div className="py-1">
+                {filteredQuickActions.map((action) => {
+                  const Icon = action.icon
+                  return (
+                    <Link
+                      key={action.label}
+                      to={action.to}
+                      onClick={() => setQuickActionsOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+                    >
+                      <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg", action.color)}>
+                        <Icon size={14} />
+                      </span>
+                      <span className="font-medium text-slate-700">{action.label}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="relative" ref={notificationRef}>
           <button
             type="button"
@@ -87,34 +222,99 @@ function Navbar({ collapsed, onToggleSidebar }) {
             aria-label="Notifications"
           >
             <Bell size={20} />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
           {notificationsOpen && (
-            <div className="animate-scale-in absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-              <div className="border-b border-slate-100 px-4 py-3">
-                <p className="text-sm font-semibold text-slate-900">Notifications</p>
-              </div>
-              <div className="max-h-72 overflow-y-auto">
-                {[
-                  { text: 'Mid-Term exam schedule published', time: '2 hours ago' },
-                  { text: 'Fee payment of $4,800 received', time: '5 hours ago' },
-                  { text: 'Attendance pending for Class 7 - B', time: 'Yesterday' },
-                  { text: 'New notice: Science Exhibition', time: '2 days ago' },
-                ].map((notice, index) => (
-                  <div
-                    key={notice.text}
-                    className={cn(
-                      'flex items-start gap-3 px-4 py-3 transition hover:bg-slate-50',
-                      index !== 0 && 'border-t border-slate-50',
-                    )}
+            <div className="animate-scale-in absolute right-0 mt-2 w-84 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl z-50">
+              <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-bold text-slate-900">Notifications</p>
+                  {unreadCount > 0 && (
+                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+                      {unreadCount} new
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={sendTestNotification}
+                    className="rounded-lg bg-indigo-50 px-2 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-100 transition"
+                    title="Send a live test push notification"
                   >
-                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-500" />
-                    <div>
-                      <p className="text-sm text-slate-700">{notice.text}</p>
-                      <p className="mt-0.5 text-xs text-slate-400">{notice.time}</p>
-                    </div>
+                    ⚡ Test Push
+                  </button>
+                  {unreadCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={markAllAsRead}
+                      className="text-[11px] font-medium text-slate-500 hover:text-slate-800 transition"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {permission !== 'granted' && (
+                <div className="border-b border-amber-100 bg-amber-50/80 px-4 py-2 text-xs text-amber-800 flex items-center justify-between">
+                  <span>Enable push alerts on this device?</span>
+                  <button
+                    type="button"
+                    onClick={requestPermissionAndRegister}
+                    className="rounded bg-amber-600 px-2 py-0.5 text-[11px] font-bold text-white hover:bg-amber-700"
+                  >
+                    Enable
+                  </button>
+                </div>
+              )}
+
+              <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
+                {notifications.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-400">
+                    <Bell size={24} className="mx-auto mb-2 text-slate-300" />
+                    No notifications yet.
                   </div>
-                ))}
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      onClick={() => markAsRead(n.id)}
+                      className={cn(
+                        'flex items-start gap-3 px-4 py-3 cursor-pointer transition hover:bg-slate-50',
+                        !n.isRead ? 'bg-indigo-50/30' : 'opacity-75'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'mt-1.5 h-2 w-2 shrink-0 rounded-full',
+                          !n.isRead ? 'bg-indigo-600 ring-4 ring-indigo-100' : 'bg-slate-300'
+                        )}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-slate-800 line-clamp-1">{n.title}</p>
+                        <p className="text-xs text-slate-600 line-clamp-2 mt-0.5">{n.body}</p>
+                        <p className="mt-1 text-[10px] text-slate-400">
+                          {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-2.5 text-center">
+                <Link
+                  to="/notifications"
+                  onClick={() => setNotificationsOpen(false)}
+                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition flex items-center justify-center gap-1.5"
+                >
+                  View all notifications <ArrowRight size={13} />
+                </Link>
               </div>
             </div>
           )}
@@ -149,13 +349,71 @@ function Navbar({ collapsed, onToggleSidebar }) {
               >
                 <UserCircle size={16} className="text-slate-400" /> My Profile
               </Link>
-              <Link
-                to="/settings"
-                onClick={() => setProfileOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+              <button
+                type="button"
+                onClick={() => setSwitcherOpen(!switcherOpen)}
+                className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-slate-700 transition hover:bg-slate-50 border-y border-slate-100"
               >
-                <Settings size={16} className="text-slate-400" /> Settings
-              </Link>
+                <span className="flex items-center gap-3">
+                  <GraduationCap size={16} className="text-slate-400" /> Portal Switcher (Demo)
+                </span>
+                <ChevronDown size={14} className={cn("text-slate-400 transition-transform duration-200", switcherOpen && "rotate-180")} />
+              </button>
+              
+              {switcherOpen && (
+                <div className="bg-slate-50 border-b border-slate-100 py-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchRole('Super Admin')}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-purple-50",
+                      user?.role === 'Super Admin' ? "text-purple-600 font-bold bg-purple-50/50" : "text-slate-600"
+                    )}
+                  >
+                    🌟 Super Admin Portal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchRole('Admin')}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-indigo-50",
+                      (user?.role === 'Admin' || user?.role === 'Administrator') ? "text-indigo-600 font-bold bg-indigo-50/50" : "text-slate-600"
+                    )}
+                  >
+                    👑 Admin Portal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchRole('Teacher')}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-emerald-50",
+                      user?.role === 'Teacher' ? "text-emerald-600 font-bold bg-emerald-50/50" : "text-slate-600"
+                    )}
+                  >
+                    👩‍🏫 Teacher Portal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchRole('Student')}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-sky-50",
+                      user?.role === 'Student' ? "text-sky-600 font-bold bg-sky-50/50" : "text-slate-600"
+                    )}
+                  >
+                    🎓 Student Portal
+                  </button>
+                </div>
+              )}
+
+              {['Super Admin', 'Admin', 'Administrator'].includes(user?.role) && (
+                <Link
+                  to="/settings"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+                >
+                  <Settings size={16} className="text-slate-400" /> Settings
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={logout}

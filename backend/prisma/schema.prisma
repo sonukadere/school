@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider     = "mongodb"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
 // -------------------------------------------------------------
@@ -12,6 +13,7 @@ datasource db {
 // -------------------------------------------------------------
 
 enum Role {
+  SUPER_ADMIN
   ADMIN
   TEACHER
   STUDENT
@@ -70,6 +72,7 @@ enum Audience {
   TEACHER
   PARENT
   ADMIN
+  SUPER_ADMIN
 }
 
 enum HolidayType {
@@ -85,7 +88,7 @@ enum HolidayType {
 // -------------------------------------------------------------
 
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   username  String   @unique
   email     String   @unique
   password  String
@@ -97,13 +100,14 @@ model User {
   student   Student?
   parent    Parent?
   staff     Staff?
+  deviceTokens  DeviceToken[]
+  notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
   @@index([role])
-  @@index([email])
 }
 
 // -------------------------------------------------------------
@@ -111,7 +115,7 @@ model User {
 // -------------------------------------------------------------
 
 model Student {
-  id          String        @id @default(cuid())
+  id          String        @id @default(cuid()) @map("_id")
   studentId   String        @unique
   firstName   String
   lastName    String
@@ -146,7 +150,6 @@ model Student {
 
   @@index([classId])
   @@index([status])
-  @@index([studentId])
   @@unique([classId, rollNumber])
 }
 
@@ -155,13 +158,13 @@ model Student {
 // -------------------------------------------------------------
 
 model Teacher {
-  id           String   @id @default(cuid())
+  id           String   @id @default(cuid()) @map("_id")
   teacherId    String   @unique
   name         String
   email        String?  @unique
   phone        String?
   qualification String?
-  salary       Decimal? @db.Decimal(10, 2)
+  salary       Float?
   joiningDate  DateTime?
   address      String?
 
@@ -170,7 +173,7 @@ model Teacher {
 
   // Primary subject of the teacher
   subjectId    String?
-  subject      Subject? @relation("TeacherPrimarySubject", fields: [subjectId], references: [id])
+  subject      Subject? @relation("TeacherPrimarySubject", fields: [subjectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   // Subjects this teacher is assigned to teach
   assignedSubjects Subject[] @relation("SubjectAssignedTeacher")
@@ -185,7 +188,6 @@ model Teacher {
   deletedAt    DateTime?
 
   @@index([subjectId])
-  @@index([email])
 }
 
 // -------------------------------------------------------------
@@ -193,7 +195,7 @@ model Teacher {
 // -------------------------------------------------------------
 
 model Parent {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid()) @map("_id")
   parentId   String   @unique
   firstName  String
   lastName   String
@@ -211,8 +213,6 @@ model Parent {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   deletedAt  DateTime?
-
-  @@index([email])
 }
 
 // -------------------------------------------------------------
@@ -220,14 +220,14 @@ model Parent {
 // -------------------------------------------------------------
 
 model Staff {
-  id          String   @id @default(cuid())
+  id          String   @id @default(cuid()) @map("_id")
   staffId     String   @unique
   name        String
   email       String?  @unique
   phone       String?
   position    String
   department  String?
-  salary      Decimal? @db.Decimal(10, 2)
+  salary      Float?
   joiningDate DateTime?
   address     String?
 
@@ -237,8 +237,6 @@ model Staff {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   deletedAt   DateTime?
-
-  @@index([email])
 }
 
 // -------------------------------------------------------------
@@ -246,13 +244,13 @@ model Staff {
 // -------------------------------------------------------------
 
 model Class {
-  id            String   @id @default(cuid())
+  id            String   @id @default(cuid()) @map("_id")
   name          String
   section       String
   roomNumber    String?
 
   classTeacherId String?
-  classTeacher  Teacher? @relation(fields: [classTeacherId], references: [id], onDelete: SetNull)
+  classTeacher  Teacher? @relation(fields: [classTeacherId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   students      Student[]
   subjects      Subject[]
@@ -272,15 +270,15 @@ model Class {
 // -------------------------------------------------------------
 
 model Subject {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   name      String
   code      String   @unique
 
   classId   String
-  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  class     Class    @relation(fields: [classId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   teacherId String?
-  teacher   Teacher? @relation("SubjectAssignedTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
+  teacher   Teacher? @relation("SubjectAssignedTeacher", fields: [teacherId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   primaryTeachers Teacher[] @relation("TeacherPrimarySubject")
 
@@ -300,7 +298,7 @@ model Subject {
 // -------------------------------------------------------------
 
 model Attendance {
-  id        String           @id @default(cuid())
+  id        String           @id @default(cuid()) @map("_id")
   date      DateTime         @db.Date
   status    AttendanceStatus @default(PRESENT)
   remark    String?
@@ -325,7 +323,7 @@ model Attendance {
 // -------------------------------------------------------------
 
 model TeacherAttendance {
-  id        String           @id @default(cuid())
+  id        String           @id @default(cuid()) @map("_id")
   date      DateTime         @db.Date
   status    AttendanceStatus @default(PRESENT)
   remark    String?
@@ -346,10 +344,10 @@ model TeacherAttendance {
 // -------------------------------------------------------------
 
 model Fee {
-  id            String        @id @default(cuid())
-  totalFee      Decimal       @db.Decimal(10, 2)
-  paidAmount    Decimal       @db.Decimal(10, 2) @default(0)
-  dueAmount     Decimal       @db.Decimal(10, 2) @default(0)
+  id            String        @id @default(cuid()) @map("_id")
+  totalFee      Float
+  paidAmount    Float         @default(0)
+  dueAmount     Float         @default(0)
   paymentDate   DateTime?
   paymentMethod PaymentMethod @default(CASH)
   paymentStatus PaymentStatus @default(PENDING)
@@ -370,7 +368,7 @@ model Fee {
 // -------------------------------------------------------------
 
 model Exam {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   name      String
   startDate DateTime @db.Date
   endDate   DateTime @db.Date
@@ -393,8 +391,8 @@ model Exam {
 // -------------------------------------------------------------
 
 model Mark {
-  id        String  @id @default(cuid())
-  marks     Decimal @db.Decimal(5, 2)
+  id        String  @id @default(cuid()) @map("_id")
+  marks     Float
   grade     String?
   remarks   String?
 
@@ -421,7 +419,7 @@ model Mark {
 // -------------------------------------------------------------
 
 model Timetable {
-  id        String    @id @default(cuid())
+  id        String    @id @default(cuid()) @map("_id")
   day       DayOfWeek
   startTime String
   endTime   String
@@ -448,7 +446,7 @@ model Timetable {
 // -------------------------------------------------------------
 
 model Notice {
-  id          String   @id @default(cuid())
+  id          String   @id @default(cuid()) @map("_id")
   title       String
   description String?
   audience    Audience @default(ALL)
@@ -468,7 +466,7 @@ model Notice {
 // -------------------------------------------------------------
 
 model Event {
-  id          String   @id @default(cuid())
+  id          String   @id @default(cuid()) @map("_id")
   title       String
   description String?
   date        DateTime @db.Date
@@ -488,7 +486,7 @@ model Event {
 // -------------------------------------------------------------
 
 model Holiday {
-  id          String      @id @default(cuid())
+  id          String      @id @default(cuid()) @map("_id")
   name        String
   date        DateTime    @db.Date
   type        HolidayType @default(PUBLIC)
@@ -507,7 +505,7 @@ model Holiday {
 // -------------------------------------------------------------
 
 model Setting {
-  id           String  @id @default(cuid())
+  id           String  @id @default(cuid()) @map("_id")
   schoolName   String
   schoolLogo   String?
   address      String?
@@ -520,3 +518,37 @@ model Setting {
   updatedAt    DateTime @updatedAt
   deletedAt    DateTime?
 }
+
+// -------------------------------------------------------------
+// Firebase Push Notifications & Device Tokens
+// -------------------------------------------------------------
+
+model DeviceToken {
+  id         String   @id @default(cuid()) @map("_id")
+  token      String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceType String?  @default("web")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String    @id @default(cuid()) @map("_id")
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String?   @default("GENERAL")
+  data      String?
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId])
+  @@index([isRead])
+}
+

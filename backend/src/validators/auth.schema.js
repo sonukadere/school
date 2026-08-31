@@ -10,5 +10,5 @@ export const registerSchema = z.object({
   email: z.string().trim().toLowerCase().email('Invalid email address.'),
   username: z.string().trim().min(3, 'Username must be at least 3 characters.').max(50),
   password: z.string().min(6, 'Password must be at least 6 characters.').max(100),
-  role: z.enum(['ADMIN', 'TEACHER', 'STUDENT', 'PARENT', 'STAFF']).optional(),
+  role: z.enum(['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT', 'PARENT', 'STAFF']).optional(),
 });

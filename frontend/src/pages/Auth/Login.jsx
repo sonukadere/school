@@ -6,7 +6,7 @@ import Button from '../../components/common/Button'
 import { useAuth } from '../../context/AuthContext'
 import { useSettings } from '../../context/SettingsContext'
 import { useToast } from '../../context/ToastContext'
-import { ADMIN_USER, TEACHER_USER } from '../../utils/constants'
+import { ADMIN_USER, TEACHER_USER, STUDENT_USER } from '../../utils/constants'
 
 function Login() {
   const { login, isAuthenticated } = useAuth()
@@ -117,18 +117,56 @@ function Login() {
             </Button>
           </form>
 
-          <div className="mt-6 space-y-2 rounded-lg bg-indigo-50 p-3 text-xs text-indigo-700">
-            <div className="flex items-start gap-2">
-              <Info size={15} className="mt-0.5 shrink-0" />
-              <p>
-                <strong>Admin Demo:</strong> {ADMIN_USER.email} / {ADMIN_USER.password}
-              </p>
-            </div>
-            <div className="flex items-start gap-2">
-              <Info size={15} className="mt-0.5 shrink-0" />
-              <p>
-                <strong>Teacher Demo:</strong> {TEACHER_USER.email} / {TEACHER_USER.password}
-              </p>
+          <div className="mt-6 space-y-2 rounded-xl bg-slate-50 border border-slate-100 p-3 text-xs text-slate-600">
+            <p className="font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+              <Info size={14} className="text-indigo-600" />
+              Quick Demo Logins (Click to fill):
+            </p>
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('superadmin@school.com')
+                  setPassword('superadmin123')
+                  setErrors({})
+                }}
+                className="rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-purple-500 hover:text-purple-600 transition shadow-xs text-center"
+              >
+                🌟 Super Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@school.com')
+                  setPassword('admin123')
+                  setErrors({})
+                }}
+                className="rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-indigo-500 hover:text-indigo-600 transition shadow-xs text-center"
+              >
+                👑 Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('teacher@school.com')
+                  setPassword('teacher123')
+                  setErrors({})
+                }}
+                className="rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-emerald-500 hover:text-emerald-600 transition shadow-xs text-center"
+              >
+                👩‍🏫 Teacher
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('student@school.com')
+                  setPassword('student123')
+                  setErrors({})
+                }}
+                className="rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-sky-500 hover:text-sky-600 transition shadow-xs text-center"
+              >
+                🎓 Student
+              </button>
             </div>
           </div>
         </div>

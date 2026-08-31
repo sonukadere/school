@@ -1,4 +1,5 @@
 export const ROLES = Object.freeze({
+  SUPER_ADMIN: 'SUPER_ADMIN',
   ADMIN: 'ADMIN',
   TEACHER: 'TEACHER',
   STUDENT: 'STUDENT',
@@ -7,7 +8,8 @@ export const ROLES = Object.freeze({
 });
 
 export const ROLE_LABELS = Object.freeze({
-  ADMIN: 'Super Admin',
+  SUPER_ADMIN: 'Super Administrator',
+  ADMIN: 'Administrator',
   TEACHER: 'Teacher',
   STUDENT: 'Student',
   PARENT: 'Parent',
@@ -41,7 +43,7 @@ export const DAYS_OF_WEEK = Object.freeze([
   'SUNDAY',
 ]);
 
-export const AUDIENCES = Object.freeze(['ALL', 'STUDENT', 'TEACHER', 'PARENT', 'ADMIN']);
+export const AUDIENCES = Object.freeze(['ALL', 'STUDENT', 'TEACHER', 'PARENT', 'ADMIN', 'SUPER_ADMIN']);
 
 export const HOLIDAY_TYPES = Object.freeze(['PUBLIC', 'SCHOOL', 'EXAM', 'RELIGIOUS', 'OTHER']);
 
@@ -66,4 +68,11 @@ export const PAGINATION = Object.freeze({
   MAX_LIMIT: 100,
 });
 
-export const USER_ROLES = Object.freeze([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT, ROLES.PARENT, ROLES.STAFF]);
+export const USER_ROLES = Object.freeze([
+  ROLES.SUPER_ADMIN,
+  ROLES.ADMIN,
+  ROLES.TEACHER,
+  ROLES.STUDENT,
+  ROLES.PARENT,
+  ROLES.STAFF,
+]);

@@ -19,10 +19,21 @@ const DEFAULT_INCLUDE = {
  */
 export async function generateStaffId() {
   const year = new Date().getFullYear();
-  const count = await prisma.staff.count({
-    where: { staffId: { startsWith: `STF-${year}-` }, deletedAt: null },
+  const prefix = `STF-${year}-`;
+  const latest = await prisma.staff.findFirst({
+    where: { staffId: { startsWith: prefix } },
+    orderBy: { staffId: 'desc' },
+    select: { staffId: true },
   });
-  return `STF-${year}-${String(count + 1).padStart(4, '0')}`;
+
+  let nextNum = 1;
+  if (latest && latest.staffId) {
+    const numPart = parseInt(latest.staffId.replace(prefix, ''), 10);
+    if (!isNaN(numPart)) {
+      nextNum = numPart + 1;
+    }
+  }
+  return `${prefix}${String(nextNum).padStart(4, '0')}`;
 }
 
 export async function listStaff(query = {}) {
@@ -71,8 +82,19 @@ export async function getStaffByUserId(userId) {
 export async function createStaff(data) {
   const staffId = data.staffId || (await generateStaffId());
 
+  const emailQuery = data.email
+    ? [{ email: { equals: data.email, mode: 'insensitive' } }]
+    : [];
+
   const existing = await prisma.staff.findFirst({
-    where: { OR: [{ staffId }, ...(data.email ? [{ email: data.email }] : [])] },
+    where: {
+      AND: [
+        notDeleted(),
+        {
+          OR: [{ staffId }, ...emailQuery],
+        },
+      ],
+    },
   });
   if (existing) {
     throw ApiError.conflict('A staff member with this ID or email already exists.');

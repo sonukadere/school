@@ -1,189 +1,694 @@
-import * as db from './mockData'
-import { generateId } from '../utils/helpers'
+import { apiClient } from './apiClient'
 
-const DELAY = 350
+// -------------------------------------------------------------
+// Normalization Helpers (Mapping backend schemas to UI props)
+// -------------------------------------------------------------
 
-function wait(ms = DELAY) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-const collections = {
-  students: db.students,
-  teachers: db.teachers,
-  classes: db.classes,
-  subjects: db.subjects,
-  exams: db.exams,
-  notices: db.notices,
-  fees: db.fees,
-  marks: db.marks,
-}
-
-async function getAll(key) {
-  await wait()
-  return [...collections[key]]
-}
-
-async function getById(key, id) {
-  await wait()
-  const record = collections[key].find((item) => item.id === id)
-  if (!record) throw new Error(`${key.slice(0, -1)} not found`)
-  return { ...record }
-}
-
-async function create(key, data) {
-  await wait()
-  const record = { id: generateId(`${key.slice(0, 3).toUpperCase()}-`), ...data }
-  collections[key].unshift(record)
-  return { ...record }
-}
-
-async function update(key, id, data) {
-  await wait()
-  const index = collections[key].findIndex((item) => item.id === id)
-  if (index === -1) throw new Error(`${key.slice(0, -1)} not found`)
-  collections[key][index] = { ...collections[key][index], ...data, id }
-  return { ...collections[key][index] }
-}
-
-async function remove(key, id) {
-  await wait()
-  const index = collections[key].findIndex((item) => item.id === id)
-  if (index === -1) throw new Error(`${key.slice(0, -1)} not found`)
-  const [removed] = collections[key].splice(index, 1)
-  return removed
-}
-
-export const api = {
-  getStudents: () => getAll('students'),
-  getStudent: (id) => getById('students', id),
-  addStudent: (data) => create('students', data),
-  updateStudent: (id, data) => update('students', id, data),
-  deleteStudent: (id) => remove('students', id),
-
-  getTeachers: () => getAll('teachers'),
-  getTeacher: (id) => getById('teachers', id),
-  addTeacher: (data) => create('teachers', data),
-  updateTeacher: (id, data) => update('teachers', id, data),
-  deleteTeacher: (id) => remove('teachers', id),
-
-  getClasses: () => getAll('classes'),
-  getClass: (id) => getById('classes', id),
-  addClass: (data) => create('classes', data),
-  updateClass: (id, data) => update('classes', id, data),
-  deleteClass: (id) => remove('classes', id),
-
-  getSubjects: () => getAll('subjects'),
-  getSubject: (id) => getById('subjects', id),
-  addSubject: (data) => create('subjects', data),
-  updateSubject: (id, data) => update('subjects', id, data),
-  deleteSubject: (id) => remove('subjects', id),
-
-  getFees: () => getAll('fees'),
-  updateFee: (id, data) => update('fees', id, data),
-  getExams: () => getAll('exams'),
-  getExam: (id) => getById('exams', id),
-  addExam: (data) => create('exams', data),
-  updateExam: (id, data) => update('exams', id, data),
-  deleteExam: (id) => remove('exams', id),
-
-  getNotices: () => getAll('notices'),
-  getNotice: (id) => getById('notices', id),
-  addNotice: (data) => create('notices', data),
-  updateNotice: (id, data) => update('notices', id, data),
-  deleteNotice: (id) => remove('notices', id),
-
-  getMarks: () => getAll('marks'),
-  addMark: (data) => create('marks', data),
-  updateMark: (id, data) => update('marks', id, data),
-  deleteMark: (id) => remove('marks', id),
-}
-
-async function getStudentAttendance({ date, className, section }) {
-  await wait()
-  const entry = db.attendanceEntries.find(
-    (item) => item.date === date && item.className === className && item.section === section,
-  )
-  if (!entry) {
-    return db.students
-      .filter((s) => s.className === className && s.section === section)
-      .map((s) => ({ studentId: s.id, status: 'Present' }))
+function normalizeStudent(s) {
+  if (!s) return null
+  return {
+    ...s,
+    id: s.id,
+    studentId: s.studentId,
+    fullName: s.firstName && s.lastName ? `${s.firstName} ${s.lastName}`.trim() : (s.name || s.firstName || 'Student'),
+    firstName: s.firstName,
+    lastName: s.lastName,
+    className: s.class?.name || s.className || '',
+    section: s.class?.section || s.section || '',
+    rollNumber: s.rollNumber ?? '',
+    gender: s.gender === 'MALE' ? 'Male' : s.gender === 'FEMALE' ? 'Female' : s.gender || '',
+    dob: s.dob ? s.dob.slice(0, 10) : '',
+    admissionDate: s.admissionDate ? s.admissionDate.slice(0, 10) : '',
+    email: s.email || '',
+    phone: s.phone || '',
+    address: s.address || '',
+    fatherName: s.fatherName || '',
+    motherName: s.motherName || '',
+    status: s.status === 'ACTIVE' ? 'Active' : s.status === 'INACTIVE' ? 'Inactive' : s.status || 'Active',
   }
-  return entry.records
 }
 
-async function saveStudentAttendance({ date, className, section, records }) {
-  await wait()
-  const index = db.attendanceEntries.findIndex(
-    (item) => item.date === date && item.className === className && item.section === section,
-  )
-  if (index === -1) {
-    db.attendanceEntries.push({
-      id: `ATT-${db.attendanceEntries.length + 1}`,
-      date,
-      className,
-      section,
-      records,
-    })
-  } else {
-    db.attendanceEntries[index].records = records
+function normalizeTeacher(t) {
+  if (!t) return null
+  return {
+    ...t,
+    id: t.id,
+    teacherId: t.teacherId,
+    name: t.name,
+    email: t.email || '',
+    phone: t.phone || '',
+    qualification: t.qualification || '',
+    salary: t.salary ? Number(t.salary) : 0,
+    joiningDate: t.joiningDate ? t.joiningDate.slice(0, 10) : '',
+    address: t.address || '',
+    subject: t.subject?.name || t.subjectName || t.subject || 'General',
+    className: t.classes?.[0]?.name || t.className || '',
+    status: t.status || 'Active',
   }
-  return records
 }
 
-async function getTeacherAttendance(date) {
-  await wait()
-  const entry = db.teacherAttendanceEntries.find((item) => item.date === date)
-  if (!entry) {
-    return db.teachers.map((t) => ({ teacherId: t.id, status: 'Present' }))
+function normalizeClass(c) {
+  if (!c) return null
+  return {
+    ...c,
+    id: c.id,
+    name: c.name,
+    section: c.section,
+    roomNumber: c.roomNumber || '',
+    classTeacherId: c.classTeacherId || null,
+    classTeacherName: c.classTeacher?.name || 'Not Assigned',
+    studentCount: c._count?.students ?? c.students?.length ?? 0,
+    subjectCount: c._count?.subjects ?? c.subjects?.length ?? 0,
   }
-  return entry.records
 }
 
-async function saveTeacherAttendance({ date, records }) {
-  await wait()
-  const index = db.teacherAttendanceEntries.findIndex((item) => item.date === date)
-  if (index === -1) {
-    db.teacherAttendanceEntries.push({
-      id: `TATT-${db.teacherAttendanceEntries.length + 1}`,
-      date,
-      records,
-    })
-  } else {
-    db.teacherAttendanceEntries[index].records = records
+function normalizeSubject(s) {
+  if (!s) return null
+  return {
+    ...s,
+    id: s.id,
+    name: s.name,
+    code: s.code,
+    classId: s.classId,
+    className: s.class ? `${s.class.name} ${s.class.section}`.trim() : (s.className || ''),
+    teacherId: s.teacherId || null,
+    teacherName: s.teacher?.name || 'Not Assigned',
   }
-  return records
 }
 
-export const attendanceApi = {
-  getStudentAttendance,
-  saveStudentAttendance,
-  getTeacherAttendance,
-  saveTeacherAttendance,
+function normalizeFee(f) {
+  if (!f) return null
+  const total = Number(f.totalFee || 0)
+  const paid = Number(f.paidAmount || f.paidFee || 0)
+  const due = Number(f.dueAmount ?? (total - paid))
+  return {
+    ...f,
+    id: f.id,
+    studentId: f.studentId,
+    studentName: f.student ? `${f.student.firstName} ${f.student.lastName}`.trim() : (f.studentName || 'Student'),
+    className: f.student?.class ? `${f.student.class.name} ${f.student.class.section}`.trim() : (f.className || ''),
+    totalFee: total,
+    paidFee: paid,
+    dueFee: due,
+    paymentDate: f.paymentDate ? f.paymentDate.slice(0, 10) : null,
+    status: f.paymentStatus === 'PAID' ? 'Paid' : f.paymentStatus === 'PARTIAL' ? 'Partial' : 'Pending',
+    paymentStatus: f.paymentStatus,
+    paymentMethod: f.paymentMethod || 'CASH',
+  }
 }
+
+function normalizeExam(e) {
+  if (!e) return null
+  return {
+    ...e,
+    id: e.id,
+    name: e.name,
+    classId: e.classId,
+    className: e.class ? `${e.class.name} ${e.class.section}`.trim() : (e.className || ''),
+    subject: e.subject?.name || e.subject || 'All Subjects',
+    date: e.startDate ? e.startDate.slice(0, 10) : (e.date || ''),
+    startDate: e.startDate ? e.startDate.slice(0, 10) : '',
+    endDate: e.endDate ? e.endDate.slice(0, 10) : '',
+  }
+}
+
+function normalizeMark(m) {
+  if (!m) return null
+  return {
+    ...m,
+    id: m.id,
+    studentId: m.studentId,
+    examId: m.examId,
+    subjectId: m.subjectId,
+    subject: m.subject?.name || m.subject || '',
+    marks: Number(m.marks || 0),
+    maxMarks: Number(m.maxMarks || 100),
+    grade: m.grade || '',
+    remarks: m.remarks || '',
+  }
+}
+
+function normalizeNotice(n) {
+  if (!n) return null
+  return {
+    ...n,
+    id: n.id,
+    title: n.title,
+    description: n.description || '',
+    date: n.publishDate ? n.publishDate.slice(0, 10) : (n.date || ''),
+    publishDate: n.publishDate,
+    priority: n.priority || 'Medium',
+    audience: n.audience || 'ALL',
+  }
+}
+
+// -------------------------------------------------------------
+// Core API Methods (Live Backend Integration)
+// -------------------------------------------------------------
 
 export async function getDashboardData() {
-  return {
-    totalStudents: db.students.length,
-    totalTeachers: db.teachers.length,
-    totalClasses: db.classes.length,
-    totalSubjects: db.subjects.length,
-    todayAttendance: 94,
-    feesCollected: db.fees.reduce((sum, fee) => sum + fee.paidFee, 0),
-    upcomingExams: db.exams.filter((exam) => new Date(exam.date) >= new Date()).length,
-    activities: db.activities,
-    studentStats: db.studentStats,
-    attendanceChart: db.attendanceEntries
-      .slice(-6)
-      .map((entry) => {
-        const present = entry.records.filter((r) => r.status === 'Present').length
-        const absent = entry.records.filter((r) => r.status === 'Absent').length
-        const leave = entry.records.filter((r) => r.status === 'Leave').length
-        return {
-          date: entry.date.slice(5).replace('-', '/'),
-          Present: present,
-          Absent: absent,
-          Leave: leave,
-        }
-      }),
+  try {
+    const data = await apiClient.get('/dashboard')
+    if (!data) throw new Error('No dashboard data received')
+
+    return {
+      totalStudents: data.widgets?.totalStudents ?? 0,
+      totalTeachers: data.widgets?.totalTeachers ?? 0,
+      totalClasses: data.widgets?.totalClasses ?? 0,
+      totalSubjects: data.widgets?.totalSubjects ?? 0,
+      todayAttendance: data.widgets?.todayAttendance ?? 0,
+      feesCollected: data.widgets?.monthlyFeeCollection ?? 0,
+      upcomingExams: data.widgets?.upcomingExams ?? 0,
+      activities: data.widgets?.recentActivities ?? [],
+      studentStats: data.charts?.studentStats?.map((s) => ({ name: s.name, students: s.count })) ?? [],
+      attendanceChart: data.charts?.attendanceChart ?? [],
+      role: data.role,
+      raw: data,
+    }
+  } catch (error) {
+    console.error('[api] getDashboardData error:', error.message)
+    throw error
   }
 }
+
+// -------------------------------------------------------------
+// Unified API Object (Exported for all components)
+// -------------------------------------------------------------
+
+export const api = {
+  // --- Students ---
+  getStudents: async (params = {}) => {
+    const res = await apiClient.get('/students', { limit: 100, ...params })
+    const list = Array.isArray(res) ? res : (res?.data || [])
+    return list.map(normalizeStudent)
+  },
+
+  getStudent: async (id) => {
+    const res = await apiClient.get(`/students/${id}`)
+    return normalizeStudent(res)
+  },
+
+  addStudent: async (data) => {
+    // Resolve classId if className & section provided
+    let classId = data.classId
+    if (!classId && data.className) {
+      const classes = await api.getClasses()
+      const found = classes.find(
+        (c) => c.name === data.className && (!data.section || c.section === data.section)
+      )
+      if (found) classId = found.id
+    }
+
+    const payload = {
+      firstName: data.firstName || data.fullName?.split(' ')[0] || 'Student',
+      lastName: data.lastName || data.fullName?.split(' ').slice(1).join(' ') || '.',
+      email: data.email || null,
+      phone: data.phone || null,
+      gender: data.gender ? data.gender.toUpperCase() : 'MALE',
+      dob: data.dob ? new Date(data.dob) : null,
+      address: data.address || null,
+      fatherName: data.fatherName || null,
+      motherName: data.motherName || null,
+      rollNumber: data.rollNumber ? Number(data.rollNumber) : null,
+      admissionDate: data.admissionDate ? new Date(data.admissionDate) : new Date(),
+      classId: classId || null,
+      section: data.section || null,
+      status: 'ACTIVE',
+    }
+
+    const res = await apiClient.post('/students', payload)
+    return normalizeStudent(res)
+  },
+
+  updateStudent: async (id, data) => {
+    let classId = data.classId
+    if (!classId && data.className) {
+      const classes = await api.getClasses()
+      const found = classes.find(
+        (c) => c.name === data.className && (!data.section || c.section === data.section)
+      )
+      if (found) classId = found.id
+    }
+
+    const payload = {
+      ...(data.firstName ? { firstName: data.firstName } : data.fullName ? { firstName: data.fullName.split(' ')[0] } : {}),
+      ...(data.lastName ? { lastName: data.lastName } : data.fullName ? { lastName: data.fullName.split(' ').slice(1).join(' ') || '.' } : {}),
+      ...(data.email !== undefined ? { email: data.email || null } : {}),
+      ...(data.phone !== undefined ? { phone: data.phone || null } : {}),
+      ...(data.gender ? { gender: data.gender.toUpperCase() } : {}),
+      ...(data.dob ? { dob: new Date(data.dob) } : {}),
+      ...(data.address !== undefined ? { address: data.address || null } : {}),
+      ...(data.fatherName !== undefined ? { fatherName: data.fatherName || null } : {}),
+      ...(data.motherName !== undefined ? { motherName: data.motherName || null } : {}),
+      ...(data.rollNumber !== undefined ? { rollNumber: Number(data.rollNumber) } : {}),
+      ...(classId ? { classId } : {}),
+      ...(data.section ? { section: data.section } : {}),
+    }
+
+    const res = await apiClient.put(`/students/${id}`, payload)
+    return normalizeStudent(res)
+  },
+
+  deleteStudent: async (id) => {
+    return apiClient.delete(`/students/${id}`)
+  },
+
+  // --- Teachers ---
+  getTeachers: async (params = {}) => {
+    const res = await apiClient.get('/teachers', { limit: 100, ...params })
+    const list = Array.isArray(res) ? res : (res?.data || [])
+    return list.map(normalizeTeacher)
+  },
+
+  getTeacher: async (id) => {
+    const res = await apiClient.get(`/teachers/${id}`)
+    return normalizeTeacher(res)
+  },
+
+  addTeacher: async (data) => {
+    const payload = {
+      name: data.name,
+      email: data.email || null,
+      phone: data.phone || null,
+      qualification: data.qualification || null,
+      salary: data.salary ? Number(data.salary) : null,
+      joiningDate: data.joiningDate ? new Date(data.joiningDate) : new Date(),
+      address: data.address || null,
+    }
+    const res = await apiClient.post('/teachers', payload)
+    return normalizeTeacher(res)
+  },
+
+  updateTeacher: async (id, data) => {
+    const payload = {
+      ...(data.name ? { name: data.name } : {}),
+      ...(data.email !== undefined ? { email: data.email || null } : {}),
+      ...(data.phone !== undefined ? { phone: data.phone || null } : {}),
+      ...(data.qualification !== undefined ? { qualification: data.qualification || null } : {}),
+      ...(data.salary !== undefined ? { salary: Number(data.salary) } : {}),
+      ...(data.joiningDate ? { joiningDate: new Date(data.joiningDate) } : {}),
+      ...(data.address !== undefined ? { address: data.address || null } : {}),
+    }
+    const res = await apiClient.put(`/teachers/${id}`, payload)
+    return normalizeTeacher(res)
+  },
+
+  deleteTeacher: async (id) => {
+    return apiClient.delete(`/teachers/${id}`)
+  },
+
+  // --- Classes ---
+  getClasses: async (params = {}) => {
+    const res = await apiClient.get('/classes', { limit: 100, ...params })
+    const list = Array.isArray(res) ? res : (res?.data || [])
+    return list.map(normalizeClass)
+  },
+
+  getClass: async (id) => {
+    const res = await apiClient.get(`/classes/${id}`)
+    return normalizeClass(res)
+  },
+
+  addClass: async (data) => {
+    const payload = {
+      name: data.name,
+      section: data.section || 'A',
+      roomNumber: data.roomNumber || null,
+      classTeacherId: data.classTeacherId || null,
+    }
+    const res = await apiClient.post('/classes', payload)
+    return normalizeClass(res)
+  },
+
+  updateClass: async (id, data) => {
+    const payload = {
+      ...(data.name ? { name: data.name } : {}),
+      ...(data.section ? { section: data.section } : {}),
+      ...(data.roomNumber !== undefined ? { roomNumber: data.roomNumber || null } : {}),
+      ...(data.classTeacherId !== undefined ? { classTeacherId: data.classTeacherId || null } : {}),
+    }
+    const res = await apiClient.put(`/classes/${id}`, payload)
+    return normalizeClass(res)
+  },
+
+  deleteClass: async (id) => {
+    return apiClient.delete(`/classes/${id}`)
+  },
+
+  // --- Subjects ---
+  getSubjects: async (params = {}) => {
+    const res = await apiClient.get('/subjects', { limit: 100, ...params })
+    const list = Array.isArray(res) ? res : (res?.data || [])
+    return list.map(normalizeSubject)
+  },
+
+  getSubject: async (id) => {
+    const res = await apiClient.get(`/subjects/${id}`)
+    return normalizeSubject(res)
+  },
+
+  addSubject: async (data) => {
+    let classId = data.classId
+    if (!classId && data.className) {
+      const classes = await api.getClasses()
+      const found = classes.find((c) => c.name === data.className)
+      if (found) classId = found.id
+    }
+
+    const payload = {
+      name: data.name,
+      code: data.code || `${data.name.slice(0, 3).toUpperCase()}-101`,
+      classId: classId,
+      teacherId: data.teacherId || null,
+    }
+    const res = await apiClient.post('/subjects', payload)
+    return normalizeSubject(res)
+  },
+
+  updateSubject: async (id, data) => {
+    const payload = {
+      ...(data.name ? { name: data.name } : {}),
+      ...(data.code ? { code: data.code } : {}),
+      ...(data.classId ? { classId: data.classId } : {}),
+      ...(data.teacherId !== undefined ? { teacherId: data.teacherId || null } : {}),
+    }
+    const res = await apiClient.put(`/subjects/${id}`, payload)
+    return normalizeSubject(res)
+  },
+
+  deleteSubject: async (id) => {
+    return apiClient.delete(`/subjects/${id}`)
+  },
+
+  // --- Fees ---
+  getFees: async (params = {}) => {
+    const res = await apiClient.get('/fees', { limit: 100, ...params })
+    const list = Array.isArray(res) ? res : (res?.data || [])
+    return list.map(normalizeFee)
+  },
+
+  getFee: async (id) => {
+    const res = await apiClient.get(`/fees/${id}`)
+    return normalizeFee(res)
+  },
+
+  addFee: async (data) => {
+    const payload = {
+      studentId: data.studentId,
+      totalFee: Number(data.totalFee),
+      paidAmount: Number(data.paidAmount || data.paidFee || 0),
+      paymentDate: data.paymentDate ? new Date(data.paymentDate) : null,
+      paymentMethod: data.paymentMethod || 'CASH',
+      paymentStatus: data.paymentStatus || (Number(data.paidAmount) >= Number(data.totalFee) ? 'PAID' : Number(data.paidAmount) > 0 ? 'PARTIAL' : 'PENDING'),
+    }
+    const res = await apiClient.post('/fees', payload)
+    return normalizeFee(res)
+  },
+
+  updateFee: async (id, data) => {
+    const payload = {
+      ...(data.totalFee !== undefined ? { totalFee: Number(data.totalFee) } : {}),
+      ...(data.paidAmount !== undefined || data.paidFee !== undefined ? { paidAmount: Number(data.paidAmount ?? data.paidFee) } : {}),
+      ...(data.paymentDate ? { paymentDate: new Date(data.paymentDate) } : {}),
+      ...(data.paymentMethod ? { paymentMethod: data.paymentMethod } : {}),
+      ...(data.paymentStatus ? { paymentStatus: data.paymentStatus } : {}),
+    }
+    const res = await apiClient.put(`/fees/${id}`, payload)
+    return normalizeFee(res)
+  },
+
+  deleteFee: async (id) => {
+    return apiClient.delete(`/fees/${id}`)
+  },
+
+  // --- Exams ---
+  getExams: async (params = {}) => {
+    const res = await apiClient.get('/exams', { limit: 100, ...params })
+    const list = Array.isArray(res) ? res : (res?.data || [])
+    return list.map(normalizeExam)
+  },
+
+  getExam: async (id) => {
+    const res = await apiClient.get(`/exams/${id}`)
+    return normalizeExam(res)
+  },
+
+  addExam: async (data) => {
+    let classId = data.classId
+    if (!classId && data.className) {
+      const classes = await api.getClasses()
+      const found = classes.find((c) => c.name === data.className)
+      if (found) classId = found.id
+    }
+
+    const payload = {
+      name: data.name,
+      classId: classId,
+      startDate: data.startDate ? new Date(data.startDate) : new Date(data.date || Date.now()),
+      endDate: data.endDate ? new Date(data.endDate) : new Date(data.date || Date.now() + 5 * 86400000),
+    }
+    const res = await apiClient.post('/exams', payload)
+    return normalizeExam(res)
+  },
+
+  updateExam: async (id, data) => {
+    const payload = {
+      ...(data.name ? { name: data.name } : {}),
+      ...(data.classId ? { classId: data.classId } : {}),
+      ...(data.startDate ? { startDate: new Date(data.startDate) } : {}),
+      ...(data.endDate ? { endDate: new Date(data.endDate) } : {}),
+    }
+    const res = await apiClient.put(`/exams/${id}`, payload)
+    return normalizeExam(res)
+  },
+
+  deleteExam: async (id) => {
+    return apiClient.delete(`/exams/${id}`)
+  },
+
+  // --- Marks ---
+  getMarks: async (params = {}) => {
+    const res = await apiClient.get('/marks', { limit: 200, ...params })
+    const list = Array.isArray(res) ? res : (res?.data || [])
+    return list.map(normalizeMark)
+  },
+
+  getMark: async (id) => {
+    const res = await apiClient.get(`/marks/${id}`)
+    return normalizeMark(res)
+  },
+
+  addMark: async (data) => {
+    // If subjectId is missing, resolve by subject name or class
+    let subjectId = data.subjectId
+    if (!subjectId && data.subject) {
+      const subjects = await api.getSubjects()
+      const found = subjects.find((s) => s.name.toLowerCase() === data.subject.toLowerCase())
+      if (found) subjectId = found.id
+    }
+
+    const payload = {
+      studentId: data.studentId,
+      examId: data.examId,
+      subjectId: subjectId,
+      marks: Number(data.marks),
+      grade: data.grade || 'A',
+      remarks: data.remarks || null,
+    }
+    const res = await apiClient.post('/marks', payload)
+    return normalizeMark(res)
+  },
+
+  updateMark: async (id, data) => {
+    const payload = {
+      ...(data.marks !== undefined ? { marks: Number(data.marks) } : {}),
+      ...(data.grade ? { grade: data.grade } : {}),
+      ...(data.remarks !== undefined ? { remarks: data.remarks } : {}),
+    }
+    const res = await apiClient.put(`/marks/${id}`, payload)
+    return normalizeMark(res)
+  },
+
+  deleteMark: async (id) => {
+    return apiClient.delete(`/marks/${id}`)
+  },
+
+  // --- Notices ---
+  getNotices: async (params = {}) => {
+    const res = await apiClient.get('/notices', { limit: 100, ...params })
+    const list = Array.isArray(res) ? res : (res?.data || [])
+    return list.map(normalizeNotice)
+  },
+
+  getNotice: async (id) => {
+    const res = await apiClient.get(`/notices/${id}`)
+    return normalizeNotice(res)
+  },
+
+  addNotice: async (data) => {
+    const payload = {
+      title: data.title,
+      description: data.description || null,
+      audience: data.audience || 'ALL',
+      publishDate: data.date ? new Date(data.date) : new Date(),
+    }
+    const res = await apiClient.post('/notices', payload)
+    return normalizeNotice(res)
+  },
+
+  updateNotice: async (id, data) => {
+    const payload = {
+      ...(data.title ? { title: data.title } : {}),
+      ...(data.description !== undefined ? { description: data.description } : {}),
+      ...(data.audience ? { audience: data.audience } : {}),
+      ...(data.date ? { publishDate: new Date(data.date) } : {}),
+    }
+    const res = await apiClient.put(`/notices/${id}`, payload)
+    return normalizeNotice(res)
+  },
+
+  deleteNotice: async (id) => {
+    return apiClient.delete(`/notices/${id}`)
+  },
+
+  // --- Settings ---
+  getSettings: async () => {
+    return apiClient.get('/settings')
+  },
+
+  updateSettings: async (data) => {
+    return apiClient.put('/settings', data)
+  },
+
+  // --- Notifications (Firebase Cloud Messaging) ---
+  getNotifications: async (params = {}) => {
+    return apiClient.get('/notifications', params)
+  },
+
+  markNotificationRead: async (id) => {
+    return apiClient.patch(`/notifications/${id}/read`)
+  },
+
+  markAllNotificationsRead: async () => {
+    return apiClient.patch('/notifications/mark-all-read')
+  },
+
+  registerDeviceToken: async (token, deviceType = 'web') => {
+    return apiClient.post('/notifications/register-token', { token, deviceType })
+  },
+
+  unregisterDeviceToken: async (token) => {
+    return apiClient.post('/notifications/unregister-token', { token })
+  },
+
+  sendTestNotification: async () => {
+    return apiClient.post('/notifications/test')
+  },
+
+  sendPushNotification: async (payload) => {
+    return apiClient.post('/notifications/send', payload)
+  },
+
+  deleteNotification: async (id) => {
+    return apiClient.delete(`/notifications/${id}`)
+  },
+
+  clearAllNotifications: async () => {
+    return apiClient.delete('/notifications/clear-all')
+  },
+}
+
+// -------------------------------------------------------------
+// Attendance API Service
+// -------------------------------------------------------------
+
+export const attendanceApi = {
+  getStudentAttendance: async ({ date, className, section, classId }) => {
+    try {
+      let targetClassId = classId
+      if (!targetClassId && className) {
+        const classes = await api.getClasses()
+        const found = classes.find(
+          (c) => c.name === className && (!section || c.section === section)
+        )
+        if (found) targetClassId = found.id
+      }
+
+      const res = await apiClient.get('/attendance', {
+        date,
+        ...(targetClassId ? { classId: targetClassId } : {}),
+        limit: 100,
+      })
+
+      const list = Array.isArray(res) ? res : (res?.data || [])
+      return list.map((a) => ({
+        id: a.id,
+        studentId: a.studentId,
+        date: a.date ? a.date.slice(0, 10) : date,
+        status: a.status === 'PRESENT' ? 'Present' : a.status === 'ABSENT' ? 'Absent' : 'Leave',
+        remark: a.remark || '',
+      }))
+    } catch (error) {
+      console.warn('[attendanceApi] getStudentAttendance error:', error.message)
+      return []
+    }
+  },
+
+  saveStudentAttendance: async ({ date, className, section, classId, records }) => {
+    let targetClassId = classId
+    if (!targetClassId && className) {
+      const classes = await api.getClasses()
+      const found = classes.find(
+        (c) => c.name === className && (!section || c.section === section)
+      )
+      if (found) targetClassId = found.id
+    }
+
+    if (!targetClassId) {
+      throw new Error('Class ID is required to mark attendance.')
+    }
+
+    const payload = {
+      classId: targetClassId,
+      date: new Date(date),
+      records: records.map((r) => ({
+        studentId: r.studentId,
+        status: (r.status || 'PRESENT').toUpperCase(),
+        remark: r.remark || null,
+      })),
+    }
+
+    return apiClient.post('/attendance/bulk', payload)
+  },
+
+  getTeacherAttendance: async (date) => {
+    try {
+      const res = await apiClient.get('/teacher-attendance', { date, limit: 100 })
+      const list = Array.isArray(res) ? res : (res?.data || [])
+      return list.map((a) => ({
+        id: a.id,
+        teacherId: a.teacherId,
+        date: a.date ? a.date.slice(0, 10) : date,
+        status: a.status === 'PRESENT' ? 'Present' : a.status === 'ABSENT' ? 'Absent' : 'Leave',
+        remark: a.remark || '',
+      }))
+    } catch (error) {
+      console.warn('[attendanceApi] getTeacherAttendance error:', error.message)
+      return []
+    }
+  },
+
+  saveTeacherAttendance: async ({ date, records }) => {
+    const promises = records.map((r) =>
+      apiClient.post('/teacher-attendance/mark', {
+        teacherId: r.teacherId,
+        date: new Date(date),
+        status: (r.status || 'PRESENT').toUpperCase(),
+        remark: r.remark || null,
+      })
+    )
+    return Promise.all(promises)
+  },
+}
+
+export default api

@@ -91,7 +91,7 @@ export async function createFee(data) {
   }
 
   const { dueAmount, paymentStatus } = deriveAmounts(data);
-  return prisma.fee.create({
+  const fee = await prisma.fee.create({
     data: {
       studentId: data.studentId,
       totalFee: data.totalFee,
@@ -103,10 +103,34 @@ export async function createFee(data) {
     },
     include: DEFAULT_INCLUDE,
   });
+
+  // Automatically dispatch notification if payment recorded
+  if (fee.paidAmount > 0) {
+    try {
+      const { sendNotificationToUser } = await import('./notification.service.js');
+      const studentName = `${student.firstName} ${student.lastName || ''}`.trim();
+      const userIds = [student.userId, student.parent?.userId].filter(Boolean);
+      for (const uid of userIds) {
+        await sendNotificationToUser(uid, {
+          title: '💳 Fee Payment Received',
+          body: `Payment of $${fee.paidAmount} recorded for ${studentName}. Status: ${fee.paymentStatus}. Remaining: $${fee.dueAmount}.`,
+          type: 'FEE',
+          data: { feeId: fee.id, studentId: student.id, paidAmount: fee.paidAmount, url: '/fees' },
+        });
+      }
+    } catch (err) {
+      console.warn('[Fee] Notification warning:', err.message);
+    }
+  }
+
+  return fee;
 }
 
 export async function updateFee(id, data) {
-  const fee = await prisma.fee.findFirst({ where: { id, ...notDeleted() } });
+  const fee = await prisma.fee.findFirst({
+    where: { id, ...notDeleted() },
+    include: { student: { include: { parent: { select: { userId: true } } } } },
+  });
   if (!fee) {
     throw ApiError.notFound('Fee record not found.');
   }
@@ -119,7 +143,7 @@ export async function updateFee(id, data) {
   };
   const { dueAmount, paymentStatus } = deriveAmounts(merged);
 
-  return prisma.fee.update({
+  const updated = await prisma.fee.update({
     where: { id },
     data: {
       ...(data.totalFee !== undefined && { totalFee: data.totalFee }),
@@ -134,6 +158,30 @@ export async function updateFee(id, data) {
     },
     include: DEFAULT_INCLUDE,
   });
+
+  // Dispatch push on fee update
+  if (data.paidAmount !== undefined && data.paidAmount > (fee.paidAmount || 0)) {
+    try {
+      const { sendNotificationToUser } = await import('./notification.service.js');
+      const student = fee.student;
+      if (student) {
+        const studentName = `${student.firstName} ${student.lastName || ''}`.trim();
+        const userIds = [student.userId, student.parent?.userId].filter(Boolean);
+        for (const uid of userIds) {
+          await sendNotificationToUser(uid, {
+            title: '💳 Fee Payment Updated',
+            body: `Payment updated for ${studentName}. Total Paid: $${updated.paidAmount}. Balance Due: $${updated.dueAmount}.`,
+            type: 'FEE',
+            data: { feeId: updated.id, studentId: student.id, url: '/fees' },
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[Fee] Notification warning:', err.message);
+    }
+  }
+
+  return updated;
 }
 
 export async function deleteFee(id) {

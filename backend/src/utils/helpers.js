@@ -44,7 +44,9 @@ export function pick(object = {}, keys = []) {
  * Return a where clause fragment that excludes soft-deleted rows.
  */
 export function notDeleted() {
-  return { deletedAt: null };
+  return {
+    OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
+  };
 }
 
 /**

@@ -16,7 +16,7 @@ if (env.nodeEnv === 'production') {
 
 async function testConnection() {
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await prisma.setting.findFirst();
     return true;
   } catch {
     return false;

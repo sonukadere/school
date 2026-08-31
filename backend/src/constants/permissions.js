@@ -61,6 +61,7 @@ const ALL_PERMISSIONS = Object.values(PERMISSIONS);
  * role -> permissions mapping.
  */
 export const ROLE_PERMISSIONS = Object.freeze({
+  [ROLES.SUPER_ADMIN]: ALL_PERMISSIONS,
   [ROLES.ADMIN]: ALL_PERMISSIONS,
 
   [ROLES.TEACHER]: [

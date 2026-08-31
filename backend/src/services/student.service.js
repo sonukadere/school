@@ -29,13 +29,21 @@ const DEFAULT_INCLUDE = {
  */
 export async function generateStudentId() {
   const year = new Date().getFullYear();
-  const count = await prisma.student.count({
-    where: {
-      studentId: { startsWith: `STU-${year}-` },
-      deletedAt: null,
-    },
+  const prefix = `STU-${year}-`;
+  const latest = await prisma.student.findFirst({
+    where: { studentId: { startsWith: prefix } },
+    orderBy: { studentId: 'desc' },
+    select: { studentId: true },
   });
-  return `STU-${year}-${String(count + 1).padStart(4, '0')}`;
+
+  let nextNum = 1;
+  if (latest && latest.studentId) {
+    const numPart = parseInt(latest.studentId.replace(prefix, ''), 10);
+    if (!isNaN(numPart)) {
+      nextNum = numPart + 1;
+    }
+  }
+  return `${prefix}${String(nextNum).padStart(4, '0')}`;
 }
 
 export async function listStudents(query = {}, actor = null) {
@@ -96,8 +104,19 @@ export async function getStudent(id, actor = null) {
 export async function createStudent(data) {
   const studentId = data.studentId || (await generateStudentId());
 
+  const emailQuery = data.email
+    ? [{ email: { equals: data.email, mode: 'insensitive' } }]
+    : [];
+
   const existing = await prisma.student.findFirst({
-    where: { OR: [{ studentId }, ...(data.email ? [{ email: data.email }] : [])] },
+    where: {
+      AND: [
+        notDeleted(),
+        {
+          OR: [{ studentId }, ...emailQuery],
+        },
+      ],
+    },
   });
   if (existing) {
     throw ApiError.conflict('A student with this ID or email already exists.');
@@ -112,10 +131,67 @@ export async function createStudent(data) {
     }
   }
 
-  return prisma.student.create({
+  const student = await prisma.student.create({
     data: { ...data, studentId },
-    include: DEFAULT_INCLUDE,
+    include: {
+      ...DEFAULT_INCLUDE,
+      user: { select: { id: true } },
+    },
   });
+
+  // Automatically send notification & message with Student No.
+  try {
+    const { sendNotificationToUser, sendNotificationToRole } = await import('./notification.service.js');
+    const studentFullName = `${student.firstName} ${student.lastName || ''}`.trim();
+    const classNameStr = student.class ? `${student.class.name} - Section ${student.class.section}` : 'Class';
+    const rollStr = student.rollNumber ? ` (Roll No: ${student.rollNumber})` : '';
+
+    // 1. If student has a user account, send direct admission push
+    if (student.userId) {
+      await sendNotificationToUser(student.userId, {
+        title: '🎓 Welcome to Daily Day Academy!',
+        body: `Dear ${studentFullName}, your admission is confirmed. Your Student No is ${studentId}${rollStr}. Class: ${classNameStr}.`,
+        type: 'STUDENT_ADMISSION',
+        data: { studentId, studentNumber: studentId, rollNumber: String(student.rollNumber || ''), url: '/profile' },
+      });
+    }
+
+    // 2. If student has a linked parent with user account, notify parent
+    if (student.parentId) {
+      const parent = await prisma.parent.findFirst({
+        where: { id: student.parentId },
+        select: { userId: true, firstName: true },
+      });
+      if (parent?.userId) {
+        await sendNotificationToUser(parent.userId, {
+          title: '👨‍👧 Student Added Successfully',
+          body: `Your child ${studentFullName} has been registered at Daily Day Academy. Student No: ${studentId}${rollStr}.`,
+          type: 'STUDENT_ADMISSION',
+          data: { studentId, studentNumber: studentId, url: `/students/${student.id}` },
+        });
+      }
+    }
+
+    // 3. Notify Admins and Super Admins
+    await sendNotificationToRole('ADMIN', {
+      title: '👨‍🎓 New Student Admission',
+      body: `${studentFullName} enrolled. Student No: ${studentId}${rollStr}. Class: ${classNameStr}.`,
+      type: 'STUDENT_ADMISSION',
+      data: { studentId, studentNumber: studentId, url: `/students/${student.id}` },
+    });
+    await sendNotificationToRole('SUPER_ADMIN', {
+      title: '👨‍🎓 New Student Admission',
+      body: `${studentFullName} enrolled. Student No: ${studentId}${rollStr}. Class: ${classNameStr}.`,
+      type: 'STUDENT_ADMISSION',
+      data: { studentId, studentNumber: studentId, url: `/students/${student.id}` },
+    });
+
+    console.log(`[Notification] Automatic admission message sent for Student No: ${studentId} (${studentFullName})`);
+  } catch (notifErr) {
+    console.warn('[Notification] Failed to send automatic student admission notification:', notifErr.message);
+  }
+
+  return student;
 }
 
 export async function updateStudent(id, data) {

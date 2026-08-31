@@ -88,13 +88,39 @@ export async function createMark(data) {
     throw ApiError.badRequest('The student is not enrolled in the class for this exam.');
   }
 
-  return prisma.mark.create({
+  const mark = await prisma.mark.create({
     data: {
       ...data,
       grade: data.grade ?? gradeForMarks(data.marks),
     },
     include: DEFAULT_INCLUDE,
   });
+
+  // Automatically dispatch notification for new marks
+  try {
+    const { sendNotificationToUser } = await import('./notification.service.js');
+    const student = await prisma.student.findFirst({
+      where: { id: mark.studentId },
+      include: { parent: { select: { userId: true } } },
+    });
+    if (student) {
+      const subjectName = mark.subject?.name || 'Subject';
+      const examName = mark.exam?.name || 'Exam';
+      const userIds = [student.userId, student.parent?.userId].filter(Boolean);
+      for (const uid of userIds) {
+        await sendNotificationToUser(uid, {
+          title: `📊 Exam Marks Published: ${examName}`,
+          body: `Marks for ${subjectName} have been recorded. Score: ${mark.marks} (Grade: ${mark.grade}).`,
+          type: 'EXAM_RESULT',
+          data: { examId: mark.examId, studentId: student.id, marks: mark.marks, url: '/marks/results' },
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[Mark] Notification error:', err.message);
+  }
+
+  return mark;
 }
 
 export async function updateMark(id, data) {
@@ -139,6 +165,31 @@ export async function bulkCreateMarks(data) {
       })
     )
   );
+
+  // Dispatch notifications for students in bulk entry
+  try {
+    const { sendNotificationToUser } = await import('./notification.service.js');
+    const studentIds = records.map((r) => r.studentId);
+    const students = await prisma.student.findMany({
+      where: { id: { in: studentIds } },
+      include: { parent: { select: { userId: true } } },
+    });
+
+    for (const st of students) {
+      const rec = records.find((r) => r.studentId === st.id);
+      const userIds = [st.userId, st.parent?.userId].filter(Boolean);
+      for (const uid of userIds) {
+        await sendNotificationToUser(uid, {
+          title: `📊 Exam Marks Published: ${exam.name}`,
+          body: `Your score for ${exam.name} has been published: ${rec?.marks ?? '-'} marks (Grade: ${rec?.grade ?? '-'}).`,
+          type: 'EXAM_RESULT',
+          data: { examId: exam.id, studentId: st.id, url: '/marks/results' },
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[Mark] Bulk notification warning:', err.message);
+  }
 
   return results;
 }

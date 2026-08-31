@@ -5,6 +5,7 @@ import ApiError from '../utils/ApiError.js';
 import {
   comparePassword,
   hashPassword,
+  notDeleted,
   serializeUser,
   signToken,
 } from '../utils/helpers.js';
@@ -31,7 +32,7 @@ const USER_SELECT = {
 const findActiveUser = async (identifier) => {
   return prisma.user.findFirst({
     where: {
-      deletedAt: null,
+      ...notDeleted(),
       OR: [{ email: identifier.toLowerCase() }, { username: identifier }],
     },
     select: USER_SELECT,
@@ -76,7 +77,7 @@ export async function login(identifier, password) {
 export async function register(data) {
   const existing = await prisma.user.findFirst({
     where: {
-      deletedAt: null,
+      ...notDeleted(),
       OR: [{ email: data.email }, { username: data.username }],
     },
   });
@@ -130,7 +131,7 @@ export async function logout(jti, expiresAtMs) {
  */
 export async function getProfile(userId) {
   const user = await prisma.user.findFirst({
-    where: { id: userId, deletedAt: null },
+    where: { id: userId, ...notDeleted() },
     select: USER_SELECT,
   });
 

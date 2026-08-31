@@ -19,6 +19,7 @@ import holidayRoutes from './holiday.routes.js';
 import settingRoutes from './setting.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import meRoutes from './me.routes.js';
+import notificationRoutes from './notification.routes.js';
 
 const router = Router();
 
@@ -42,5 +43,6 @@ router.use('/holidays', holidayRoutes);
 router.use('/settings', settingRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/me', meRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

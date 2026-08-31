@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ClipboardList, ArrowRight, PenLine, Table2 } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
+import { useAuth } from '../../context/AuthContext'
 
 const OPTIONS = [
   {
@@ -20,6 +21,14 @@ const OPTIONS = [
 ]
 
 function Marks() {
+  const { user } = useAuth()
+  const filteredOptions = OPTIONS.filter((option) => {
+    if (user?.role === 'Student') {
+      return option.to !== '/marks/entry'
+    }
+    return true
+  })
+
   return (
     <div>
       <PageHeader
@@ -28,7 +37,7 @@ function Marks() {
         breadcrumb={[{ label: 'Marks' }]}
       />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {OPTIONS.map((option) => {
+        {filteredOptions.map((option) => {
           const Icon = option.icon
           return (
             <Link

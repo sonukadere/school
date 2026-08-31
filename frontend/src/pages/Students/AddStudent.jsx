@@ -14,10 +14,16 @@ function AddStudent() {
 
   const handleSubmit = async (values) => {
     setSubmitting(true)
-    await api.addStudent(values)
-    setSubmitting(false)
-    showToast('Student added successfully', 'success')
-    navigate('/students')
+    try {
+      const created = await api.addStudent(values)
+      setSubmitting(false)
+      const studentNo = created?.studentId ? ` (${created.studentId})` : ''
+      showToast(`Student added successfully! Student No: ${created?.studentId || 'Generated'}`, 'success')
+      navigate('/students')
+    } catch (err) {
+      setSubmitting(false)
+      showToast(err.message || 'Failed to add student', 'error')
+    }
   }
 
   return (

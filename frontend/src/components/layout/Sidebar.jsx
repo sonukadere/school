@@ -15,6 +15,19 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
         const forbidden = ['/teachers', '/fees', '/settings']
         return !forbidden.some((path) => item.path.startsWith(path))
       }
+      if (user?.role === 'Student') {
+        const forbidden = [
+          '/students',
+          '/teachers',
+          '/classes',
+          '/subjects',
+          '/attendance',
+          '/fees',
+          '/settings',
+          '/exams',
+        ]
+        return !forbidden.some((path) => item.path.startsWith(path))
+      }
       return true
     })
     return { ...group, items }

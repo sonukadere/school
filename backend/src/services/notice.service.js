@@ -54,13 +54,29 @@ export async function getNotice(id) {
 }
 
 export async function createNotice(data) {
-  return prisma.notice.create({
+  const notice = await prisma.notice.create({
     data: {
       ...data,
       publishDate: data.publishDate ? toDateOnly(data.publishDate) : toDateOnly(new Date()),
       expiryDate: data.expiryDate ? toDateOnly(data.expiryDate) : null,
     },
   });
+
+  // Automatically trigger Firebase Push Notification
+  try {
+    const { broadcastNotification } = await import('./notification.service.js');
+    await broadcastNotification({
+      title: `📢 ${notice.title}`,
+      body: notice.description ? notice.description.slice(0, 120) : 'A new notice has been published.',
+      audience: notice.audience || 'ALL',
+      type: 'NOTICE',
+      data: { noticeId: notice.id, url: '/notices' },
+    });
+  } catch (err) {
+    console.warn('[Notice] Push notification trigger error:', err.message);
+  }
+
+  return notice;
 }
 
 export async function updateNotice(id, data) {

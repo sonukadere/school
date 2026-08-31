@@ -1,6 +1,7 @@
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import { SettingsProvider } from './context/SettingsContext'
+import { NotificationProvider } from './context/NotificationContext'
 import AppRoutes from './routes'
 
 function App() {
@@ -8,7 +9,9 @@ function App() {
     <AuthProvider>
       <ToastProvider>
         <SettingsProvider>
-          <AppRoutes />
+          <NotificationProvider>
+            <AppRoutes />
+          </NotificationProvider>
         </SettingsProvider>
       </ToastProvider>
     </AuthProvider>

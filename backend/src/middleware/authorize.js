@@ -20,6 +20,9 @@ const authorize =
     if (!req.user) {
       return next(ApiError.unauthorized('Authentication required.'));
     }
+    if (req.user.role === 'SUPER_ADMIN') {
+      return next();
+    }
     if (!roles.includes(req.user.role)) {
       return next(
         ApiError.forbidden(`Access denied. Role '${req.user.role}' is not allowed to perform this action.`)

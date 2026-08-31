@@ -37,6 +37,7 @@ const ProfilePage = lazy(() => import('../pages/Profile/ProfilePage'))
 const EditProfile = lazy(() => import('../pages/Profile/EditProfile'))
 const ChangePassword = lazy(() => import('../pages/Profile/ChangePassword'))
 const SettingsPage = lazy(() => import('../pages/Settings/SettingsPage'))
+const NotificationList = lazy(() => import('../pages/Notifications/NotificationList'))
 
 function ForbiddenRedirect() {
   const { showToast } = useToast()
@@ -60,6 +61,26 @@ function ProtectedRoute({ children }) {
       '/attendance/teachers',
       '/fees',
       '/settings',
+    ]
+    const isForbidden = forbiddenPrefixes.some((prefix) =>
+      location.pathname.startsWith(prefix)
+    )
+    if (isForbidden) {
+      return <ForbiddenRedirect />
+    }
+  }
+
+  if (user?.role === 'Student') {
+    const forbiddenPrefixes = [
+      '/students',
+      '/teachers',
+      '/classes',
+      '/subjects',
+      '/attendance',
+      '/fees',
+      '/settings',
+      '/exams',
+      '/marks/entry',
     ]
     const isForbidden = forbiddenPrefixes.some((prefix) =>
       location.pathname.startsWith(prefix)
@@ -141,6 +162,7 @@ function AppRoutes() {
         <Route path="/profile/change-password" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><ChangePassword /></Suspense>} />
 
         <Route path="/settings" element={<Suspense fallback={<Loader fullScreen label="Loading settings..." />}><SettingsPage /></Suspense>} />
+        <Route path="/notifications" element={<Suspense fallback={<Loader fullScreen label="Loading notifications..." />}><NotificationList /></Suspense>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

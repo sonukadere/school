@@ -92,7 +92,7 @@ export async function markAttendance(data, userId = null) {
     teacherId = teacher?.id ?? null;
   }
 
-  return prisma.attendance.upsert({
+  const result = await prisma.attendance.upsert({
     where: { studentId_date: { studentId: data.studentId, date } },
     create: {
       studentId: data.studentId,
@@ -108,6 +108,36 @@ export async function markAttendance(data, userId = null) {
     },
     include: DEFAULT_INCLUDE,
   });
+
+  // Automatically dispatch notification if marked Absent or Leave
+  if (data.status === 'ABSENT' || data.status === 'LEAVE') {
+    try {
+      const { sendNotificationToUser } = await import('./notification.service.js');
+      const studentName = `${student.firstName} ${student.lastName || ''}`.trim();
+      const dateStr = date.toISOString().split('T')[0];
+      const isAbsent = data.status === 'ABSENT';
+
+      const userIdsToNotify = [];
+      if (student.userId) userIdsToNotify.push(student.userId);
+      if (student.parentId) {
+        const parent = await prisma.parent.findFirst({ where: { id: student.parentId }, select: { userId: true } });
+        if (parent?.userId) userIdsToNotify.push(parent.userId);
+      }
+
+      for (const uid of userIdsToNotify) {
+        await sendNotificationToUser(uid, {
+          title: isAbsent ? '⚠️ Attendance Alert: Absent' : '📝 Attendance Alert: On Leave',
+          body: `${studentName} was marked ${data.status} on ${dateStr}.${isAbsent ? ' Please contact the school if unexcused.' : ''}`,
+          type: 'ATTENDANCE',
+          data: { studentId: student.id, status: data.status, date: dateStr, url: '/attendance' },
+        });
+      }
+    } catch (err) {
+      console.warn('[Attendance] Push notification trigger warning:', err.message);
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -146,6 +176,39 @@ export async function bulkMarkAttendance(data, userId = null) {
       })
     )
   );
+
+  // Dispatch attendance absence notifications in background
+  try {
+    const absentOrLeaveRecords = data.records.filter((r) => r.status === 'ABSENT' || r.status === 'LEAVE');
+    if (absentOrLeaveRecords.length > 0) {
+      const { sendNotificationToUser } = await import('./notification.service.js');
+      const studentIds = absentOrLeaveRecords.map((r) => r.studentId);
+      const students = await prisma.student.findMany({
+        where: { id: { in: studentIds } },
+        include: { parent: { select: { userId: true } } },
+      });
+
+      const dateStr = date.toISOString().split('T')[0];
+      for (const st of students) {
+        const record = absentOrLeaveRecords.find((r) => r.studentId === st.id);
+        const status = record?.status || 'ABSENT';
+        const isAbsent = status === 'ABSENT';
+        const studentName = `${st.firstName} ${st.lastName || ''}`.trim();
+
+        const userIds = [st.userId, st.parent?.userId].filter(Boolean);
+        for (const uid of userIds) {
+          await sendNotificationToUser(uid, {
+            title: isAbsent ? '⚠️ Attendance Alert: Absent' : '📝 Attendance Alert: On Leave',
+            body: `${studentName} was marked ${status} on ${dateStr} for ${cls.name}.`,
+            type: 'ATTENDANCE',
+            data: { studentId: st.id, status, date: dateStr, url: '/attendance' },
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Attendance] Bulk push notification error:', err.message);
+  }
 
   return results;
 }

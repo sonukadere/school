@@ -148,8 +148,8 @@ async function getAdminDashboard(user) {
     .slice(0, 6);
 
   return {
-    role: 'ADMIN',
-    roleLabel: 'Super Admin',
+    role: user.role,
+    roleLabel: user.role === 'SUPER_ADMIN' ? 'Super Administrator' : 'Administrator',
     widgets: {
       totalStudents,
       totalTeachers,
@@ -471,6 +471,7 @@ async function getParentDashboard(user) {
  */
 export async function getDashboard(user) {
   switch (user.role) {
+    case 'SUPER_ADMIN':
     case 'ADMIN':
       return getAdminDashboard(user);
     case 'TEACHER':

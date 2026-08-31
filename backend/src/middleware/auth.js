@@ -37,7 +37,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
     where: {
       id: payload.sub,
       isActive: true,
-      deletedAt: null,
+      ...notDeleted(),
     },
     select: {
       id: true,

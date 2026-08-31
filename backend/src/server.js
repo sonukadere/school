@@ -8,11 +8,11 @@ async function start() {
   const connected = await testConnection();
   if (!connected) {
     console.error(
-      '[server] Could not connect to PostgreSQL. Check DATABASE_URL and that the database is running.'
+      '[server] Could not connect to MongoDB. Check DATABASE_URL and that the database is running.'
     );
     process.exit(1);
   }
-  console.log('[server] PostgreSQL connection established.');
+  console.log('[server] MongoDB connection established.');
 
   server = app.listen(env.port, () => {
     console.log(`[server] API listening on http://localhost:${env.port} (${env.nodeEnv})`);

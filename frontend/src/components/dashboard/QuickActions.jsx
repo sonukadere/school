@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { GraduationCap, Users, FilePlus2, CalendarCheck, Wallet, Megaphone } from 'lucide-react'
+import { GraduationCap, Users, FilePlus2, CalendarCheck, Wallet, Megaphone, ClipboardList, Bell, UserCircle } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const ACTIONS = [
@@ -11,16 +11,24 @@ const ACTIONS = [
   { label: 'Post Notice', description: 'Publish a new notice', to: '/notices/create', icon: Megaphone, classes: 'bg-sky-600 hover:bg-sky-700' },
 ]
 
+const STUDENT_ACTIONS = [
+  { label: 'View Results', description: 'Check your exam marks', to: '/marks/results', icon: ClipboardList, classes: 'bg-emerald-600 hover:bg-emerald-700' },
+  { label: 'View Notices', description: 'Read school announcements', to: '/notices', icon: Bell, classes: 'bg-sky-600 hover:bg-sky-700' },
+  { label: 'My Profile', description: 'View your student info', to: '/profile', icon: UserCircle, classes: 'bg-indigo-600 hover:bg-indigo-700' },
+]
+
 function QuickActions() {
   const { user } = useAuth()
 
-  const filteredActions = ACTIONS.filter((action) => {
-    if (user?.role === 'Teacher') {
-      const forbidden = ['/teachers/add', '/fees']
-      return !forbidden.includes(action.to)
-    }
-    return true
-  })
+  const filteredActions = user?.role === 'Student'
+    ? STUDENT_ACTIONS
+    : ACTIONS.filter((action) => {
+        if (user?.role === 'Teacher') {
+          const forbidden = ['/teachers/add', '/fees']
+          return !forbidden.includes(action.to)
+        }
+        return true
+      })
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

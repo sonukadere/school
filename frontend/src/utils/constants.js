@@ -116,11 +116,18 @@ export const AVATAR_COLORS = [
   'bg-orange-500',
 ]
 
+export const SUPER_ADMIN_USER = {
+  email: 'superadmin@school.com',
+  password: 'superadmin123',
+  name: 'Chief Super Administrator',
+  role: 'Super Admin',
+}
+
 export const ADMIN_USER = {
   email: 'admin@school.com',
   password: 'admin123',
   name: 'Admin User',
-  role: 'Administrator',
+  role: 'Admin',
 }
 
 export const TEACHER_USER = {
@@ -128,4 +135,11 @@ export const TEACHER_USER = {
   password: 'teacher123',
   name: 'Teacher User',
   role: 'Teacher',
+}
+
+export const STUDENT_USER = {
+  email: 'student@school.com',
+  password: 'student123',
+  name: 'Student User',
+  role: 'Student',
 }

@@ -93,10 +93,38 @@ export async function createExam(data) {
   if (end < start) {
     throw ApiError.badRequest('End date cannot be before start date.');
   }
-  return prisma.exam.create({
+  const exam = await prisma.exam.create({
     data: { name: data.name, classId: data.classId, startDate: start, endDate: end },
     include: DEFAULT_INCLUDE,
   });
+
+  // Automatically dispatch push notifications to students and parents of the class
+  try {
+    const { sendNotificationToUser } = await import('./notification.service.js');
+    const students = await prisma.student.findMany({
+      where: { classId: data.classId, isActive: true, ...notDeleted() },
+      include: { parent: { select: { userId: true } } },
+    });
+
+    const startStr = start.toISOString().split('T')[0];
+    const endStr = end.toISOString().split('T')[0];
+
+    for (const st of students) {
+      const userIds = [st.userId, st.parent?.userId].filter(Boolean);
+      for (const uid of userIds) {
+        await sendNotificationToUser(uid, {
+          title: `📝 New Exam Scheduled: ${exam.name}`,
+          body: `Examination scheduled for ${cls.name} (${cls.section}) from ${startStr} to ${endStr}.`,
+          type: 'EXAM',
+          data: { examId: exam.id, classId: cls.id, url: '/exams' },
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[Exam] Notification dispatch warning:', err.message);
+  }
+
+  return exam;
 }
 
 export async function updateExam(id, data) {

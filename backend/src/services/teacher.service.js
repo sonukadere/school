@@ -28,13 +28,21 @@ const DEFAULT_INCLUDE = {
  */
 export async function generateTeacherId() {
   const year = new Date().getFullYear();
-  const count = await prisma.teacher.count({
-    where: {
-      teacherId: { startsWith: `TCH-${year}-` },
-      deletedAt: null,
-    },
+  const prefix = `TCH-${year}-`;
+  const latest = await prisma.teacher.findFirst({
+    where: { teacherId: { startsWith: prefix } },
+    orderBy: { teacherId: 'desc' },
+    select: { teacherId: true },
   });
-  return `TCH-${year}-${String(count + 1).padStart(4, '0')}`;
+
+  let nextNum = 1;
+  if (latest && latest.teacherId) {
+    const numPart = parseInt(latest.teacherId.replace(prefix, ''), 10);
+    if (!isNaN(numPart)) {
+      nextNum = numPart + 1;
+    }
+  }
+  return `${prefix}${String(nextNum).padStart(4, '0')}`;
 }
 
 export async function listTeachers(query = {}, actor = null) {
@@ -91,8 +99,19 @@ export async function getTeacher(id, actor = null) {
 export async function createTeacher(data) {
   const teacherId = data.teacherId || (await generateTeacherId());
 
+  const emailQuery = data.email
+    ? [{ email: { equals: data.email, mode: 'insensitive' } }]
+    : [];
+
   const existing = await prisma.teacher.findFirst({
-    where: { OR: [{ teacherId }, ...(data.email ? [{ email: data.email }] : [])] },
+    where: {
+      AND: [
+        notDeleted(),
+        {
+          OR: [{ teacherId }, ...emailQuery],
+        },
+      ],
+    },
   });
   if (existing) {
     throw ApiError.conflict('A teacher with this ID or email already exists.');
@@ -107,10 +126,45 @@ export async function createTeacher(data) {
     }
   }
 
-  return prisma.teacher.create({
+  const teacher = await prisma.teacher.create({
     data: { ...data, teacherId },
-    include: DEFAULT_INCLUDE,
+    include: {
+      ...DEFAULT_INCLUDE,
+      user: { select: { id: true } },
+    },
   });
+
+  // Automatically dispatch notification & push message
+  try {
+    const { sendNotificationToUser, sendNotificationToRole } = await import('./notification.service.js');
+    const subjectName = teacher.subject?.name || 'General';
+
+    if (teacher.userId) {
+      await sendNotificationToUser(teacher.userId, {
+        title: '👩‍🏫 Welcome to Daily Day Academy!',
+        body: `Hello ${teacher.name}, your faculty account is activated. Teacher ID: ${teacherId}. Subject: ${subjectName}.`,
+        type: 'TEACHER_ONBOARDING',
+        data: { teacherId, subjectName, url: '/profile' },
+      });
+    }
+
+    await sendNotificationToRole('ADMIN', {
+      title: '👩‍🏫 New Faculty Onboarded',
+      body: `${teacher.name} has joined the faculty (ID: ${teacherId}, Subject: ${subjectName}).`,
+      type: 'TEACHER_ONBOARDING',
+      data: { teacherId, url: `/teachers/${teacher.id}` },
+    });
+    await sendNotificationToRole('SUPER_ADMIN', {
+      title: '👩‍🏫 New Faculty Onboarded',
+      body: `${teacher.name} has joined the faculty (ID: ${teacherId}, Subject: ${subjectName}).`,
+      type: 'TEACHER_ONBOARDING',
+      data: { teacherId, url: `/teachers/${teacher.id}` },
+    });
+  } catch (notifErr) {
+    console.warn('[Notification] Failed to send teacher onboarding notification:', notifErr.message);
+  }
+
+  return teacher;
 }
 
 export async function updateTeacher(id, data) {
