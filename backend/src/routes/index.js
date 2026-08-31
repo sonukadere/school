@@ -1,0 +1,46 @@
+import { Router } from 'express';
+import authRoutes from './auth.routes.js';
+import userRoutes from './user.routes.js';
+import studentRoutes from './student.routes.js';
+import teacherRoutes from './teacher.routes.js';
+import parentRoutes from './parent.routes.js';
+import staffRoutes from './staff.routes.js';
+import classRoutes from './class.routes.js';
+import subjectRoutes from './subject.routes.js';
+import attendanceRoutes from './attendance.routes.js';
+import teacherAttendanceRoutes from './teacherAttendance.routes.js';
+import feeRoutes from './fee.routes.js';
+import examRoutes from './exam.routes.js';
+import markRoutes from './mark.routes.js';
+import timetableRoutes from './timetable.routes.js';
+import noticeRoutes from './notice.routes.js';
+import eventRoutes from './event.routes.js';
+import holidayRoutes from './holiday.routes.js';
+import settingRoutes from './setting.routes.js';
+import dashboardRoutes from './dashboard.routes.js';
+import meRoutes from './me.routes.js';
+
+const router = Router();
+
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+router.use('/students', studentRoutes);
+router.use('/teachers', teacherRoutes);
+router.use('/parents', parentRoutes);
+router.use('/staff', staffRoutes);
+router.use('/classes', classRoutes);
+router.use('/subjects', subjectRoutes);
+router.use('/attendance', attendanceRoutes);
+router.use('/teacher-attendance', teacherAttendanceRoutes);
+router.use('/fees', feeRoutes);
+router.use('/exams', examRoutes);
+router.use('/marks', markRoutes);
+router.use('/timetables', timetableRoutes);
+router.use('/notices', noticeRoutes);
+router.use('/events', eventRoutes);
+router.use('/holidays', holidayRoutes);
+router.use('/settings', settingRoutes);
+router.use('/dashboard', dashboardRoutes);
+router.use('/me', meRoutes);
+
+export default router;
