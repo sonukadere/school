@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Bell, Menu, PanelLeftClose, PanelLeftOpen, ChevronDown, LogOut, UserCircle, Settings } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
@@ -10,6 +10,25 @@ function Navbar({ collapsed, onToggleSidebar }) {
   const location = useLocation()
   const [profileOpen, setProfileOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+
+  const notificationRef = useRef(null)
+  const profileRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setNotificationsOpen(false)
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setProfileOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   const resolveTitle = (pathname) => {
     if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname]
@@ -60,7 +79,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
-        <div className="relative">
+        <div className="relative" ref={notificationRef}>
           <button
             type="button"
             onClick={toggleNotifications}
@@ -101,7 +120,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
           )}
         </div>
 
-        <div className="relative">
+        <div className="relative" ref={profileRef}>
           <button
             type="button"
             onClick={toggleProfile}

@@ -1,9 +1,10 @@
-import { Suspense, lazy } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Suspense, lazy, useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Layout from '../components/layout/Layout'
 import Loader from '../components/common/Loader'
 import PageNotFound from '../components/common/PageNotFound'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import Login from '../pages/Auth/Login'
 import ForgotPassword from '../pages/Auth/ForgotPassword'
 
@@ -37,9 +38,37 @@ const EditProfile = lazy(() => import('../pages/Profile/EditProfile'))
 const ChangePassword = lazy(() => import('../pages/Profile/ChangePassword'))
 const SettingsPage = lazy(() => import('../pages/Settings/SettingsPage'))
 
+function ForbiddenRedirect() {
+  const { showToast } = useToast()
+
+  useEffect(() => {
+    showToast('Access Denied: You do not have permission to view this page.', 'error')
+  }, [showToast])
+
+  return <Navigate to="/dashboard" replace />
+}
+
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
+  const location = useLocation()
+
   if (!isAuthenticated) return <Navigate to="/login" replace />
+
+  if (user?.role === 'Teacher') {
+    const forbiddenPrefixes = [
+      '/teachers',
+      '/attendance/teachers',
+      '/fees',
+      '/settings',
+    ]
+    const isForbidden = forbiddenPrefixes.some((prefix) =>
+      location.pathname.startsWith(prefix)
+    )
+    if (isForbidden) {
+      return <ForbiddenRedirect />
+    }
+  }
+
   return children
 }
 

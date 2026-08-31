@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { GraduationCap, Users, FilePlus2, CalendarCheck, Wallet, Megaphone } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
 
 const ACTIONS = [
   { label: 'Add Student', description: 'Register a new student', to: '/students/add', icon: GraduationCap, classes: 'bg-indigo-600 hover:bg-indigo-700' },
@@ -11,9 +12,19 @@ const ACTIONS = [
 ]
 
 function QuickActions() {
+  const { user } = useAuth()
+
+  const filteredActions = ACTIONS.filter((action) => {
+    if (user?.role === 'Teacher') {
+      const forbidden = ['/teachers/add', '/fees']
+      return !forbidden.includes(action.to)
+    }
+    return true
+  })
+
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-      {ACTIONS.map((action) => {
+      {filteredActions.map((action) => {
         const Icon = action.icon
         return (
           <Link

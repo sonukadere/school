@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { CalendarCheck, Users, ArrowRight, ClipboardList } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
+import { useAuth } from '../../context/AuthContext'
 
 const OPTIONS = [
   {
@@ -20,6 +21,14 @@ const OPTIONS = [
 ]
 
 function Attendance() {
+  const { user } = useAuth()
+  const filteredOptions = OPTIONS.filter((option) => {
+    if (user?.role === 'Teacher') {
+      return option.to !== '/attendance/teachers'
+    }
+    return true
+  })
+
   return (
     <div>
       <PageHeader
@@ -28,7 +37,7 @@ function Attendance() {
         breadcrumb={[{ label: 'Attendance' }]}
       />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {OPTIONS.map((option) => {
+        {filteredOptions.map((option) => {
           const Icon = option.icon
           return (
             <Link

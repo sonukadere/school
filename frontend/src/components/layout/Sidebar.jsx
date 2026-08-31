@@ -6,8 +6,19 @@ import { useSettings } from '../../context/SettingsContext'
 import { cn } from '../../utils/helpers'
 
 function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
-  const { logout } = useAuth()
+  const { user, logout } = useAuth()
   const { settings } = useSettings()
+
+  const filteredMenuItems = MENU_ITEMS.map((group) => {
+    const items = group.items.filter((item) => {
+      if (user?.role === 'Teacher') {
+        const forbidden = ['/teachers', '/fees', '/settings']
+        return !forbidden.some((path) => item.path.startsWith(path))
+      }
+      return true
+    })
+    return { ...group, items }
+  }).filter((group) => group.items.length > 0)
 
   const renderLink = (item) => {
     const Icon = item.icon
@@ -85,7 +96,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          {MENU_ITEMS.map((group) => (
+          {filteredMenuItems.map((group) => (
             <div key={group.heading} className="mb-4">
               {(!collapsed || mobileOpen) && (
                 <p className="mb-2 px-3 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">

@@ -4,11 +4,14 @@ import { Mail, ArrowLeft, Send } from 'lucide-react'
 import Input from '../../components/common/Input'
 import Button from '../../components/common/Button'
 import { useAuth } from '../../context/AuthContext'
+import { useSettings } from '../../context/SettingsContext'
 import { useToast } from '../../context/ToastContext'
 
 function ForgotPassword() {
   const { isAuthenticated } = useAuth()
+  const { settings } = useSettings()
   const { showToast } = useToast()
+  const schoolName = settings?.schoolName || 'Daily Day Academy'
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -38,8 +41,12 @@ function ForgotPassword() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 p-4">
       <div className="animate-fade-in w-full max-w-md">
         <div className="mb-8 flex flex-col items-center text-center">
-          <img src="/logo.svg" alt="EduManage logo" className="h-16 w-16 rounded-2xl shadow-lg" />
-          <h1 className="mt-4 text-2xl font-bold text-white">EduManage High School</h1>
+          <img
+            src={settings?.schoolLogo || '/logo.svg'}
+            alt={`${schoolName} logo`}
+            className="h-16 w-16 rounded-2xl object-cover shadow-lg"
+          />
+          <h1 className="mt-4 text-2xl font-bold text-white">{schoolName}</h1>
           <p className="mt-1 text-sm text-indigo-200">School Management System</p>
         </div>
 

@@ -63,11 +63,15 @@ function Dashboard() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <StatCard title="Total Students" value={data.totalStudents} icon={GraduationCap} accent="indigo" trend="+3.2%" trendLabel="this month" link="/students" />
-        <StatCard title="Total Teachers" value={data.totalTeachers} icon={Users} accent="emerald" trend="+1" trendLabel="this month" link="/teachers" />
+        {user?.role !== 'Teacher' && (
+          <StatCard title="Total Teachers" value={data.totalTeachers} icon={Users} accent="emerald" trend="+1" trendLabel="this month" link="/teachers" />
+        )}
         <StatCard title="Total Classes" value={data.totalClasses} icon={School} accent="amber" link="/classes" />
         <StatCard title="Total Subjects" value={data.totalSubjects} icon={BookOpen} accent="violet" link="/subjects" />
         <StatCard title="Today's Attendance" value={`${data.todayAttendance}%`} icon={CalendarCheck} accent="sky" trend="+2.1%" trendLabel="vs yesterday" link="/attendance" />
-        <StatCard title="Fees Collected" value={formatCurrency(data.feesCollected)} icon={Wallet} accent="emerald" trend="+12.5%" trendLabel="this term" link="/fees" />
+        {user?.role !== 'Teacher' && (
+          <StatCard title="Fees Collected" value={formatCurrency(data.feesCollected)} icon={Wallet} accent="emerald" trend="+12.5%" trendLabel="this term" link="/fees" />
+        )}
         <StatCard title="Upcoming Exams" value={data.upcomingExams} icon={FileText} accent="rose" link="/exams" />
         <Link
           to="/attendance/students"

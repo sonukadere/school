@@ -122,3 +122,10 @@ export const ADMIN_USER = {
   name: 'Admin User',
   role: 'Administrator',
 }
+
+export const TEACHER_USER = {
+  email: 'teacher@school.com',
+  password: 'teacher123',
+  name: 'Teacher User',
+  role: 'Teacher',
+}
