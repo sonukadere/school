@@ -117,11 +117,13 @@ async function getAdminDashboard(user) {
     ? Math.round((totalPresent / todayRecords.length) * 100)
     : 0;
 
-  const classIds = classStats.map((c) => c.classId);
-  const classNames = await prisma.class.findMany({
-    where: { id: { in: classIds } },
-    select: { id: true, name: true, section: true },
-  });
+  const classIds = classStats.map((c) => c.classId).filter(Boolean);
+  const classNames = classIds.length
+    ? await prisma.class.findMany({
+        where: { id: { in: classIds } },
+        select: { id: true, name: true, section: true },
+      })
+    : [];
   const nameById = new Map(classNames.map((c) => [c.id, `${c.name} ${c.section}`]));
 
   const activities = [
@@ -320,6 +322,9 @@ async function buildStudentSummary(student) {
       return {
         examId: exam.id,
         examName: exam.name,
+        examDate: exam.startDate,
+        startDate: exam.startDate,
+        endDate: exam.endDate,
         total: examMarks.reduce((sum, m) => sum + Number(m.marks), 0),
         subjects: examMarks.map((m) => ({
           subject: m.subject.name,
@@ -330,7 +335,7 @@ async function buildStudentSummary(student) {
       };
     })
     .filter(Boolean)
-    .sort((a, b) => new Date(b.examDate) - new Date(a.examDate));
+    .sort((a, b) => new Date(b.startDate || b.examDate) - new Date(a.startDate || a.examDate));
 
   const timetable = classId
     ? await prisma.timetable.findMany({
@@ -383,7 +388,7 @@ async function getStudentDashboard(user) {
 
   const [notices, events] = await Promise.all([
     prisma.notice.findMany({
-      where: { ...notDeleted(), audience: { in: ['ALL', 'STUDENT', 'ADMIN'] } },
+      where: { ...notDeleted(), audience: { in: ['ALL', 'STUDENT'] } },
       orderBy: { publishDate: 'desc' },
       take: 5,
     }),

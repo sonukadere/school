@@ -36,7 +36,7 @@ export const studentCreateSchema = z.object({
 export const studentUpdateSchema = z.object({
   ...baseStudentSchema,
   studentId: z.string().trim().min(1).optional(),
-}).strict();
+});
 
 export const studentQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),

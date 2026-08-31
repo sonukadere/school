@@ -48,6 +48,13 @@ export const PERMISSIONS = Object.freeze({
   HOLIDAYS_VIEW: 'holidays.view',
   HOLIDAYS_MANAGE: 'holidays.manage',
 
+  MARKSHEETS_VIEW: 'marksheets.view',
+  MARKSHEETS_GENERATE: 'marksheets.generate',
+  TC_VIEW: 'tc.view',
+  TC_MANAGE: 'tc.manage',
+  TC_GENERATE: 'tc.generate',
+  TC_APPROVE: 'tc.approve',
+
   // Own data (student/parent self-service).
   OWN_VIEW: 'own.view',
   // Teacher assigned classes, students and subjects.
@@ -72,6 +79,8 @@ export const ROLE_PERMISSIONS = Object.freeze({
     PERMISSIONS.ATTENDANCE_MANAGE,
     PERMISSIONS.MARKS_VIEW,
     PERMISSIONS.MARKS_MANAGE,
+    PERMISSIONS.MARKSHEETS_VIEW,
+    PERMISSIONS.MARKSHEETS_GENERATE,
     PERMISSIONS.EXAMS_VIEW,
     PERMISSIONS.TIMETABLES_VIEW,
     PERMISSIONS.SUBJECTS_VIEW,

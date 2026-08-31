@@ -18,7 +18,7 @@ function Layout() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100">
+    <div className="flex h-screen overflow-hidden bg-slate-50 font-sans">
       <Sidebar
         collapsed={collapsed}
         mobileOpen={mobileOpen}
@@ -28,11 +28,12 @@ function Layout() {
         <Navbar collapsed={collapsed} onToggleSidebar={toggleSidebar} />
         <main
           className={cn(
-            'flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8',
+            'flex-1 overflow-y-auto px-4 py-7 sm:px-6 lg:px-8',
+            'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/25 via-slate-50/60 to-slate-100/60',
             'transition-all duration-300',
           )}
         >
-          <div className="mx-auto max-w-7xl animate-fade-in">
+          <div className="mx-auto max-w-7xl animate-fade-in pb-10">
             <Outlet />
           </div>
         </main>

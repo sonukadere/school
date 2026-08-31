@@ -18,9 +18,15 @@ function ClassList() {
 
   const loadClasses = async () => {
     setLoading(true)
-    const data = await api.getClasses()
-    setClasses(data)
-    setLoading(false)
+    try {
+      const data = await api.getClasses()
+      setClasses(Array.isArray(data) ? data : [])
+    } catch (err) {
+      showToast('Failed to load classes', 'error')
+      setClasses([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -28,19 +34,26 @@ function ClassList() {
   }, [])
 
   const handleDelete = async () => {
+    if (!deleteTarget) return
     setDeleting(true)
-    await api.deleteClass(deleteTarget.id)
-    setDeleting(false)
-    setDeleteTarget(null)
-    showToast(`Class ${deleteTarget.name} - ${deleteTarget.section} deleted`, 'success')
-    loadClasses()
+    try {
+      await api.deleteClass(deleteTarget.id)
+      showToast(`Class ${deleteTarget.name} - ${deleteTarget.section} deleted`, 'success')
+      loadClasses()
+    } catch (err) {
+      showToast(err.message || 'Failed to delete class', 'error')
+    } finally {
+      setDeleting(false)
+      setDeleteTarget(null)
+    }
   }
 
   const columns = [
     {
       key: 'name',
       header: 'Class',
-      searchValue: (item) => `${item.name} ${item.id} ${item.classTeacher} ${item.roomNumber}`,
+      searchValue: (item) =>
+        `${item.name} ${item.id} ${item.classTeacherName || item.classTeacher || ''} ${item.roomNumber || ''}`,
       render: (item) => (
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
@@ -53,20 +66,53 @@ function ClassList() {
         </div>
       ),
     },
-    { key: 'section', header: 'Section', render: (item) => (
-      <Badge className="bg-indigo-100 text-indigo-700">{item.section}</Badge>
-    ) },
-    { key: 'classTeacher', header: 'Class Teacher', render: (item) => item.classTeacher },
-    { key: 'roomNumber', header: 'Room', render: (item) => (
-      <Badge className="bg-slate-100 text-slate-600">{item.roomNumber}</Badge>
-    ) },
+    {
+      key: 'section',
+      header: 'Section',
+      render: (item) => (
+        <Badge className="bg-indigo-100 text-indigo-700">{item.section}</Badge>
+      ),
+    },
+    {
+      key: 'classTeacher',
+      header: 'Class Teacher',
+      render: (item) => {
+        const teacherName =
+          item.classTeacherName ||
+          (typeof item.classTeacher === 'string'
+            ? item.classTeacher
+            : item.classTeacher?.name) ||
+          'Not Assigned'
+        return <span className="text-slate-700">{teacherName}</span>
+      },
+    },
+    {
+      key: 'studentCount',
+      header: 'Students',
+      render: (item) => (
+        <Badge className="bg-blue-50 text-blue-700">
+          {item.studentCount ?? (item._count?.students ?? 0)} Students
+        </Badge>
+      ),
+    },
+    {
+      key: 'roomNumber',
+      header: 'Room',
+      render: (item) => (
+        <Badge className="bg-slate-100 text-slate-600">{item.roomNumber || 'N/A'}</Badge>
+      ),
+    },
     {
       key: 'actions',
       header: 'Actions',
       className: 'text-right',
       render: (item) => (
         <div className="flex justify-end gap-1">
-          <Link to={`/classes/edit/${item.id}`} title="Edit" className="rounded-lg p-2 text-amber-600 transition hover:bg-amber-50">
+          <Link
+            to={`/classes/edit/${item.id}`}
+            title="Edit"
+            className="rounded-lg p-2 text-amber-600 transition hover:bg-amber-50"
+          >
             <Pencil size={16} />
           </Link>
           <button

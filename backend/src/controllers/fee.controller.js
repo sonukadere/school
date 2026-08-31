@@ -10,7 +10,7 @@ export const listFees = asyncHandler(async (req, res) => {
 });
 
 export const getFee = asyncHandler(async (req, res) => {
-  const fee = await feeService.getFee(req.params.id);
+  const fee = await feeService.getFee(req.params.id, req.user);
   res.status(200).json(new ApiResponse(200, 'Fee record fetched successfully.', fee));
 });
 

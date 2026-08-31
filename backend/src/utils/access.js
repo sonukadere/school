@@ -37,10 +37,9 @@ export async function getVisibleClassIds(user) {
     }),
   ]);
 
-  const ids = new Set([
-    ...classTeacher.map((c) => c.id),
-    ...taughtSubjects.map((s) => s.classId),
-  ]);
+  const ids = new Set(
+    [...classTeacher.map((c) => c.id), ...taughtSubjects.map((s) => s.classId)].filter(Boolean)
+  );
   return [...ids];
 }
 
@@ -91,7 +90,7 @@ export async function getVisibleTeacherIds(user) {
  */
 export function getVisibleAudiences(user) {
   if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') return null;
-  return ['ALL', user.role, 'ADMIN', 'SUPER_ADMIN'];
+  return ['ALL', user.role];
 }
 
 /**

@@ -93,8 +93,8 @@ async function main() {
 
   const classes = [];
   for (const c of classDefs) {
-    let existing = await prisma.class.findFirst({
-      where: { name: c.name, section: c.section, deletedAt: null },
+    let existing = await prisma.class.findUnique({
+      where: { name_section: { name: c.name, section: c.section } },
     });
     if (!existing) {
       existing = await prisma.class.create({ data: c });
@@ -214,14 +214,14 @@ async function main() {
   for (const c of classes) {
     for (let i = 0; i < subjectList.length; i++) {
       const s = subjectList[i];
-      let sub = await prisma.subject.findFirst({
-        where: { name: s.name, classId: c.id, deletedAt: null },
+      let sub = await prisma.subject.findUnique({
+        where: { classId_name: { classId: c.id, name: s.name } },
       });
       if (!sub) {
         sub = await prisma.subject.create({
           data: {
             name: s.name,
-            code: `${s.code}-${c.name.replace(/\s+/g, '')}`,
+            code: `${s.code}-${c.name.replace(/\s+/g, '')}-${c.section}`,
             classId: c.id,
             teacherId: teachers[i % teachers.length]?.id,
           },
@@ -451,8 +451,8 @@ async function main() {
 
   const exams = [];
   for (const e of examDefs) {
-    let exam = await prisma.exam.findFirst({
-      where: { name: e.name, classId: e.classId, deletedAt: null },
+    let exam = await prisma.exam.findUnique({
+      where: { name_classId: { name: e.name, classId: e.classId } },
     });
     if (!exam) {
       exam = await prisma.exam.create({ data: e });
@@ -468,8 +468,14 @@ async function main() {
   if (exams[0] && class6Subjects.length) {
     for (const student of class6Students) {
       for (const subject of class6Subjects) {
-        const existingMark = await prisma.mark.findFirst({
-          where: { studentId: student.id, examId: exams[0].id, subjectId: subject.id },
+        const existingMark = await prisma.mark.findUnique({
+          where: {
+            studentId_subjectId_examId: {
+              studentId: student.id,
+              subjectId: subject.id,
+              examId: exams[0].id,
+            },
+          },
         });
         if (!existingMark) {
           const score = 70 + Math.floor(Math.random() * 26);
@@ -529,6 +535,10 @@ async function main() {
     });
   }
   console.log('Seeded events and holidays.');
+
+  // 15. Seed 20 Full Student Test Records
+  const { seed20Students } = await import('./seed_20_students.js');
+  await seed20Students();
 
   console.log('--- Database Seeding Completed Successfully ---');
 }

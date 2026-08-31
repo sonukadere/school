@@ -16,28 +16,28 @@ function Input({
       {label && (
         <label
           htmlFor={inputId}
-          className="mb-1.5 block text-sm font-medium text-slate-700"
+          className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700"
         >
           {label}
-          {required && <span className="ml-0.5 text-rose-500">*</span>}
+          {required && <span className="ml-1 text-rose-500">*</span>}
         </label>
       )}
       <div className="relative">
         {Icon && (
           <Icon
             size={18}
-            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400"
           />
         )}
         <input
           id={inputId}
           className={cn(
-            'w-full rounded-lg border bg-white px-3.5 text-sm text-slate-900 transition-colors',
-            'placeholder:text-slate-400 focus:outline-none focus:ring-2',
-            Icon ? 'py-2.5 pl-10' : 'py-2.5',
+            'w-full h-11 rounded-xl border bg-slate-50/40 px-3.5 text-sm text-slate-900 transition-all duration-200',
+            'placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-4',
+            Icon ? 'pl-10' : '',
             error
-              ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100'
-              : 'border-slate-300 focus:border-indigo-500 focus:ring-indigo-100',
+              ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-500/10'
+              : 'border-slate-200 hover:border-slate-300 focus:border-indigo-500 focus:ring-indigo-500/10',
             className,
           )}
           aria-invalid={Boolean(error)}

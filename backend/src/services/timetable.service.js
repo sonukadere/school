@@ -48,13 +48,19 @@ export async function listTimetables(query = {}, actor = null) {
   return { data, pagination: getPaginationMeta(page, limit, total) };
 }
 
-export async function getTimetable(id) {
+export async function getTimetable(id, actor = null) {
   const timetable = await prisma.timetable.findFirst({
     where: { id, ...notDeleted() },
     include: DEFAULT_INCLUDE,
   });
   if (!timetable) {
     throw ApiError.notFound('Timetable entry not found.');
+  }
+  if (actor && actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
+    const visibleClassIds = await resolveActorClassIds(actor);
+    if (visibleClassIds && !visibleClassIds.includes(timetable.classId)) {
+      throw ApiError.forbidden('You do not have permission to access this timetable entry.');
+    }
   }
   return timetable;
 }

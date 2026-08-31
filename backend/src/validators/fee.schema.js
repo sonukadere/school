@@ -17,8 +17,7 @@ export const feeUpdateSchema = z
     paymentDate: dateSchema.nullish(),
     paymentMethod: paymentMethodSchema.optional(),
     paymentStatus: paymentStatusSchema.optional(),
-  })
-  .strict();
+  });
 
 export const feeQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),

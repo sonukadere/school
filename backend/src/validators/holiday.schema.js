@@ -14,8 +14,7 @@ export const holidayUpdateSchema = z
     date: dateSchema.optional(),
     type: holidayTypeSchema.optional(),
     description: z.string().trim().max(1000).optional().nullable(),
-  })
-  .strict();
+  });
 
 export const holidayQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),

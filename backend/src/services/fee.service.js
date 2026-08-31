@@ -76,10 +76,13 @@ export async function listFees(query = {}, actor = null) {
   return { data, pagination: getPaginationMeta(page, limit, total) };
 }
 
-export async function getFee(id) {
+export async function getFee(id, actor = null) {
   const fee = await prisma.fee.findFirst({ where: { id, ...notDeleted() }, include: DEFAULT_INCLUDE });
   if (!fee) {
     throw ApiError.notFound('Fee record not found.');
+  }
+  if (actor) {
+    await assertStudentVisible(actor, fee.studentId);
   }
   return fee;
 }

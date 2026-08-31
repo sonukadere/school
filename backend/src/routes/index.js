@@ -20,6 +20,8 @@ import settingRoutes from './setting.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import meRoutes from './me.routes.js';
 import notificationRoutes from './notification.routes.js';
+import marksheetRoutes from './marksheet.routes.js';
+import transferCertificateRoutes from './transferCertificate.routes.js';
 
 const router = Router();
 
@@ -36,6 +38,8 @@ router.use('/teacher-attendance', teacherAttendanceRoutes);
 router.use('/fees', feeRoutes);
 router.use('/exams', examRoutes);
 router.use('/marks', markRoutes);
+router.use('/marksheets', marksheetRoutes);
+router.use('/transfer-certificates', transferCertificateRoutes);
 router.use('/timetables', timetableRoutes);
 router.use('/notices', noticeRoutes);
 router.use('/events', eventRoutes);

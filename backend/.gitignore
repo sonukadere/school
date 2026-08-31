@@ -38,3 +38,7 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
+
+# MongoDB Local Data
+.mongo_data/
+

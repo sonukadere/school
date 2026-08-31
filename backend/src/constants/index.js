@@ -43,7 +43,7 @@ export const DAYS_OF_WEEK = Object.freeze([
   'SUNDAY',
 ]);
 
-export const AUDIENCES = Object.freeze(['ALL', 'STUDENT', 'TEACHER', 'PARENT', 'ADMIN', 'SUPER_ADMIN']);
+export const AUDIENCES = Object.freeze(['ALL', 'STUDENT', 'TEACHER', 'PARENT', 'ADMIN', 'SUPER_ADMIN', 'STAFF']);
 
 export const HOLIDAY_TYPES = Object.freeze(['PUBLIC', 'SCHOOL', 'EXAM', 'RELIGIOUS', 'OTHER']);
 

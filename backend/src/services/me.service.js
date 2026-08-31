@@ -218,6 +218,31 @@ export async function getMyNotices(user) {
   });
 }
 
+/**
+ * Marksheets for the current student/parent.
+ */
+export async function getMyMarksheets(user) {
+  const studentIds = await getVisibleStudentIds(user);
+  if (!studentIds || !studentIds.length) return [];
+  const { getStudentMarksheets } = await import('./marksheet.service.js');
+  const allMarksheets = [];
+  for (const sId of studentIds) {
+    const list = await getStudentMarksheets(sId, user);
+    allMarksheets.push(...list);
+  }
+  return allMarksheets;
+}
+
+/**
+ * Transfer certificate for the current student/parent.
+ */
+export async function getMyTransferCertificate(user) {
+  const studentIds = await getVisibleStudentIds(user);
+  if (!studentIds || !studentIds.length) return null;
+  const { getStudentTransferCertificate } = await import('./transferCertificate.service.js');
+  return getStudentTransferCertificate(studentIds[0], user);
+}
+
 async function myClassIds(user) {
   const ids = await resolveActorClassIds(user);
   return ids || [];

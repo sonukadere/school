@@ -18,7 +18,8 @@ export async function listNotices(query = {}, actor = null) {
   // Only admins can pass an explicit audience filter; others are scoped
   // to the audiences their role may see.
   const visibleAudiences = actor ? getVisibleAudiences(actor) : null;
-  const effectiveAudience = audience && actor?.role === 'ADMIN' ? audience : undefined;
+  const effectiveAudience =
+    audience && (actor?.role === 'ADMIN' || actor?.role === 'SUPER_ADMIN') ? audience : undefined;
 
   const where = {
     ...notDeleted(),

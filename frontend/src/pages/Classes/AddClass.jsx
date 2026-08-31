@@ -14,10 +14,15 @@ function AddClass() {
 
   const handleSubmit = async (values) => {
     setSubmitting(true)
-    await api.addClass(values)
-    setSubmitting(false)
-    showToast('Class added successfully', 'success')
-    navigate('/classes')
+    try {
+      await api.addClass(values)
+      showToast('Class added successfully', 'success')
+      navigate('/classes')
+    } catch (err) {
+      showToast(err.message || 'Failed to add class', 'error')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (

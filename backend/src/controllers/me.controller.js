@@ -36,3 +36,14 @@ export const getMyNotices = asyncHandler(async (req, res) => {
   const data = await meService.getMyNotices(req.user);
   res.status(200).json(new ApiResponse(200, 'Notices fetched successfully.', data));
 });
+
+export const getMyMarksheets = asyncHandler(async (req, res) => {
+  const data = await meService.getMyMarksheets(req.user);
+  res.status(200).json(new ApiResponse(200, 'Marksheets fetched successfully.', data));
+});
+
+export const getMyTransferCertificate = asyncHandler(async (req, res) => {
+  const data = await meService.getMyTransferCertificate(req.user);
+  res.status(200).json(new ApiResponse(200, 'Transfer certificate fetched successfully.', data));
+});
+

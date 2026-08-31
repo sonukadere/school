@@ -9,7 +9,7 @@ const baseSubjectSchema = {
 
 export const subjectCreateSchema = z.object(baseSubjectSchema);
 
-export const subjectUpdateSchema = z.object(baseSubjectSchema).partial().strict();
+export const subjectUpdateSchema = z.object(baseSubjectSchema).partial();
 
 export const subjectQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),

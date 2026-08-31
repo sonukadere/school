@@ -62,13 +62,16 @@ export async function listAttendances(query = {}, actor = null) {
   return { data, pagination: getPaginationMeta(page, limit, total) };
 }
 
-export async function getAttendance(id) {
+export async function getAttendance(id, actor = null) {
   const attendance = await prisma.attendance.findFirst({
     where: { id, ...notDeleted() },
     include: DEFAULT_INCLUDE,
   });
   if (!attendance) {
     throw ApiError.notFound('Attendance record not found.');
+  }
+  if (actor) {
+    await assertStudentVisible(actor, attendance.studentId);
   }
   return attendance;
 }

@@ -37,10 +37,15 @@ function EditClass() {
 
   const handleSubmit = async (values) => {
     setSubmitting(true)
-    await api.updateClass(id, values)
-    setSubmitting(false)
-    showToast('Class updated successfully', 'success')
-    navigate('/classes')
+    try {
+      await api.updateClass(id, values)
+      showToast('Class updated successfully', 'success')
+      navigate('/classes')
+    } catch (err) {
+      showToast(err.message || 'Failed to update class', 'error')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (loading) return <Loader fullScreen label="Loading class..." />

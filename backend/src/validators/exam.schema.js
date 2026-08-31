@@ -14,8 +14,7 @@ export const examUpdateSchema = z
     classId: z.string().min(1).optional(),
     startDate: dateSchema.optional(),
     endDate: dateSchema.optional(),
-  })
-  .strict();
+  });
 
 export const examQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),

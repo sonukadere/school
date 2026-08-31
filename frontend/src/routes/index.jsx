@@ -31,6 +31,7 @@ const CreateExam = lazy(() => import('../pages/Exams/CreateExam'))
 const Marks = lazy(() => import('../pages/Marks/Marks'))
 const MarksEntry = lazy(() => import('../pages/Marks/MarksEntry'))
 const ResultView = lazy(() => import('../pages/Marks/ResultView'))
+const TransferCertificateList = lazy(() => import('../pages/Certificates/TransferCertificateList'))
 const NoticeList = lazy(() => import('../pages/Notices/NoticeList'))
 const CreateNotice = lazy(() => import('../pages/Notices/CreateNotice'))
 const ProfilePage = lazy(() => import('../pages/Profile/ProfilePage'))
@@ -153,6 +154,7 @@ function AppRoutes() {
         <Route path="/marks" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><Marks /></Suspense>} />
         <Route path="/marks/entry" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><MarksEntry /></Suspense>} />
         <Route path="/marks/results" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><ResultView /></Suspense>} />
+        <Route path="/certificates" element={<Suspense fallback={<Loader fullScreen label="Loading certificates..." />}><TransferCertificateList /></Suspense>} />
 
         <Route path="/notices" element={<Suspense fallback={<Loader fullScreen label="Loading notices..." />}><NoticeList /></Suspense>} />
         <Route path="/notices/create" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><CreateNotice /></Suspense>} />

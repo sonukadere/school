@@ -73,6 +73,7 @@ enum Audience {
   PARENT
   ADMIN
   SUPER_ADMIN
+  STAFF
 }
 
 enum HolidayType {
@@ -81,6 +82,15 @@ enum HolidayType {
   EXAM
   RELIGIOUS
   OTHER
+}
+
+enum TcStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  GENERATED
+  CANCELLED
 }
 
 // -------------------------------------------------------------
@@ -102,6 +112,8 @@ model User {
   staff     Staff?
   deviceTokens  DeviceToken[]
   notifications Notification[]
+  generatedTcs  TransferCertificate[] @relation("TcGeneratedBy")
+  approvedTcs   TransferCertificate[] @relation("TcApprovedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -143,6 +155,7 @@ model Student {
   attendances Attendance[]
   fees        Fee[]
   marks       Mark[]
+  transferCertificates TransferCertificate[]
 
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -505,18 +518,20 @@ model Holiday {
 // -------------------------------------------------------------
 
 model Setting {
-  id           String  @id @default(cuid()) @map("_id")
-  schoolName   String
-  schoolLogo   String?
-  address      String?
-  phone        String?
-  email        String?
-  website      String?
-  academicYear String?
+  id                String   @id @default(cuid()) @map("_id")
+  schoolName        String
+  schoolLogo        String?
+  address           String?
+  phone             String?
+  email             String?
+  website           String?
+  academicYear      String?
+  affiliationNumber String?
+  principalName     String?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  deletedAt    DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
 }
 
 // -------------------------------------------------------------
@@ -551,4 +566,38 @@ model Notification {
   @@index([userId])
   @@index([isRead])
 }
+
+// -------------------------------------------------------------
+// Transfer Certificate (TC)
+// -------------------------------------------------------------
+
+model TransferCertificate {
+  id              String    @id @default(cuid()) @map("_id")
+  tcNumber        String    @unique
+  studentId       String
+  student         Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  issueDate       DateTime  @db.Date @default(now())
+  leavingDate     DateTime  @db.Date
+  lastClass       String?
+  academicYear    String?
+  reason          String?
+  conduct         String?   @default("Good")
+  resultStatus    String?   @default("PASS")
+  remarks         String?
+  status          TcStatus  @default(GENERATED)
+
+  generatedById   String?
+  generatedBy     User?     @relation("TcGeneratedBy", fields: [generatedById], references: [id], onDelete: SetNull)
+  approvedById    String?
+  approvedBy      User?     @relation("TcApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  @@index([studentId])
+  @@index([status])
+}
+
 

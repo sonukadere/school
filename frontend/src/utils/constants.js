@@ -33,6 +33,7 @@ export const MENU_ITEMS = [
       { label: 'Attendance', path: '/attendance', icon: CalendarCheck },
       { label: 'Exams', path: '/exams', icon: FileText },
       { label: 'Marks', path: '/marks', icon: ClipboardList },
+      { label: 'Certificates (TC)', path: '/certificates', icon: FileText },
     ],
   },
   {
@@ -71,6 +72,7 @@ export const PAGE_TITLES = {
   '/marks': 'Marks',
   '/marks/entry': 'Marks Entry',
   '/marks/results': 'Result View',
+  '/certificates': 'Transfer Certificates',
   '/notices': 'Notice Board',
   '/notices/create': 'Create Notice',
   '/profile': 'Profile',

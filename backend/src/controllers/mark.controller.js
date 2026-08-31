@@ -10,7 +10,7 @@ export const listMarks = asyncHandler(async (req, res) => {
 });
 
 export const getMark = asyncHandler(async (req, res) => {
-  const mark = await markService.getMark(req.params.id);
+  const mark = await markService.getMark(req.params.id, req.user);
   res.status(200).json(new ApiResponse(200, 'Mark record fetched successfully.', mark));
 });
 

@@ -10,7 +10,7 @@ export const listTimetables = asyncHandler(async (req, res) => {
 });
 
 export const getTimetable = asyncHandler(async (req, res) => {
-  const timetable = await timetableService.getTimetable(req.params.id);
+  const timetable = await timetableService.getTimetable(req.params.id, req.user);
   res.status(200).json(new ApiResponse(200, 'Timetable entry fetched successfully.', timetable));
 });
 

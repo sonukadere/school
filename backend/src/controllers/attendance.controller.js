@@ -10,7 +10,7 @@ export const listAttendances = asyncHandler(async (req, res) => {
 });
 
 export const getAttendance = asyncHandler(async (req, res) => {
-  const attendance = await attendanceService.getAttendance(req.params.id);
+  const attendance = await attendanceService.getAttendance(req.params.id, req.user);
   res.status(200).json(new ApiResponse(200, 'Attendance record fetched successfully.', attendance));
 });
 

@@ -1,10 +1,15 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, ShieldCheck, Pencil, KeyRound, UserCircle } from 'lucide-react'
+import { Mail, ShieldCheck, Pencil, KeyRound, UserCircle, GraduationCap, FileText, Download } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import Card from '../../components/common/Card'
 import Button from '../../components/common/Button'
+import MarksheetModal from '../../components/marksheets/MarksheetModal'
+import TransferCertificateModal from '../../components/certificates/TransferCertificateModal'
 import { useAuth } from '../../context/AuthContext'
 import { useSettings } from '../../context/SettingsContext'
+import { api } from '../../services/api'
+import { useToast } from '../../context/ToastContext'
 
 function InfoItem({ label, value }) {
   return (
@@ -18,12 +23,52 @@ function InfoItem({ label, value }) {
 function ProfilePage() {
   const { user } = useAuth()
   const { settings } = useSettings()
+  const { showToast } = useToast()
+
+  const [marksheets, setMarksheets] = useState([])
+  const [tc, setTc] = useState(null)
+  const [selectedMarksheet, setSelectedMarksheet] = useState(null)
+  const [marksheetModalOpen, setMarksheetModalOpen] = useState(false)
+  const [tcModalOpen, setTcModalOpen] = useState(false)
+  const [loadingDocs, setLoadingDocs] = useState(false)
+
+  const isStudentOrParent = user?.role === 'STUDENT' || user?.role === 'PARENT'
+
+  useEffect(() => {
+    if (!isStudentOrParent) return
+    setLoadingDocs(true)
+    Promise.all([
+      api.getMyMarksheets().catch(() => []),
+      api.getMyTransferCertificate().catch(() => null),
+    ])
+      .then(([msList, tcDoc]) => {
+        setMarksheets(msList)
+        setTc(tcDoc)
+        setLoadingDocs(false)
+      })
+      .catch(() => {
+        setLoadingDocs(false)
+      })
+  }, [isStudentOrParent])
+
+  const handleOpenMarksheet = (ms) => {
+    setSelectedMarksheet(ms)
+    setMarksheetModalOpen(true)
+  }
+
+  const handleOpenTc = () => {
+    if (!tc) {
+      showToast('No approved Transfer Certificate found for your account.', 'info')
+      return
+    }
+    setTcModalOpen(true)
+  }
 
   return (
     <div>
       <PageHeader
         title="My Profile"
-        description="View your account information"
+        description="View your account information and academic records"
         breadcrumb={[{ label: 'Profile' }]}
         actions={
           <>
@@ -68,6 +113,72 @@ function ProfilePage() {
           </div>
         </Card>
 
+        {isStudentOrParent && (
+          <Card title="Official Academic Documents" subtitle="Download and print official verified certificates">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Marksheet Cards */}
+              <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50 flex flex-col justify-between">
+                <div className="flex items-start gap-3.5">
+                  <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                    <GraduationCap size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm">Official Marksheets</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {marksheets.length > 0
+                        ? `${marksheets.length} exam statement(s) available`
+                        : 'Official examination results & performance'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-200 flex flex-wrap gap-2">
+                  {marksheets.length > 0 ? (
+                    marksheets.map((ms, idx) => (
+                      <Button
+                        key={idx}
+                        variant="outline"
+                        size="sm"
+                        leftIcon={GraduationCap}
+                        onClick={() => handleOpenMarksheet(ms)}
+                      >
+                        {ms.exam?.name || 'Marksheet'}
+                      </Button>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">No published marksheets available yet.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Transfer Certificate Card */}
+              <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50 flex flex-col justify-between">
+                <div className="flex items-start gap-3.5">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm">Transfer Certificate (TC)</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {tc ? `TC No: ${tc.tcNumber} (${tc.status})` : 'Official School Leaving Certificate'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-200 flex justify-end">
+                  {tc ? (
+                    <Button variant="outline" size="sm" leftIcon={FileText} onClick={handleOpenTc}>
+                      View / Print TC
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">Not issued yet.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
         <Card title="Account Actions">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Link to="/profile/edit" className="flex items-center gap-4 rounded-xl border border-slate-200 p-4 transition hover:border-indigo-300 hover:bg-indigo-50/50">
@@ -87,6 +198,24 @@ function ProfilePage() {
           </div>
         </Card>
       </div>
+
+      {/* Marksheet Modal */}
+      {selectedMarksheet && (
+        <MarksheetModal
+          open={marksheetModalOpen}
+          onClose={() => setMarksheetModalOpen(false)}
+          initialMarksheet={selectedMarksheet}
+        />
+      )}
+
+      {/* TC Modal */}
+      {tc && (
+        <TransferCertificateModal
+          open={tcModalOpen}
+          onClose={() => setTcModalOpen(false)}
+          initialCertificate={tc}
+        />
+      )}
     </div>
   )
 }

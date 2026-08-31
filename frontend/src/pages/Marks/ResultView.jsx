@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Trophy, TrendingUp, TrendingDown, ClipboardCheck, Table2 } from 'lucide-react'
+import { ArrowLeft, Trophy, TrendingUp, TrendingDown, ClipboardCheck, Table2, GraduationCap } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import Card from '../../components/common/Card'
 import Select from '../../components/common/Select'
@@ -8,6 +8,7 @@ import Button from '../../components/common/Button'
 import Badge from '../../components/common/Badge'
 import Avatar from '../../components/common/Avatar'
 import EmptyState from '../../components/common/EmptyState'
+import MarksheetModal from '../../components/marksheets/MarksheetModal'
 import { api } from '../../services/api'
 import { gradeFromPercentage, percentage } from '../../utils/helpers'
 
@@ -18,6 +19,8 @@ function ResultView() {
   const [marks, setMarks] = useState([])
   const [examId, setExamId] = useState('')
   const [loading, setLoading] = useState(true)
+  const [marksheetModalOpen, setMarksheetModalOpen] = useState(false)
+  const [selectedStudentForMarksheet, setSelectedStudentForMarksheet] = useState(null)
 
   useEffect(() => {
     let mounted = true
@@ -160,7 +163,7 @@ function ResultView() {
               <table className="min-w-full divide-y divide-slate-200 text-left">
                 <thead className="bg-slate-50">
                   <tr>
-                    {['Rank', 'Student', 'Marks', 'Total', 'Percentage', 'Grade'].map((header) => (
+                    {['Rank', 'Student', 'Marks', 'Total', 'Percentage', 'Grade', 'Action'].map((header) => (
                       <th key={header} className="px-5 py-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">{header}</th>
                     ))}
                   </tr>
@@ -203,12 +206,35 @@ function ResultView() {
                           {result.grade}
                         </Badge>
                       </td>
+                      <td className="px-5 py-3.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          leftIcon={GraduationCap}
+                          onClick={() => {
+                            setSelectedStudentForMarksheet(result.student)
+                            setMarksheetModalOpen(true)
+                          }}
+                        >
+                          Marksheet
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </Card>
+
+          {/* Marksheet Modal */}
+          {selectedStudentForMarksheet && examId && (
+            <MarksheetModal
+              open={marksheetModalOpen}
+              onClose={() => setMarksheetModalOpen(false)}
+              studentId={selectedStudentForMarksheet.id}
+              examId={examId}
+            />
+          )}
         </div>
       ) : (
         <Card>

@@ -13,8 +13,7 @@ export const attendanceUpdateSchema = z
     date: dateSchema.optional(),
     status: attendanceStatusSchema.optional(),
     remark: z.string().trim().max(500).optional().nullable(),
-  })
-  .strict();
+  });
 
 export const attendanceQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),

@@ -2,12 +2,12 @@ import { Loader2 } from 'lucide-react'
 import { cn } from '../../utils/helpers'
 
 const VARIANT_STYLES = {
-  primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:ring-indigo-500 shadow-sm shadow-indigo-600/20',
-  secondary: 'bg-slate-800 text-white hover:bg-slate-900 focus-visible:ring-slate-500 shadow-sm shadow-slate-800/20',
-  outline: 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-400',
-  ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-slate-400',
-  danger: 'bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-500 shadow-sm shadow-rose-600/20',
-  success: 'bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-500 shadow-sm shadow-emerald-600/20',
+  primary: 'bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white shadow-md shadow-indigo-600/25 active:scale-[0.98] border border-indigo-500/20',
+  secondary: 'bg-slate-900 hover:bg-slate-800 text-white shadow-sm shadow-slate-900/20 active:scale-[0.98]',
+  outline: 'border border-slate-200 bg-white hover:bg-slate-50/90 hover:border-slate-300 text-slate-700 shadow-xs shadow-slate-900/5 active:scale-[0.98]',
+  ghost: 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900',
+  danger: 'bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-md shadow-rose-600/20 active:scale-[0.98]',
+  success: 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white shadow-md shadow-emerald-600/20 active:scale-[0.98]',
 }
 
 const SIZE_STYLES = {

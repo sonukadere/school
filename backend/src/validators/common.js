@@ -37,8 +37,15 @@ export const dayOfWeekSchema = z.enum(DAYS_OF_WEEK);
 export const audienceSchema = z.enum(AUDIENCES);
 export const holidayTypeSchema = z.enum(HOLIDAY_TYPES);
 
-export const dateSchema = z.union([z.date(), z.string().datetime(), z.string().date()]).pipe(z.coerce.date());
-export const dateOnlySchema = z.union([z.date(), z.string().date()]).pipe(z.coerce.date());
+export const dateSchema = z.preprocess((arg) => {
+  if (arg === '' || arg === null || arg === undefined) return null;
+  return arg;
+}, z.union([z.date(), z.string()]).pipe(z.coerce.date()).nullable().optional());
+
+export const dateOnlySchema = z.preprocess((arg) => {
+  if (arg === '' || arg === null || arg === undefined) return null;
+  return arg;
+}, z.union([z.date(), z.string()]).pipe(z.coerce.date()).nullable().optional());
 
 export const emailSchema = z
   .string()

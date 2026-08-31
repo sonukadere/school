@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Pencil, Trash2, Mail, Phone, MapPin, GraduationCap } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, Mail, Phone, MapPin, GraduationCap, FileText } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import Avatar from '../../components/common/Avatar'
 import Button from '../../components/common/Button'
@@ -8,6 +8,9 @@ import Badge from '../../components/common/Badge'
 import Card from '../../components/common/Card'
 import Loader from '../../components/common/Loader'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
+import MarksheetModal from '../../components/marksheets/MarksheetModal'
+import TransferCertificateModal from '../../components/certificates/TransferCertificateModal'
+import GenerateTcModal from '../../components/certificates/GenerateTcModal'
 import { api } from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 import { STATUS_STYLES, formatDate, formatCurrency } from '../../utils/helpers'
@@ -27,17 +30,35 @@ function StudentDetails() {
   const { showToast } = useToast()
   const [student, setStudent] = useState(null)
   const [fees, setFees] = useState([])
+  const [exams, setExams] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  // Document modals
+  const [marksheetModalOpen, setMarksheetModalOpen] = useState(false)
+  const [selectedExamId, setSelectedExamId] = useState(null)
+  const [tcModalOpen, setTcModalOpen] = useState(false)
+  const [generateTcOpen, setGenerateTcOpen] = useState(false)
+  const [existingTc, setExistingTc] = useState(null)
+
   useEffect(() => {
     let mounted = true
-    Promise.all([api.getStudent(id), api.getFees()])
-      .then(([studentData, feeData]) => {
+    Promise.all([
+      api.getStudent(id),
+      api.getFees(),
+      api.getExams(),
+      api.getStudentTransferCertificate(id).catch(() => null),
+    ])
+      .then(([studentData, feeData, examData, tcData]) => {
         if (mounted) {
           setStudent(studentData)
           setFees(feeData.filter((fee) => fee.studentId === id))
+          setExams(examData)
+          setExistingTc(tcData)
+          if (examData.length > 0) {
+            setSelectedExamId(examData[0].id)
+          }
           setLoading(false)
         }
       })
@@ -52,6 +73,22 @@ function StudentDetails() {
       mounted = false
     }
   }, [id, navigate, showToast])
+
+  const handleOpenMarksheet = () => {
+    if (!exams.length) {
+      showToast('No examination records found for marksheet generation.', 'info')
+      return
+    }
+    setMarksheetModalOpen(true)
+  }
+
+  const handleOpenTc = () => {
+    if (existingTc) {
+      setTcModalOpen(true)
+    } else {
+      setGenerateTcOpen(true)
+    }
+  }
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -82,6 +119,12 @@ function StudentDetails() {
                 Back
               </Button>
             </Link>
+            <Button variant="outline" leftIcon={GraduationCap} onClick={handleOpenMarksheet}>
+              Marksheet
+            </Button>
+            <Button variant="outline" leftIcon={FileText} onClick={handleOpenTc}>
+              Transfer Certificate
+            </Button>
             <Link to={`/students/edit/${id}`}>
               <Button variant="outline" leftIcon={Pencil}>
                 Edit
@@ -204,6 +247,36 @@ function StudentDetails() {
         loading={deleting}
         title="Delete Student"
         message={`Are you sure you want to delete ${student.fullName}? This action cannot be undone.`}
+      />
+
+      {/* Marksheet Modal */}
+      {selectedExamId && (
+        <MarksheetModal
+          open={marksheetModalOpen}
+          onClose={() => setMarksheetModalOpen(false)}
+          studentId={id}
+          examId={selectedExamId}
+        />
+      )}
+
+      {/* Transfer Certificate Modal */}
+      <TransferCertificateModal
+        open={tcModalOpen}
+        onClose={() => setTcModalOpen(false)}
+        studentId={id}
+        initialCertificate={existingTc}
+        onStatusChange={(updated) => setExistingTc(updated)}
+      />
+
+      {/* Generate TC Modal */}
+      <GenerateTcModal
+        open={generateTcOpen}
+        onClose={() => setGenerateTcOpen(false)}
+        student={student}
+        onGenerated={(newTc) => {
+          setExistingTc(newTc)
+          setTcModalOpen(true)
+        }}
       />
     </div>
   )

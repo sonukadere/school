@@ -16,8 +16,7 @@ export const noticeUpdateSchema = z
     audience: audienceSchema.optional(),
     publishDate: dateSchema.optional(),
     expiryDate: dateSchema.nullish(),
-  })
-  .strict();
+  });
 
 export const noticeQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),

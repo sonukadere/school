@@ -66,10 +66,13 @@ export async function listMarks(query = {}, actor = null) {
   return { data, pagination: getPaginationMeta(page, limit, total) };
 }
 
-export async function getMark(id) {
+export async function getMark(id, actor = null) {
   const mark = await prisma.mark.findFirst({ where: { id, ...notDeleted() }, include: DEFAULT_INCLUDE });
   if (!mark) {
     throw ApiError.notFound('Mark record not found.');
+  }
+  if (actor) {
+    await assertStudentVisible(actor, mark.studentId);
   }
   return mark;
 }

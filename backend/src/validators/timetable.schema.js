@@ -28,7 +28,6 @@ export const timetableUpdateSchema = z
     startTime: timeSchema.optional(),
     endTime: timeSchema.optional(),
   })
-  .strict()
   .refine((data) => !data.startTime || !data.endTime || data.startTime < data.endTime, {
     message: 'Start time must be before end time.',
     path: ['endTime'],

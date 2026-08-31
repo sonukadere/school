@@ -12,7 +12,7 @@ export const classUpdateSchema = z.object({
   section: z.string().trim().min(1).max(20).optional(),
   roomNumber: z.string().trim().max(30).optional().nullable(),
   classTeacherId: z.string().min(1).optional().nullable(),
-}).strict();
+});
 
 export const classQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),

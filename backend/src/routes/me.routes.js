@@ -13,5 +13,7 @@ router.get('/fees', meController.getMyFees);
 router.get('/exams', meController.getMyExams);
 router.get('/timetable', meController.getMyTimetable);
 router.get('/notices', meController.getMyNotices);
+router.get('/marksheets', meController.getMyMarksheets);
+router.get('/transfer-certificate', meController.getMyTransferCertificate);
 
 export default router;

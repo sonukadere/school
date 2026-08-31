@@ -49,14 +49,19 @@ function normalizeTeacher(t) {
 
 function normalizeClass(c) {
   if (!c) return null
+  const teacherName =
+    typeof c.classTeacher === 'string'
+      ? c.classTeacher
+      : c.classTeacher?.name || 'Not Assigned'
   return {
     ...c,
     id: c.id,
     name: c.name,
     section: c.section,
     roomNumber: c.roomNumber || '',
-    classTeacherId: c.classTeacherId || null,
-    classTeacherName: c.classTeacher?.name || 'Not Assigned',
+    classTeacherId: c.classTeacherId || c.classTeacher?.id || null,
+    classTeacher: teacherName,
+    classTeacherName: teacherName,
     studentCount: c._count?.students ?? c.students?.length ?? 0,
     subjectCount: c._count?.subjects ?? c.subjects?.length ?? 0,
   }
@@ -64,15 +69,20 @@ function normalizeClass(c) {
 
 function normalizeSubject(s) {
   if (!s) return null
+  const teacherName =
+    typeof s.teacher === 'string'
+      ? s.teacher
+      : s.teacher?.name || (typeof s.assignedTeacher === 'string' ? s.assignedTeacher : 'Not Assigned')
   return {
     ...s,
     id: s.id,
     name: s.name,
     code: s.code,
     classId: s.classId,
-    className: s.class ? `${s.class.name} ${s.class.section}`.trim() : (s.className || ''),
-    teacherId: s.teacherId || null,
-    teacherName: s.teacher?.name || 'Not Assigned',
+    className: s.class ? `${s.class.name} ${s.class.section || ''}`.trim() : (s.className || ''),
+    teacherId: s.teacherId || s.teacher?.id || null,
+    assignedTeacher: teacherName,
+    teacherName: teacherName,
   }
 }
 
@@ -310,22 +320,46 @@ export const api = {
   },
 
   addClass: async (data) => {
+    let teacherId = data.classTeacherId
+    if (!teacherId && data.classTeacher) {
+      try {
+        const teachers = await api.getTeachers()
+        const found = teachers.find(
+          (t) => t.id === data.classTeacher || t.name?.toLowerCase() === data.classTeacher?.toLowerCase()
+        )
+        if (found) teacherId = found.id
+      } catch (err) {
+        console.warn('Could not resolve teacher', err)
+      }
+    }
     const payload = {
       name: data.name,
       section: data.section || 'A',
       roomNumber: data.roomNumber || null,
-      classTeacherId: data.classTeacherId || null,
+      classTeacherId: teacherId || null,
     }
     const res = await apiClient.post('/classes', payload)
     return normalizeClass(res)
   },
 
   updateClass: async (id, data) => {
+    let teacherId = data.classTeacherId
+    if (teacherId === undefined && data.classTeacher !== undefined) {
+      try {
+        const teachers = await api.getTeachers()
+        const found = teachers.find(
+          (t) => t.id === data.classTeacher || t.name?.toLowerCase() === data.classTeacher?.toLowerCase?.()
+        )
+        teacherId = found ? found.id : null
+      } catch (err) {
+        console.warn('Could not resolve teacher', err)
+      }
+    }
     const payload = {
       ...(data.name ? { name: data.name } : {}),
       ...(data.section ? { section: data.section } : {}),
       ...(data.roomNumber !== undefined ? { roomNumber: data.roomNumber || null } : {}),
-      ...(data.classTeacherId !== undefined ? { classTeacherId: data.classTeacherId || null } : {}),
+      ...(teacherId !== undefined ? { classTeacherId: teacherId || null } : {}),
     }
     const res = await apiClient.put(`/classes/${id}`, payload)
     return normalizeClass(res)
@@ -596,6 +630,49 @@ export const api = {
   clearAllNotifications: async () => {
     return apiClient.delete('/notifications/clear-all')
   },
+
+  // --- Marksheets ---
+  getMarksheet: async (studentId, examId) => {
+    return apiClient.get('/marksheets/generate', { studentId, examId })
+  },
+
+  getStudentMarksheets: async (studentId) => {
+    return apiClient.get(`/marksheets/student/${studentId}`)
+  },
+
+  getMyMarksheets: async () => {
+    return apiClient.get('/me/marksheets')
+  },
+
+  // --- Transfer Certificates (TC) ---
+  getTransferCertificates: async (params = {}) => {
+    const res = await apiClient.get('/transfer-certificates', params)
+    return Array.isArray(res) ? res : (res?.data || [])
+  },
+
+  getTransferCertificate: async (id) => {
+    return apiClient.get(`/transfer-certificates/${id}`)
+  },
+
+  getStudentTransferCertificate: async (studentId) => {
+    return apiClient.get(`/transfer-certificates/student/${studentId}`)
+  },
+
+  getMyTransferCertificate: async () => {
+    return apiClient.get('/me/transfer-certificate')
+  },
+
+  createTransferCertificate: async (data) => {
+    return apiClient.post('/transfer-certificates', data)
+  },
+
+  updateTransferCertificate: async (id, data) => {
+    return apiClient.put(`/transfer-certificates/${id}`, data)
+  },
+
+  deleteTransferCertificate: async (id) => {
+    return apiClient.delete(`/transfer-certificates/${id}`)
+  },
 }
 
 // -------------------------------------------------------------
@@ -689,6 +766,59 @@ export const attendanceApi = {
     )
     return Promise.all(promises)
   },
+
+  // -------------------------------------------------------------
+  // Marksheets & Transfer Certificates
+  // -------------------------------------------------------------
+  getMarksheet: async (studentId, examId) => {
+    return apiClient.get(`/marksheets/student/${studentId}/exam/${examId}`)
+  },
+
+  getStudentMarksheets: async (studentId) => {
+    const res = await apiClient.get(`/marksheets/student/${studentId}`)
+    return Array.isArray(res) ? res : (res?.data || [])
+  },
+
+  getMyMarksheets: async () => {
+    const res = await apiClient.get('/me/marksheets')
+    return Array.isArray(res) ? res : (res?.data || [])
+  },
+
+  getClassMarksheets: async (classId, examId) => {
+    const res = await apiClient.get(`/marksheets/class/${classId}/exam/${examId}`)
+    return Array.isArray(res) ? res : (res?.data || [])
+  },
+
+  getTransferCertificates: async (params = {}) => {
+    const res = await apiClient.get('/transfer-certificates', params)
+    const list = Array.isArray(res) ? res : (res?.data || [])
+    return list
+  },
+
+  getTransferCertificate: async (id) => {
+    return apiClient.get(`/transfer-certificates/${id}`)
+  },
+
+  getStudentTransferCertificate: async (studentId) => {
+    return apiClient.get(`/transfer-certificates/student/${studentId}`)
+  },
+
+  getMyTransferCertificate: async () => {
+    return apiClient.get('/me/transfer-certificate')
+  },
+
+  createTransferCertificate: async (data) => {
+    return apiClient.post('/transfer-certificates', data)
+  },
+
+  updateTransferCertificate: async (id, data) => {
+    return apiClient.patch(`/transfer-certificates/${id}`, data)
+  },
+
+  deleteTransferCertificate: async (id) => {
+    return apiClient.delete(`/transfer-certificates/${id}`)
+  },
 }
 
 export default api
+

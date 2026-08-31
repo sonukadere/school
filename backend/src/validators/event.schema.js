@@ -18,8 +18,7 @@ export const eventUpdateSchema = z
     startTime: z.string().trim().max(10).optional().nullable(),
     endTime: z.string().trim().max(10).optional().nullable(),
     location: z.string().trim().max(200).optional().nullable(),
-  })
-  .strict();
+  });
 
 export const eventQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),

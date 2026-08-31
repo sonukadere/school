@@ -26,8 +26,7 @@ export const teacherUpdateSchema = z
   .object({
     ...baseTeacherSchema,
     teacherId: z.string().trim().min(1).optional(),
-  })
-  .strict();
+  });
 
 export const teacherQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),

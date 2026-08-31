@@ -16,7 +16,7 @@ export const parentCreateSchema = z.object(baseParentSchema);
 export const parentUpdateSchema = z.object({
   ...baseParentSchema,
   parentId: z.string().trim().min(1).optional(),
-}).strict();
+});
 
 export const parentQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),
