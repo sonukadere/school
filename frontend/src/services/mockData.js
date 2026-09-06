@@ -156,13 +156,13 @@ export const notices = [
 
 export const activities = [
   { id: 'ACT001', type: 'student', text: 'Aarav Sharma was added as a new student', time: '2026-08-06T09:24:00' },
-  { id: 'ACT002', type: 'fee', text: 'Fee payment of $4,800 received from Ananya Iyer', time: '2026-08-06T08:12:00' },
+  { id: 'ACT002', type: 'fee', text: 'Fee payment of ₹4,800 received from Ananya Iyer', time: '2026-08-06T08:12:00' },
   { id: 'ACT003', type: 'exam', text: 'Mid-Term exam schedule published for Class 9', time: '2026-08-05T17:40:00' },
   { id: 'ACT004', type: 'notice', text: 'New notice "Science Exhibition" published', time: '2026-08-05T14:05:00' },
   { id: 'ACT005', type: 'teacher', text: 'Manish Trivedi updated his profile details', time: '2026-08-05T10:30:00' },
   { id: 'ACT006', type: 'attendance', text: 'Attendance marked for Class 6 - Section A', time: '2026-08-05T09:15:00' },
   { id: 'ACT007', type: 'student', text: 'Myra Reddy\'s admission record was updated', time: '2026-08-04T16:50:00' },
-  { id: 'ACT008', type: 'fee', text: 'Fee payment of $6,500 received from Aditya Verma', time: '2026-08-04T11:00:00' },
+  { id: 'ACT008', type: 'fee', text: 'Fee payment of ₹6,500 received from Aditya Verma', time: '2026-08-04T11:00:00' },
 ]
 
 export const studentStats = [
