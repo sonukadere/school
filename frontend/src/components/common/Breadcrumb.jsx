@@ -3,10 +3,10 @@ import { ChevronRight, Home } from 'lucide-react'
 
 function Breadcrumb({ items = [] }) {
   return (
-    <nav aria-label="Breadcrumb" className="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1 text-xs font-medium text-slate-500 shadow-xs border border-slate-200/60 backdrop-blur-xs">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
       <Link
         to="/dashboard"
-        className="flex items-center gap-1 text-slate-500 transition hover:text-indigo-600"
+        className="flex items-center gap-1 text-slate-400 transition hover:text-slate-700"
       >
         <Home size={13} className="text-slate-400" />
         <span className="hidden sm:inline">Home</span>

@@ -46,6 +46,9 @@ enum PaymentStatus {
   PAID
   PARTIAL
   PENDING
+  UNPAID
+  OVERDUE
+  CANCELLED
 }
 
 enum PaymentMethod {
@@ -54,6 +57,7 @@ enum PaymentMethod {
   BANK_TRANSFER
   ONLINE
   CHEQUE
+  UPI
 }
 
 enum DayOfWeek {
@@ -106,6 +110,7 @@ model User {
   role      Role     @default(ADMIN)
   avatar    String?
   isActive  Boolean  @default(true)
+  mustChangePassword Boolean @default(false)
   teacher   Teacher?
   student   Student?
   parent    Parent?
@@ -115,11 +120,26 @@ model User {
   generatedTcs  TransferCertificate[] @relation("TcGeneratedBy")
   approvedTcs   TransferCertificate[] @relation("TcApprovedBy")
 
+  schoolId      String?       @default("SCH001")
+  paymentsCreated Payment[]   @relation("PaymentCreatedBy")
+  receiptsGenerated PaymentReceipt[] @relation("ReceiptGeneratedBy")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
   @@index([role])
+  @@index([schoolId])
+}
+
+// -------------------------------------------------------------
+// Sequence / Atomic ID Counter
+// -------------------------------------------------------------
+
+model Sequence {
+  id        String   @id @map("_id")
+  seq       Int      @default(0)
+  updatedAt DateTime @updatedAt
 }
 
 // -------------------------------------------------------------
@@ -152,8 +172,13 @@ model Student {
   userId      String?       @unique
   user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
 
+  schoolId    String?       @default("SCH001")
+
   attendances Attendance[]
   fees        Fee[]
+  feeInvoices FeeInvoice[]
+  payments    Payment[]
+  receipts    PaymentReceipt[]
   marks       Mark[]
   transferCertificates TransferCertificate[]
 
@@ -163,7 +188,8 @@ model Student {
 
   @@index([classId])
   @@index([status])
-  @@unique([classId, rollNumber])
+  @@index([schoolId])
+  @@index([classId, rollNumber])
 }
 
 // -------------------------------------------------------------
@@ -269,6 +295,7 @@ model Class {
   subjects      Subject[]
   exams         Exam[]
   timetables    Timetable[]
+  feeStructures FeeStructure[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -598,6 +625,167 @@ model TransferCertificate {
 
   @@index([studentId])
   @@index([status])
+}
+
+// -------------------------------------------------------------
+// School (Multi-Tenant)
+// -------------------------------------------------------------
+
+model School {
+  id                String   @id @default(cuid()) @map("_id")
+  code              String   @unique // e.g. "SCH001"
+  name              String
+  logo              String?
+  address           String?
+  phone             String?
+  email             String?
+  website           String?
+  affiliationNumber String?
+  principalName     String?
+  academicYear      String?  @default("2026-2027")
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
+}
+
+// -------------------------------------------------------------
+// Fee Structure
+// -------------------------------------------------------------
+
+model FeeStructure {
+  id           String        @id @default(cuid()) @map("_id")
+  schoolId     String        @default("SCH001")
+  academicYear String        @default("2026-2027")
+  classId      String?
+  class        Class?        @relation(fields: [classId], references: [id], onDelete: SetNull)
+  feeType      String        // Tuition Fee, Admission Fee, Examination Fee, Transport Fee, Library Fee, Computer Fee, Other Fee
+  totalFee     Float
+  dueDate      DateTime?     @db.Date
+  lateFee      Float         @default(0)
+  description  String?
+  status       String        @default("ACTIVE") // ACTIVE, INACTIVE
+
+  invoices     FeeInvoice[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+
+  @@index([schoolId])
+  @@index([academicYear])
+  @@index([classId])
+  @@index([feeType])
+}
+
+// -------------------------------------------------------------
+// Fee Invoice (Student Fee Record)
+// -------------------------------------------------------------
+
+model FeeInvoice {
+  id              String        @id @default(cuid()) @map("_id")
+  invoiceNumber   String        @unique // e.g. INV/SCH001/2026/0001
+  schoolId        String        @default("SCH001")
+  studentId       String
+  student         Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  academicYear    String        @default("2026-2027")
+  feeStructureId  String?
+  feeStructure    FeeStructure? @relation(fields: [feeStructureId], references: [id], onDelete: SetNull)
+  feeType         String        @default("Tuition Fee")
+  totalFee        Float
+  paidAmount      Float         @default(0)
+  pendingAmount   Float         @default(0)
+  discount        Float         @default(0)
+  lateFee         Float         @default(0)
+  finalAmount     Float         // totalFee + lateFee - discount
+  dueDate         DateTime?     @db.Date
+  status          PaymentStatus @default(PENDING)
+
+  payments        Payment[]
+  receipts        PaymentReceipt[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+
+  @@index([schoolId])
+  @@index([studentId])
+  @@index([academicYear])
+  @@index([status])
+}
+
+// -------------------------------------------------------------
+// Payment (Transaction Record)
+// -------------------------------------------------------------
+
+model Payment {
+  id               String        @id @default(cuid()) @map("_id")
+  paymentNumber    String?
+  receiptNumber    String        @unique // e.g. RCPT/SCH001/2026/0001
+  schoolId         String        @default("SCH001")
+  studentId        String
+  student          Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  academicYear     String        @default("2026-2027")
+  invoiceId        String?
+  invoice          FeeInvoice?   @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  feeId            String?       // Backward compatibility with legacy Fee model
+  feeType          String        @default("Tuition Fee")
+  amount           Float
+  previousDue      Float         @default(0)
+  remainingDue     Float         @default(0)
+  paymentDate      DateTime      @default(now())
+  paymentMethod    PaymentMethod @default(CASH)
+  paymentStatus    PaymentStatus @default(PAID)
+
+  // Online gateway readiness fields
+  gateway          String?       // "MANUAL", "RAZORPAY", "STRIPE"
+  transactionId    String?
+  referenceNumber  String?
+  gatewayOrderId   String?
+  gatewayPaymentId String?
+  notes            String?
+
+  createdById      String?
+  createdBy        User?         @relation("PaymentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  receipt          PaymentReceipt?
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?
+
+  @@index([schoolId])
+  @@index([studentId])
+  @@index([academicYear])
+  @@index([paymentDate])
+  @@index([paymentStatus])
+}
+
+// -------------------------------------------------------------
+// Payment Receipt
+// -------------------------------------------------------------
+
+model PaymentReceipt {
+  id            String      @id @default(cuid()) @map("_id")
+  receiptNumber String      @unique
+  schoolId      String      @default("SCH001")
+  paymentId     String      @unique
+  payment       Payment     @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  invoiceId     String?
+  invoice       FeeInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  studentId     String
+  student       Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  receiptDate   DateTime    @default(now())
+  generatedById String?
+  generatedBy   User?       @relation("ReceiptGeneratedBy", fields: [generatedById], references: [id], onDelete: SetNull)
+  metadata      String?     // JSON snapshot of school, student, items, balances
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  deletedAt     DateTime?
+
+  @@index([schoolId])
+  @@index([studentId])
 }
 
 

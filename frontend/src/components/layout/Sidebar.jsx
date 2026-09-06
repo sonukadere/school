@@ -10,26 +10,45 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
   const { settings } = useSettings()
 
   const filteredMenuItems = MENU_ITEMS.map((group) => {
-    const items = group.items.filter((item) => {
-      if (user?.role === 'Teacher') {
-        const forbidden = ['/teachers', '/fees', '/settings']
-        return !forbidden.some((path) => item.path.startsWith(path))
-      }
-      if (user?.role === 'Student') {
-        const forbidden = [
-          '/students',
-          '/teachers',
-          '/classes',
-          '/subjects',
-          '/attendance',
-          '/fees',
-          '/settings',
-          '/exams',
-        ]
-        return !forbidden.some((path) => item.path.startsWith(path))
-      }
-      return true
-    })
+    const items = group.items
+      .filter((item) => {
+        if (user?.role === 'Teacher') {
+          const forbidden = ['/teachers', '/fees', '/settings']
+          return !forbidden.some((path) => item.path.startsWith(path))
+        }
+        if (user?.role === 'Student' || user?.isStudent) {
+          const forbidden = [
+            '/students',
+            '/teachers',
+            '/classes',
+            '/subjects',
+            '/attendance',
+            '/settings',
+          ]
+          return !forbidden.some((path) => item.path.startsWith(path))
+        }
+        if (user?.role === 'Parent' || user?.isParent) {
+          const forbidden = [
+            '/students',
+            '/teachers',
+            '/classes',
+            '/subjects',
+            '/attendance',
+            '/settings',
+          ]
+          return !forbidden.some((path) => item.path.startsWith(path))
+        }
+        return true
+      })
+      .map((item) => {
+        if ((user?.role === 'Student' || user?.isStudent) && item.path === '/marks') {
+          return { ...item, label: 'My Results', path: '/marks/results' }
+        }
+        if ((user?.role === 'Parent' || user?.isParent) && item.path === '/marks') {
+          return { ...item, label: 'Child Results', path: '/marks/results' }
+        }
+        return item
+      })
     return { ...group, items }
   }).filter((group) => group.items.length > 0)
 
@@ -42,28 +61,23 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
         onClick={onCloseMobile}
         className={({ isActive }) =>
           cn(
-            'group relative flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all duration-200',
+            'group relative flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-all duration-150',
             collapsed && !mobileOpen ? 'justify-center px-0' : 'px-3',
             isActive
-              ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-900/40'
-              : 'text-slate-400 hover:bg-slate-800 hover:text-white',
+              ? 'bg-indigo-600 text-white font-semibold shadow-xs'
+              : 'text-slate-400 hover:bg-slate-800/70 hover:text-slate-200',
           )
         }
         title={collapsed && !mobileOpen ? item.label : undefined}
       >
         <Icon
-          size={20}
+          size={18}
           className={cn(
-            'shrink-0 transition-transform duration-200 group-hover:scale-110',
+            'shrink-0 transition-transform duration-150 group-hover:scale-105',
             collapsed && !mobileOpen && 'mx-auto',
           )}
         />
-        {(!collapsed || mobileOpen) && <span className="truncate">{item.label}</span>}
-        {(!collapsed || mobileOpen) && (
-          <span className="ml-auto text-[10px] font-semibold text-slate-400 opacity-0 transition-opacity group-hover:opacity-100">
-            &rarr;
-          </span>
-        )}
+        {(!collapsed || mobileOpen) && <span className="truncate text-xs font-medium">{item.label}</span>}
       </NavLink>
     )
   }
@@ -107,6 +121,25 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
             <X size={18} />
           </button>
         </div>
+
+        {(!collapsed || mobileOpen) && (
+          <div className="mx-3 mt-3 px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
+            <div className="min-w-0 pr-2">
+              <span className="text-[10px] text-slate-400 block uppercase font-medium">Active Role</span>
+              <span className="text-xs font-bold text-white truncate block">{user?.name}</span>
+            </div>
+            <span className={cn(
+              'px-2 py-0.5 text-[10px] font-bold rounded-md shrink-0 uppercase tracking-wide',
+              user?.isSuperAdmin ? 'bg-purple-900/60 text-purple-300 border border-purple-500/40' :
+              user?.isTeacher ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-500/40' :
+              user?.isStudent ? 'bg-blue-900/60 text-blue-300 border border-blue-500/40' :
+              user?.isParent ? 'bg-amber-900/60 text-amber-300 border border-amber-500/40' :
+              'bg-indigo-900/60 text-indigo-300 border border-indigo-500/40'
+            )}>
+              {user?.role || 'Admin'}
+            </span>
+          </div>
+        )}
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           {filteredMenuItems.map((group) => (

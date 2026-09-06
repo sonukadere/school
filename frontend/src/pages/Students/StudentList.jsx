@@ -65,7 +65,7 @@ function StudentList() {
           )}
           <div className="min-w-0">
             <p className="font-semibold text-slate-900">{student.fullName}</p>
-            <p className="text-xs text-slate-500">ID: {student.id}</p>
+            <p className="text-xs font-mono text-slate-400">ID: {student.studentId || student.id.slice(-6)}</p>
           </div>
         </div>
       ),
@@ -76,9 +76,13 @@ function StudentList() {
     {
       key: 'section',
       header: 'Section',
-      render: (student) => <Badge className="bg-indigo-100 text-indigo-700">{student.section}</Badge>,
+      render: (student) => <Badge variant="primary">Section {student.section}</Badge>,
     },
-    { key: 'rollNumber', header: 'Roll No', render: (student) => student.rollNumber },
+    { key: 'rollNumber', header: 'Roll No', render: (student) => (
+      <span className="font-mono text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200/60">
+        {student.rollNumber ?? '—'}
+      </span>
+    ) },
     {
       key: 'gender',
       header: 'Gender',
@@ -86,30 +90,42 @@ function StudentList() {
     },
     { key: 'phone', header: 'Contact', render: (student) => (
       <div>
-        <p className="text-slate-700">{student.phone}</p>
-        <p className="text-xs text-slate-400">{student.email}</p>
+        <p className="text-slate-700 text-xs font-medium">{student.phone || '—'}</p>
+        <p className="text-[11px] text-slate-400">{student.email}</p>
       </div>
     ) },
-    { key: 'admissionDate', header: 'Admission', render: (student) => formatDate(student.admissionDate) },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (student) => <Badge className={STATUS_STYLES[student.status]}>{student.status}</Badge>,
+    },
     {
       key: 'actions',
       header: 'Actions',
       className: 'text-right',
       render: (student) => (
-        <div className="flex justify-end gap-1" onClick={(event) => event.stopPropagation()}>
-          <Link to={`/students/${student.id}`} title="View" className="rounded-lg p-2 text-sky-600 transition hover:bg-sky-50">
-            <Eye size={16} />
+        <div className="flex items-center justify-end gap-1.5">
+          <Link
+            to={`/students/${student.id}`}
+            title="View Details"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-sky-300 hover:bg-sky-50/60 hover:text-sky-600"
+          >
+            <Eye size={14} />
           </Link>
-          <Link to={`/students/edit/${student.id}`} title="Edit" className="rounded-lg p-2 text-amber-600 transition hover:bg-amber-50">
-            <Pencil size={16} />
+          <Link
+            to={`/students/edit/${student.id}`}
+            title="Edit Student"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-600"
+          >
+            <Pencil size={14} />
           </Link>
           <button
             type="button"
             onClick={() => setDeleteTarget(student)}
-            title="Delete"
-            className="rounded-lg p-2 text-rose-600 transition hover:bg-rose-50"
+            title="Delete Student"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-rose-300 hover:bg-rose-50/60 hover:text-rose-600"
           >
-            <Trash2 size={16} />
+            <Trash2 size={14} />
           </button>
         </div>
       ),

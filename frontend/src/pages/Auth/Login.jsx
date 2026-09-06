@@ -26,8 +26,7 @@ function Login() {
 
   const validate = () => {
     const nextErrors = {}
-    if (!email.trim()) nextErrors.email = 'Email is required'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nextErrors.email = 'Enter a valid email'
+    if (!email.trim()) nextErrors.email = 'Email or ID is required'
     if (!password) nextErrors.password = 'Password is required'
     return nextErrors
   }
@@ -68,14 +67,14 @@ function Login() {
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate>
             <Input
-              label="Email Address"
-              type="email"
+              label="Email Address / ID"
+              type="text"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="admin@school.com"
+              placeholder="admin@school.com or STU-2026-001"
               icon={GraduationCap}
               error={errors.email}
-              autoComplete="email"
+              autoComplete="username"
             />
             <div className="relative">
               <Input

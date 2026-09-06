@@ -19,10 +19,20 @@ function timeAgo(isoString) {
   return `${Math.floor(hours / 24)} days ago`
 }
 
-function RecentActivities({ activities }) {
+function RecentActivities({ activities = [] }) {
+  const safeActivities = Array.isArray(activities) ? activities : []
+
+  if (safeActivities.length === 0) {
+    return (
+      <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-6 text-center text-sm text-slate-400">
+        No recent activities recorded yet.
+      </div>
+    )
+  }
+
   return (
     <ul className="divide-y divide-slate-100">
-      {activities.map((activity) => {
+      {safeActivities.map((activity) => {
         const style = TYPE_STYLES[activity.type] || TYPE_STYLES.notice
         const Icon = style.icon
         return (

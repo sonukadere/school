@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Pencil, Trash2, Mail, Phone, MapPin, BookOpen, CalendarDays } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, Mail, Phone, MapPin, BookOpen, CalendarDays, KeyRound } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import Avatar from '../../components/common/Avatar'
 import Button from '../../components/common/Button'
 import Badge from '../../components/common/Badge'
 import Card from '../../components/common/Card'
+import Input from '../../components/common/Input'
 import Loader from '../../components/common/Loader'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { api } from '../../services/api'
@@ -29,6 +30,32 @@ function TeacherDetails() {
   const [loading, setLoading] = useState(true)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+  // Portal Account Credentials Modal
+  const [resetModalOpen, setResetModalOpen] = useState(false)
+  const [resetUsername, setResetUsername] = useState('')
+  const [resetPassword, setResetPassword] = useState('teacher123')
+  const [resetting, setResetting] = useState(false)
+
+  const handleResetCredentials = async (e) => {
+    e.preventDefault()
+    setResetting(true)
+    try {
+      await api.resetTeacherCredentials(id, {
+        username: resetUsername,
+        password: resetPassword,
+      })
+      setResetting(false)
+      setResetModalOpen(false)
+      showToast('Faculty portal credentials updated successfully!', 'success')
+      // Refresh teacher details to show updated user info
+      const refreshed = await api.getTeacher(id)
+      setTeacher(refreshed)
+    } catch (err) {
+      setResetting(false)
+      showToast(err.message || 'Failed to update credentials', 'error')
+    }
+  }
 
   useEffect(() => {
     let mounted = true
@@ -95,9 +122,9 @@ function TeacherDetails() {
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-xl font-bold text-slate-900">{teacher.name}</h2>
                 <Badge className="bg-violet-100 text-violet-700">{teacher.subject}</Badge>
-                <Badge className={STATUS_STYLES[teacher.gender]}>{teacher.gender}</Badge>
+                {teacher.gender && <Badge className={STATUS_STYLES[teacher.gender]}>{teacher.gender}</Badge>}
               </div>
-              <p className="mt-1 text-sm text-slate-500">Teacher ID: {teacher.id}</p>
+              <p className="mt-1 text-sm text-slate-500">Teacher ID: {teacher.teacherId || teacher.id}</p>
               <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-600">
                 <span className="flex items-center gap-1.5"><Mail size={15} className="text-slate-400" />{teacher.email}</span>
                 <span className="flex items-center gap-1.5"><Phone size={15} className="text-slate-400" />{teacher.phone}</span>
@@ -134,7 +161,7 @@ function TeacherDetails() {
         <Card title="Teacher Information" className="h-fit">
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <InfoItem label="Full Name" value={teacher.name} />
-            <InfoItem label="Teacher ID" value={teacher.id} />
+            <InfoItem label="Teacher ID" value={teacher.teacherId || teacher.id} />
             <InfoItem label="Gender" value={teacher.gender} />
             <InfoItem label="Subject" value={teacher.subject} />
             <InfoItem label="Qualification" value={teacher.qualification} />
@@ -147,6 +174,47 @@ function TeacherDetails() {
             </div>
           </div>
         </Card>
+
+        {/* Faculty Portal Authentication & Login Card */}
+        <Card title="Faculty Portal Authentication & Login" className="h-fit">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-1">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Portal Account Status:</span>
+                <Badge className={teacher.user ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
+                  {teacher.user ? 'Active & Linked' : 'Not Linked'}
+                </Badge>
+              </div>
+              <div className="flex flex-wrap items-center gap-6 pt-1 text-sm">
+                <div>
+                  <span className="text-xs text-slate-400 block">Faculty Login ID / Username:</span>
+                  <span className="font-mono font-bold text-slate-900">{teacher.user?.username || teacher.teacherId || 'None'}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 block">Teacher ID:</span>
+                  <span className="font-mono font-bold text-violet-600">{teacher.teacherId || teacher.id}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 block">Account Email:</span>
+                  <span className="text-slate-700">{teacher.user?.email || teacher.email || '—'}</span>
+                </div>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={KeyRound}
+              onClick={() => {
+                setResetUsername(teacher.user?.username || (teacher.teacherId ? teacher.teacherId.toLowerCase().replace(/[^a-z0-9_-]/g, '') : ''))
+                setResetPassword('teacher123')
+                setResetModalOpen(true)
+              }}
+              className="text-violet-600 border-violet-200 hover:bg-violet-50 shrink-0"
+            >
+              {teacher.user ? 'Reset Password / Login ID' : 'Set Up Portal Account'}
+            </Button>
+          </div>
+        </Card>
       </div>
 
       <ConfirmDialog
@@ -157,8 +225,51 @@ function TeacherDetails() {
         title="Delete Teacher"
         message={`Are you sure you want to delete ${teacher.name}? This action cannot be undone.`}
       />
+
+      {/* Reset Portal Credentials Modal */}
+      {resetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <KeyRound className="text-violet-600" size={20} />
+              {teacher.user ? 'Reset Faculty Credentials' : 'Set Up Faculty Portal Account'}
+            </h3>
+            <p className="mt-1 text-xs text-slate-500">
+              Configure login credentials for <strong>{teacher.name}</strong> ({teacher.teacherId || teacher.id}).
+            </p>
+
+            <form onSubmit={handleResetCredentials} className="mt-5 space-y-4">
+              <Input
+                label="Faculty Login ID / Username"
+                value={resetUsername}
+                onChange={(e) => setResetUsername(e.target.value)}
+                placeholder="e.g. TCH-001 or custom username"
+                required
+                helper="The teacher can log in using this username or their Teacher ID"
+              />
+              <Input
+                label="New Password"
+                type="text"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                placeholder="Enter password (min 6 characters)"
+                required
+              />
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setResetModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" loading={resetting}>
+                  Save Credentials
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 export default TeacherDetails
+

@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "dev": "node src/config/ensureMongo.js && nodemon src/server.js",
+    "db:start": "node src/config/ensureMongo.js",
+    "mongo:start": "powershell -ExecutionPolicy Bypass -File ./start-mongo.ps1",
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",

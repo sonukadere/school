@@ -25,7 +25,7 @@ export const markUpdateSchema = z
 
 export const markQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),
-  limit: z.coerce.number().int().positive().max(100).optional(),
+  limit: z.coerce.number().int().positive().max(500).optional(),
   studentId: z.string().optional(),
   subjectId: z.string().optional(),
   examId: z.string().optional(),

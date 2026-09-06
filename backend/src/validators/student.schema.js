@@ -31,6 +31,14 @@ export const studentCreateSchema = z.object({
   ...baseStudentSchema,
   firstName: baseStudentSchema.firstName,
   lastName: baseStudentSchema.lastName,
+  createLoginAccount: z.boolean().optional().default(true),
+  username: z.string().trim().min(3, 'Username must be at least 3 characters.').max(50).optional().nullable().or(z.literal('')),
+  password: z.string().min(6, 'Password must be at least 6 characters.').max(100).optional().nullable().or(z.literal('')),
+});
+
+export const studentResetCredentialsSchema = z.object({
+  username: z.string().trim().min(3, 'Username must be at least 3 characters.').max(50).optional(),
+  password: z.string().min(6, 'Password must be at least 6 characters.').max(100),
 });
 
 export const studentUpdateSchema = z.object({

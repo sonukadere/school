@@ -101,6 +101,14 @@ async function request(endpoint, options = {}) {
     }
     return data;
   } catch (error) {
+    if (error.name === 'TypeError' && (error.message.includes('fetch') || error.message.includes('NetworkError'))) {
+      const connError = new Error(
+        `Unable to connect to backend API server at ${API_BASE_URL}. Please ensure the backend is running.`
+      );
+      connError.status = 0;
+      console.error(`[apiClient] ${method} ${endpoint} failed: Backend connection error`);
+      throw connError;
+    }
     console.error(`[apiClient] ${method} ${endpoint} failed:`, error.message);
     throw error;
   }

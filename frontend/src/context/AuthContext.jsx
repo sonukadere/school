@@ -28,12 +28,22 @@ export function normalizeUser(rawUser) {
     rawRole: rawUser.role,
     isSuperAdmin: role === 'Super Admin' || rawUser.role === 'SUPER_ADMIN',
     isAdmin: ['Admin', 'Super Admin', 'Administrator'].includes(role) || ['ADMIN', 'SUPER_ADMIN'].includes(rawUser.role),
+    isSchoolAdmin: role === 'Admin' || rawUser.role === 'ADMIN',
+    isTeacher: role === 'Teacher' || rawUser.role === 'TEACHER',
+    isStudent: role === 'Student' || rawUser.role === 'STUDENT',
+    isParent: role === 'Parent' || rawUser.role === 'PARENT',
     avatar: rawUser.avatar || null,
     teacherId: rawUser.teacher?.id || rawUser.teacherId || null,
+    teacherNumber: rawUser.teacher?.teacherId || null,
     studentId: rawUser.student?.id || rawUser.studentId || null,
+    studentNumber: rawUser.student?.studentId || null,
     parentId: rawUser.parent?.id || rawUser.parentId || null,
+    parentNumber: rawUser.parent?.parentId || null,
+    parent: rawUser.parent || null,
+    children: rawUser.parent?.children || [],
     staffId: rawUser.staff?.id || rawUser.staffId || null,
     classId: rawUser.student?.classId || null,
+    mustChangePassword: Boolean(rawUser.mustChangePassword),
   }
 }
 
@@ -81,19 +91,40 @@ export function AuthProvider({ children }) {
   }, [])
 
   /**
-   * Real backend JWT login
+   * Real backend JWT login with optional role-based enforcement
    */
-  const login = async (email, password) => {
+  const login = async (identifier, password, expectedRole = null) => {
     setLoading(true)
     try {
       const response = await apiClient.post('/auth/login', {
-        email: email.trim().toLowerCase(),
+        email: (identifier || '').trim(),
         password,
       })
 
       if (response && response.token) {
-        tokenStorage.set(response.token)
         const normalized = normalizeUser(response.user)
+
+        // Role-Based Access Control check against selected login role
+        if (expectedRole) {
+          const userRole = normalized.role
+          const roleMap = {
+            SUPER_ADMIN: ['Super Admin'],
+            ADMIN: ['Admin', 'Super Admin'],
+            TEACHER: ['Teacher'],
+            STUDENT: ['Student'],
+            PARENT: ['Parent'],
+          }
+          const allowed = roleMap[expectedRole] || []
+          if (!allowed.includes(userRole)) {
+            setLoading(false)
+            return {
+              ok: false,
+              error: `Access Denied: Your account is assigned role "${userRole}". Please select "${userRole}" in the role dropdown to sign in.`,
+            }
+          }
+        }
+
+        tokenStorage.set(response.token)
         setUserState(normalized)
         setLoading(false)
         return { ok: true, user: normalized }
@@ -102,7 +133,7 @@ export function AuthProvider({ children }) {
       throw new Error('Invalid response structure from authentication server.')
     } catch (error) {
       setLoading(false)
-      const errorMsg = error.message || 'Invalid email or password'
+      const errorMsg = error.message || 'Invalid credentials'
       return { ok: false, error: errorMsg }
     }
   }
@@ -118,6 +149,33 @@ export function AuthProvider({ children }) {
     } finally {
       tokenStorage.clear()
       setUserState(null)
+    }
+  }
+
+  /**
+   * Change password for authenticated user (required on first login if mustChangePassword is true)
+   */
+  const changePassword = async (currentPassword, newPassword) => {
+    setLoading(true)
+    try {
+      const response = await apiClient.post('/auth/change-password', {
+        currentPassword,
+        newPassword,
+      })
+
+      if (response && response.token) {
+        tokenStorage.set(response.token)
+        const normalized = normalizeUser(response.user)
+        setUserState(normalized)
+        setLoading(false)
+        return { ok: true, user: normalized }
+      }
+
+      throw new Error('Invalid response from server')
+    } catch (error) {
+      setLoading(false)
+      const errorMsg = error.message || 'Failed to change password'
+      return { ok: false, error: errorMsg }
     }
   }
 
@@ -147,6 +205,7 @@ export function AuthProvider({ children }) {
         initializing,
         login,
         logout,
+        changePassword,
         updateProfile,
         isAuthenticated: Boolean(user && tokenStorage.get()),
       }}

@@ -35,6 +35,24 @@ export const PERMISSIONS = Object.freeze({
   ATTENDANCE_MANAGE: 'attendance.manage',
   FEES_VIEW: 'fees.view',
   FEES_MANAGE: 'fees.manage',
+  FEES_CREATE: 'fees.create',
+  FEES_UPDATE: 'fees.update',
+  FEES_DELETE: 'fees.delete',
+
+  PAYMENTS_VIEW: 'payments.view',
+  PAYMENTS_CREATE: 'payments.create',
+  PAYMENTS_UPDATE: 'payments.update',
+  PAYMENTS_DELETE: 'payments.delete',
+  PAYMENTS_DOWNLOAD: 'payments.download',
+  PAYMENTS_EXPORT: 'payments.export',
+
+  RECEIPTS_VIEW: 'receipts.view',
+  RECEIPTS_GENERATE: 'receipts.generate',
+  RECEIPTS_DOWNLOAD: 'receipts.download',
+
+  REPORTS_FEES_VIEW: 'reports.fees.view',
+  REPORTS_FEES_EXPORT: 'reports.fees.export',
+
   EXAMS_VIEW: 'exams.view',
   EXAMS_MANAGE: 'exams.manage',
   MARKS_VIEW: 'marks.view',
@@ -93,6 +111,11 @@ export const ROLE_PERMISSIONS = Object.freeze({
   [ROLES.STUDENT]: [
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.OWN_VIEW,
+    PERMISSIONS.FEES_VIEW,
+    PERMISSIONS.PAYMENTS_VIEW,
+    PERMISSIONS.PAYMENTS_DOWNLOAD,
+    PERMISSIONS.RECEIPTS_VIEW,
+    PERMISSIONS.RECEIPTS_DOWNLOAD,
     PERMISSIONS.NOTICES_VIEW,
     PERMISSIONS.EVENTS_VIEW,
     PERMISSIONS.PROFILE_MANAGE,
@@ -101,6 +124,11 @@ export const ROLE_PERMISSIONS = Object.freeze({
   [ROLES.PARENT]: [
     PERMISSIONS.DASHBOARD_VIEW,
     PERMISSIONS.OWN_VIEW,
+    PERMISSIONS.FEES_VIEW,
+    PERMISSIONS.PAYMENTS_VIEW,
+    PERMISSIONS.PAYMENTS_DOWNLOAD,
+    PERMISSIONS.RECEIPTS_VIEW,
+    PERMISSIONS.RECEIPTS_DOWNLOAD,
     PERMISSIONS.NOTICES_VIEW,
     PERMISSIONS.EVENTS_VIEW,
     PERMISSIONS.PROFILE_MANAGE,

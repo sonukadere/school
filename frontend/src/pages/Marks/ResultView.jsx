@@ -24,14 +24,22 @@ function ResultView() {
 
   useEffect(() => {
     let mounted = true
-    Promise.all([api.getExams(), api.getStudents(), api.getMarks()]).then(([examData, studentData, markData]) => {
-      if (mounted) {
-        setExams(examData)
-        setStudents(studentData)
-        setMarks(markData)
-        setLoading(false)
-      }
-    })
+    setLoading(true)
+    Promise.all([api.getExams(), api.getStudents(), api.getMarks()])
+      .then(([examData, studentData, markData]) => {
+        if (mounted) {
+          setExams(Array.isArray(examData) ? examData : [])
+          setStudents(Array.isArray(studentData) ? studentData : [])
+          setMarks(Array.isArray(markData) ? markData : [])
+          setLoading(false)
+        }
+      })
+      .catch((err) => {
+        console.error('[ResultView] Error loading data:', err)
+        if (mounted) {
+          setLoading(false)
+        }
+      })
     return () => {
       mounted = false
     }
@@ -42,12 +50,16 @@ function ResultView() {
   const results = useMemo(() => {
     if (!selectedExam) return []
     return students
-      .filter((student) => student.className === selectedExam.className)
+      .filter((student) =>
+        (selectedExam.classId && student.classId === selectedExam.classId) ||
+        student.className === selectedExam.className ||
+        `${student.className} ${student.section}`.trim() === selectedExam.className,
+      )
       .map((student) => {
         const studentMarks = marks.filter((mark) => mark.examId === examId && mark.studentId === student.id)
         if (!studentMarks.length) return null
         const total = studentMarks.reduce((sum, mark) => sum + mark.marks, 0)
-        const maxTotal = studentMarks.reduce((sum, mark) => sum + mark.maxMarks, 0)
+        const maxTotal = studentMarks.reduce((sum, mark) => sum + (mark.maxMarks || 100), 0)
         const percent = percentage(total, maxTotal)
         const grade = gradeFromPercentage(percent)
         return {

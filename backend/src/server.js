@@ -17,6 +17,16 @@ async function start() {
   server = app.listen(env.port, () => {
     console.log(`[server] API listening on http://localhost:${env.port} (${env.nodeEnv})`);
   });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`[server] Port ${env.port} is already in use by another process.`);
+      console.error(`[server] Free port ${env.port} or change PORT in backend/.env to another port.`);
+    } else {
+      console.error('[server] Server error:', err.message);
+    }
+    process.exit(1);
+  });
 }
 
 async function shutdown(signal) {

@@ -148,7 +148,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-md sm:px-6 shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -167,8 +167,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
           <Menu size={20} />
         </button>
         <div>
-          <p className="hidden text-sm font-semibold text-slate-800 sm:block">{currentTitle}</p>
-          <p className="text-xs text-slate-500 sm:hidden">{currentTitle}</p>
+          <p className="text-sm font-semibold tracking-tight text-slate-800">{currentTitle}</p>
         </div>
       </div>
 
@@ -178,14 +177,14 @@ function Navbar({ collapsed, onToggleSidebar }) {
             type="button"
             onClick={toggleQuickActions}
             className={cn(
-              "relative flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-slate-600 transition hover:bg-slate-100",
-              quickActionsOpen && "bg-slate-100"
+              "relative flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900 shadow-2xs",
+              quickActionsOpen && "bg-slate-100 ring-2 ring-indigo-500/20 border-indigo-300"
             )}
             title="Quick Actions"
             aria-label="Quick Actions"
           >
-            <Zap size={20} className={cn(quickActionsOpen ? "fill-amber-500 text-amber-500" : "")} />
-            <span className="hidden text-sm font-semibold text-slate-700 sm:inline">Quick Actions</span>
+            <Zap size={14} className={cn(quickActionsOpen ? "fill-amber-500 text-amber-500" : "text-amber-500")} />
+            <span className="hidden sm:inline">Quick Actions</span>
           </button>
           {quickActionsOpen && (
             <div className="animate-scale-in absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
@@ -324,17 +323,18 @@ function Navbar({ collapsed, onToggleSidebar }) {
           <button
             type="button"
             onClick={toggleProfile}
-            className="flex items-center gap-2.5 rounded-lg p-1.5 transition hover:bg-slate-100"
+            className="flex items-center gap-2.5 rounded-lg p-1 transition hover:bg-slate-100"
             aria-label="Profile menu"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">
+            <div className="relative flex h-8.5 w-8.5 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white shadow-2xs">
               {user?.name?.charAt(0) || 'A'}
+              <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
             </div>
             <div className="hidden text-left md:block">
-              <p className="text-sm leading-tight font-semibold text-slate-800">{user?.name}</p>
-              <p className="text-xs leading-tight text-slate-500">{user?.role}</p>
+              <p className="text-xs leading-tight font-semibold text-slate-800">{user?.name}</p>
+              <p className="text-[11px] leading-tight text-slate-400 capitalize">{user?.role?.toLowerCase()?.replace('_', ' ')}</p>
             </div>
-            <ChevronDown size={16} className="hidden text-slate-400 md:block" />
+            <ChevronDown size={14} className="hidden text-slate-400 md:block" />
           </button>
           {profileOpen && (
             <div className="animate-scale-in absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">

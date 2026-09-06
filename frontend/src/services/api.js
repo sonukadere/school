@@ -166,13 +166,26 @@ export async function getDashboardData() {
       totalTeachers: data.widgets?.totalTeachers ?? 0,
       totalClasses: data.widgets?.totalClasses ?? 0,
       totalSubjects: data.widgets?.totalSubjects ?? 0,
-      todayAttendance: data.widgets?.todayAttendance ?? 0,
+      todayAttendance: data.widgets?.todayAttendance ?? data.widgets?.attendancePercentage ?? 0,
       feesCollected: data.widgets?.monthlyFeeCollection ?? 0,
-      upcomingExams: data.widgets?.upcomingExams ?? 0,
+      upcomingExams: Array.isArray(data.widgets?.upcomingExams) ? data.widgets.upcomingExams.length : (data.widgets?.upcomingExams ?? 0),
       activities: data.widgets?.recentActivities ?? [],
       studentStats: data.charts?.studentStats?.map((s) => ({ name: s.name, students: s.count })) ?? [],
       attendanceChart: data.charts?.attendanceChart ?? [],
       role: data.role,
+      roleLabel: data.roleLabel,
+      widgets: data.widgets || {},
+      studentSummary: data.role === 'STUDENT' ? {
+        profile: data.widgets?.profile,
+        attendancePercentage: data.widgets?.attendancePercentage ?? 0,
+        subjects: data.widgets?.subjects || [],
+        timetable: data.widgets?.timetable || [],
+        upcomingExams: data.widgets?.upcomingExams || [],
+        results: data.widgets?.results || [],
+        feeStatus: data.widgets?.feeStatus,
+        notices: data.widgets?.notices || [],
+        events: data.widgets?.events || [],
+      } : null,
       raw: data,
     }
   } catch (error) {
@@ -224,10 +237,40 @@ export const api = {
       classId: classId || null,
       section: data.section || null,
       status: 'ACTIVE',
+      createLoginAccount: data.createLoginAccount !== false,
+      username: data.username || null,
+      password: data.password || null,
     }
 
     const res = await apiClient.post('/students', payload)
-    return normalizeStudent(res)
+    const normalized = normalizeStudent(res)
+    if (res?.credentials) {
+      normalized.credentials = res.credentials
+    }
+    return normalized
+  },
+
+  registerStudent: async (data) => {
+    const payload = {
+      firstName: data.firstName || data.fullName?.split(' ')[0] || 'Student',
+      lastName: data.lastName || data.fullName?.split(' ').slice(1).join(' ') || '.',
+      email: data.email || null,
+      phone: data.phone || null,
+      gender: data.gender ? data.gender.toUpperCase() : 'OTHER',
+      dob: data.dob ? new Date(data.dob) : null,
+      address: data.address || null,
+      fatherName: data.fatherName || null,
+      motherName: data.motherName || null,
+      className: data.className || null,
+      section: data.section || null,
+      username: data.username || null,
+      password: data.password,
+    }
+    return apiClient.post('/auth/register-student', payload)
+  },
+
+  resetStudentCredentials: async (id, data) => {
+    return apiClient.post(`/students/${id}/credentials`, data)
   },
 
   updateStudent: async (id, data) => {
@@ -284,9 +327,20 @@ export const api = {
       salary: data.salary ? Number(data.salary) : null,
       joiningDate: data.joiningDate ? new Date(data.joiningDate) : new Date(),
       address: data.address || null,
+      createLoginAccount: data.createLoginAccount !== false,
+      username: data.username || null,
+      password: data.password || null,
     }
     const res = await apiClient.post('/teachers', payload)
-    return normalizeTeacher(res)
+    const normalized = normalizeTeacher(res)
+    if (res?.credentials) {
+      normalized.credentials = res.credentials
+    }
+    return normalized
+  },
+
+  resetTeacherCredentials: async (id, data) => {
+    return apiClient.post(`/teachers/${id}/credentials`, data)
   },
 
   updateTeacher: async (id, data) => {
@@ -414,7 +468,7 @@ export const api = {
     return apiClient.delete(`/subjects/${id}`)
   },
 
-  // --- Fees ---
+  // --- Fees (Legacy & Invoices) ---
   getFees: async (params = {}) => {
     const res = await apiClient.get('/fees', { limit: 100, ...params })
     const list = Array.isArray(res) ? res : (res?.data || [])
@@ -453,6 +507,64 @@ export const api = {
 
   deleteFee: async (id) => {
     return apiClient.delete(`/fees/${id}`)
+  },
+
+  // --- Payment Management ---
+  getPayments: async (params = {}) => {
+    return apiClient.get('/payments', params)
+  },
+
+  getPayment: async (id) => {
+    return apiClient.get(`/payments/${id}`)
+  },
+
+  recordPayment: async (data) => {
+    return apiClient.post('/payments', data)
+  },
+
+  updatePayment: async (id, data) => {
+    return apiClient.put(`/payments/${id}`, data)
+  },
+
+  cancelPayment: async (id) => {
+    return apiClient.delete(`/payments/${id}`)
+  },
+
+  getPaymentReceipt: async (idOrNumber) => {
+    const pathParam = encodeURIComponent(idOrNumber)
+    return apiClient.get(`/payments/receipt/${pathParam}`)
+  },
+
+  getPendingFees: async (params = {}) => {
+    return apiClient.get('/payments/pending-fees', params)
+  },
+
+  getPaymentReports: async (params = {}) => {
+    return apiClient.get('/payments/reports', params)
+  },
+
+  getStudentFeeLedger: async (studentId) => {
+    return apiClient.get(`/payments/student/${studentId}`)
+  },
+
+  getFeeStructures: async (params = {}) => {
+    return apiClient.get('/payments/fee-structures', params)
+  },
+
+  createFeeStructure: async (data) => {
+    return apiClient.post('/payments/fee-structures', data)
+  },
+
+  updateFeeStructure: async (id, data) => {
+    return apiClient.put(`/payments/fee-structures/${id}`, data)
+  },
+
+  deleteFeeStructure: async (id) => {
+    return apiClient.delete(`/payments/fee-structures/${id}`)
+  },
+
+  getPaymentSchools: async () => {
+    return apiClient.get('/payments/schools')
   },
 
   // --- Exams ---
@@ -502,7 +614,7 @@ export const api = {
 
   // --- Marks ---
   getMarks: async (params = {}) => {
-    const res = await apiClient.get('/marks', { limit: 200, ...params })
+    const res = await apiClient.get('/marks', { limit: 100, ...params })
     const list = Array.isArray(res) ? res : (res?.data || [])
     return list.map(normalizeMark)
   },

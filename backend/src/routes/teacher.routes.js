@@ -8,6 +8,7 @@ import {
   teacherCreateSchema,
   teacherUpdateSchema,
   teacherQuerySchema,
+  teacherResetCredentialsSchema,
 } from '../validators/teacher.schema.js';
 import { idParamSchema } from '../validators/common.js';
 
@@ -21,6 +22,12 @@ const canWrite = authorize(ROLES.ADMIN);
 router.get('/', canRead, validate({ query: teacherQuerySchema }), teacherController.listTeachers);
 router.get('/:id', canRead, validate({ params: idParamSchema }), teacherController.getTeacher);
 router.post('/', canWrite, validate({ body: teacherCreateSchema }), teacherController.createTeacher);
+router.post(
+  '/:id/credentials',
+  canWrite,
+  validate({ params: idParamSchema, body: teacherResetCredentialsSchema }),
+  teacherController.resetTeacherCredentials
+);
 router.put(
   '/:id',
   canWrite,

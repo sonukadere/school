@@ -8,6 +8,7 @@ import { useToast } from '../context/ToastContext'
 import Login from '../pages/Auth/Login'
 import ForgotPassword from '../pages/Auth/ForgotPassword'
 
+const RegisterStudent = lazy(() => import('../pages/Auth/RegisterStudent'))
 const Dashboard = lazy(() => import('../pages/Dashboard/Dashboard'))
 const StudentList = lazy(() => import('../pages/Students/StudentList'))
 const AddStudent = lazy(() => import('../pages/Students/AddStudent'))
@@ -56,6 +57,14 @@ function ProtectedRoute({ children }) {
 
   if (!isAuthenticated) return <Navigate to="/login" replace />
 
+  // Security enforcement: If account has mustChangePassword, only allow access to change password
+  if (user?.mustChangePassword) {
+    if (location.pathname !== '/change-password' && location.pathname !== '/profile/change-password') {
+      return <Navigate to="/change-password" replace />
+    }
+    return children
+  }
+
   if (user?.role === 'Teacher') {
     const forbiddenPrefixes = [
       '/teachers',
@@ -71,17 +80,37 @@ function ProtectedRoute({ children }) {
     }
   }
 
-  if (user?.role === 'Student') {
+  if (user?.role === 'Student' || user?.isStudent) {
     const forbiddenPrefixes = [
       '/students',
       '/teachers',
       '/classes',
       '/subjects',
       '/attendance',
-      '/fees',
       '/settings',
-      '/exams',
+      '/exams/create',
       '/marks/entry',
+      '/notices/create',
+    ]
+    const isForbidden = forbiddenPrefixes.some((prefix) =>
+      location.pathname.startsWith(prefix)
+    )
+    if (isForbidden) {
+      return <ForbiddenRedirect />
+    }
+  }
+
+  if (user?.role === 'Parent' || user?.isParent) {
+    const forbiddenPrefixes = [
+      '/students',
+      '/teachers',
+      '/classes',
+      '/subjects',
+      '/attendance',
+      '/settings',
+      '/exams/create',
+      '/marks/entry',
+      '/notices/create',
     ]
     const isForbidden = forbiddenPrefixes.some((prefix) =>
       location.pathname.startsWith(prefix)
@@ -98,6 +127,22 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route
+        path="/register"
+        element={
+          <Suspense fallback={<Loader fullScreen label="Loading registration..." />}>
+            <RegisterStudent />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/student-register"
+        element={
+          <Suspense fallback={<Loader fullScreen label="Loading registration..." />}>
+            <RegisterStudent />
+          </Suspense>
+        }
+      />
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
       <Route
@@ -162,6 +207,7 @@ function AppRoutes() {
         <Route path="/profile" element={<Suspense fallback={<Loader fullScreen label="Loading profile..." />}><ProfilePage /></Suspense>} />
         <Route path="/profile/edit" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><EditProfile /></Suspense>} />
         <Route path="/profile/change-password" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><ChangePassword /></Suspense>} />
+        <Route path="/change-password" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><ChangePassword /></Suspense>} />
 
         <Route path="/settings" element={<Suspense fallback={<Loader fullScreen label="Loading settings..." />}><SettingsPage /></Suspense>} />
         <Route path="/notifications" element={<Suspense fallback={<Loader fullScreen label="Loading notifications..." />}><NotificationList /></Suspense>} />

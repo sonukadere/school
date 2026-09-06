@@ -22,6 +22,7 @@ import meRoutes from './me.routes.js';
 import notificationRoutes from './notification.routes.js';
 import marksheetRoutes from './marksheet.routes.js';
 import transferCertificateRoutes from './transferCertificate.routes.js';
+import paymentRoutes from './payment.routes.js';
 
 const router = Router();
 
@@ -36,6 +37,7 @@ router.use('/subjects', subjectRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/teacher-attendance', teacherAttendanceRoutes);
 router.use('/fees', feeRoutes);
+router.use('/payments', paymentRoutes);
 router.use('/exams', examRoutes);
 router.use('/marks', markRoutes);
 router.use('/marksheets', marksheetRoutes);

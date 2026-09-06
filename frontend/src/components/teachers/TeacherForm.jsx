@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Camera, Upload, User } from 'lucide-react'
+import { Camera, Upload, User, KeyRound, Sparkles, Eye, EyeOff } from 'lucide-react'
 import Input from '../common/Input'
 import Select from '../common/Select'
 import Button from '../common/Button'
@@ -16,6 +16,9 @@ const EMPTY_VALUES = {
   joiningDate: '',
   address: '',
   gender: '',
+  createLoginAccount: true,
+  username: '',
+  password: 'teacher123',
 }
 
 function PhotoUploader({ value, onChange }) {
@@ -69,6 +72,7 @@ function PhotoUploader({ value, onChange }) {
 function TeacherForm({ initialValues = {}, onSubmit, submitting, submitLabel = 'Save Teacher' }) {
   const [values, setValues] = useState({ ...EMPTY_VALUES, ...initialValues })
   const [errors, setErrors] = useState({})
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -131,7 +135,7 @@ function TeacherForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
         </div>
 
         {/* Section 2: Contact & Subject */}
-        <div className="p-6 sm:p-8 space-y-4">
+        <div className="p-6 sm:p-8 border-b border-slate-100 space-y-4">
           <h4 className="text-xs font-bold tracking-wider text-slate-400 uppercase flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-indigo-600"></span> 2. Contact & Specialization
           </h4>
@@ -143,6 +147,83 @@ function TeacherForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
               <Input label="Residential Address" name="address" value={values.address} onChange={handleChange} placeholder="Address, City, State" />
             </div>
           </div>
+        </div>
+
+        {/* Section 3: Faculty Portal Login Account */}
+        <div className="p-6 sm:p-8 space-y-4 bg-slate-50/50">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h4 className="text-xs font-bold tracking-wider text-emerald-900 uppercase flex items-center gap-2">
+                <KeyRound size={16} className="text-emerald-600" />
+                3. Faculty Portal Login Account
+              </h4>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Configure faculty portal authentication so the teacher can mark attendance, enter marks, and manage classes.
+              </p>
+            </div>
+            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
+              <input
+                type="checkbox"
+                name="createLoginAccount"
+                checked={values.createLoginAccount}
+                onChange={(e) => setValues((prev) => ({ ...prev, createLoginAccount: e.target.checked }))}
+                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              Create Faculty Login Account
+            </label>
+          </div>
+
+          {values.createLoginAccount && (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 pt-2">
+              <Input
+                label="Faculty Login ID / Username"
+                name="username"
+                value={values.username}
+                onChange={handleChange}
+                placeholder="Leave blank to use Teacher ID"
+                helper="Teacher can sign in using their Teacher ID (e.g. TCH-2026-0001), username, or email"
+              />
+              <div className="relative">
+                <Input
+                  label="Portal Password"
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={values.password}
+                  onChange={handleChange}
+                  placeholder="teacher123"
+                  helper="Default: teacher123"
+                  className="pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute top-[38px] right-3 text-slate-400 hover:text-slate-600"
+                  aria-label="Toggle password"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              <div className="flex items-end pb-5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  leftIcon={Sparkles}
+                  onClick={() => {
+                    const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$'
+                    let generated = ''
+                    for (let i = 0; i < 9; i++) {
+                      generated += chars.charAt(Math.floor(Math.random() * chars.length))
+                    }
+                    setValues((prev) => ({ ...prev, password: generated }))
+                  }}
+                  className="w-full text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                >
+                  Generate Strong Password
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Integrated Action Footer */}

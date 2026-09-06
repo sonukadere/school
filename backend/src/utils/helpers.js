@@ -126,6 +126,13 @@ export function toDateOnly(value) {
 }
 
 /**
+ * Returns today's date normalized to UTC date-only.
+ */
+export function today() {
+  return toDateOnly(new Date());
+}
+
+/**
  * Add days to a Date (returns a new Date).
  */
 export function addDays(value, days) {

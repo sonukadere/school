@@ -29,9 +29,23 @@ export const STUDENT_STATUSES = Object.freeze([
   'ALUMNI',
 ]);
 
-export const PAYMENT_STATUSES = Object.freeze(['PAID', 'PARTIAL', 'PENDING']);
+export const PAYMENT_STATUSES = Object.freeze([
+  'PAID',
+  'PARTIAL',
+  'PENDING',
+  'UNPAID',
+  'OVERDUE',
+  'CANCELLED',
+]);
 
-export const PAYMENT_METHODS = Object.freeze(['CASH', 'CARD', 'BANK_TRANSFER', 'ONLINE', 'CHEQUE']);
+export const PAYMENT_METHODS = Object.freeze([
+  'CASH',
+  'CARD',
+  'BANK_TRANSFER',
+  'ONLINE',
+  'CHEQUE',
+  'UPI',
+]);
 
 export const DAYS_OF_WEEK = Object.freeze([
   'MONDAY',
@@ -65,7 +79,7 @@ export const HTTP_STATUS = Object.freeze({
 export const PAGINATION = Object.freeze({
   DEFAULT_PAGE: 1,
   DEFAULT_LIMIT: 10,
-  MAX_LIMIT: 100,
+  MAX_LIMIT: 500,
 });
 
 export const USER_ROLES = Object.freeze([

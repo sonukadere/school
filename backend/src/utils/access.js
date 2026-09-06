@@ -117,6 +117,76 @@ export async function assertTeacherVisible(user, teacherId) {
 }
 
 /**
+ * Resolve school filtering based on actor role.
+ * Super Admin can access all or filter by schoolId.
+ * Admin and other roles are strictly constrained to their own school.
+ */
+export function getEffectiveSchoolId(user, requestedSchoolId = null) {
+  if (!user) return null;
+  const userSchoolId = user.schoolId || 'SCH001';
+
+  if (user.role === 'SUPER_ADMIN') {
+    return requestedSchoolId || null;
+  }
+
+  if (requestedSchoolId && requestedSchoolId !== userSchoolId) {
+    throw ApiError.forbidden('Access denied. You cannot access another school’s data.');
+  }
+
+  return userSchoolId;
+}
+
+/**
+ * Assert that an actor is authorized to access a given school's resource.
+ */
+export function assertSchoolAccess(user, resourceSchoolId) {
+  if (!user) {
+    throw ApiError.unauthorized('Authentication required.');
+  }
+  if (user.role === 'SUPER_ADMIN') return;
+
+  const userSchoolId = user.schoolId || 'SCH001';
+  if (resourceSchoolId && resourceSchoolId !== userSchoolId) {
+    throw ApiError.forbidden('Cross-school data access is prohibited.');
+  }
+}
+
+/**
+ * Ensure a payment or receipt record is accessible to the actor.
+ */
+export async function assertPaymentVisible(user, record) {
+  if (!user) {
+    throw ApiError.unauthorized('Authentication required.');
+  }
+  if (user.role === 'SUPER_ADMIN') return;
+
+  assertSchoolAccess(user, record.schoolId);
+
+  if (user.role === 'ADMIN') return;
+
+  if (user.role === 'TEACHER') {
+    throw ApiError.forbidden('Teachers are not authorized to view financial records.');
+  }
+
+  if (user.role === 'STUDENT') {
+    if (!user.student?.id || record.studentId !== user.student.id) {
+      throw ApiError.forbidden('You can only access your own payment records.');
+    }
+    return;
+  }
+
+  if (user.role === 'PARENT') {
+    const childIds = await getVisibleStudentIds(user);
+    if (!childIds.includes(record.studentId)) {
+      throw ApiError.forbidden('You can only access your child’s payment records.');
+    }
+    return;
+  }
+
+  throw ApiError.forbidden('Access denied to payment record.');
+}
+
+/**
  * Resolve the class/classes a student/parent/teacher dashboard should use.
  */
 export async function resolveActorClassIds(user) {
@@ -133,3 +203,4 @@ export async function resolveActorClassIds(user) {
   }
   return getVisibleClassIds(user);
 }
+

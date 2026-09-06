@@ -48,10 +48,18 @@ function DataTable({
   const pageRows = filteredData.slice(startIndex, startIndex + pageSize)
 
   return (
-    <div className={cn('overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.02),0_6px_24px_0_rgba(15,23,42,0.05)]', className)}>
+    <div className={cn('overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs', className)}>
       {(toolbar || searchPlaceholder) && (
-        <div className="flex flex-col gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50/60 to-transparent p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-3">{toolbar}</div>
+        <div className="flex flex-col gap-3 border-b border-slate-200/70 bg-white px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-1 flex-wrap items-center gap-3">
+            {toolbar ? (
+              toolbar
+            ) : (
+              <span className="text-xs font-medium text-slate-500">
+                Total: <span className="font-semibold text-slate-800">{filteredData.length}</span> {filteredData.length === 1 ? 'entry' : 'entries'}
+              </span>
+            )}
+          </div>
           <SearchBar value={search} onChange={setSearch} placeholder={searchPlaceholder} />
         </div>
       )}
@@ -65,15 +73,15 @@ function DataTable({
             icon={emptyIcon}
           />
         ) : (
-          <table className="min-w-full divide-y divide-slate-200 text-left">
-            <thead className="bg-slate-50/80">
+          <table className="min-w-full divide-y divide-slate-200/80 text-left">
+            <thead className="bg-slate-50/75">
               <tr>
                 {columns.map((column) => (
                   <th
                     key={column.key}
                     scope="col"
                     className={cn(
-                      'px-5 py-3.5 text-xs font-bold tracking-wider text-slate-500 uppercase',
+                      'px-5 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase',
                       column.className,
                     )}
                   >
@@ -88,14 +96,14 @@ function DataTable({
                   key={rowKey ? rowKey(row) : row.id}
                   onClick={() => onRowClick?.(row)}
                   className={cn(
-                    'transition-colors',
-                    onRowClick ? 'cursor-pointer hover:bg-slate-50' : 'hover:bg-slate-50/60',
+                    'transition-colors duration-150',
+                    onRowClick ? 'cursor-pointer hover:bg-slate-50' : 'hover:bg-slate-50/70',
                   )}
                 >
                   {columns.map((column) => (
                     <td
                       key={column.key}
-                      className={cn('px-5 py-3.5 text-sm text-slate-700', column.className)}
+                      className={cn('px-5 py-3.5 text-sm text-slate-700 align-middle', column.className)}
                     >
                       {column.render ? column.render(row, index) : row[column.key]}
                     </td>
