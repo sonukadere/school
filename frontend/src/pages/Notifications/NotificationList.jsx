@@ -129,7 +129,7 @@ function NotificationList() {
     <div className="space-y-6">
       <PageHeader
         title="Notification Center"
-        description="Live Firebase Push & In-App activity alerts across all school operations"
+        description="Live in-app activity alerts across all school operations"
         breadcrumb={[{ label: 'Notifications' }]}
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -148,7 +148,7 @@ function NotificationList() {
               leftIcon={Bell}
               onClick={sendTestNotification}
             >
-              Send Test Push
+              Send Test Notification
             </Button>
             {unreadCount > 0 && (
               <Button

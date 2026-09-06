@@ -1,6 +1,4 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getToken, onMessage } from 'firebase/messaging';
-import { getFirebaseMessaging } from '../config/firebase';
 import { api } from '../services/api';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
@@ -17,14 +15,13 @@ export function NotificationProvider({ children }) {
   const [permission, setPermission] = useState(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
   );
-  const [deviceToken, setDeviceToken] = useState(null);
 
   // Fetch notifications from backend
   const fetchNotifications = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
       setLoading(true);
-      const res = await api.getNotifications({ limit: 20 });
+      const res = await api.getNotifications({ limit: 30 });
       if (res && res.data) {
         setNotifications(res.data);
         setUnreadCount(res.unreadCount ?? res.data.filter((n) => !n.isRead).length);
@@ -39,103 +36,37 @@ export function NotificationProvider({ children }) {
     }
   }, [isAuthenticated]);
 
-  // Request browser push notification permission and register FCM device token
+  // Request browser notification permission (Standard Web Notification API)
   const requestPermissionAndRegister = useCallback(async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) {
-      console.warn('Push notifications are not supported in this browser.');
+      showToast('Notifications are not supported by your browser.', 'info');
       return null;
     }
 
     try {
       const perm = await Notification.requestPermission();
       setPermission(perm);
-
       if (perm === 'granted') {
-        const messaging = await getFirebaseMessaging();
-        if (messaging) {
-          try {
-            // Register service worker if available
-            let swRegistration = null;
-            if ('serviceWorker' in navigator) {
-              swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-            }
-
-            const token = await getToken(messaging, {
-              serviceWorkerRegistration: swRegistration,
-            });
-
-            if (token) {
-              setDeviceToken(token);
-              await api.registerDeviceToken(token, 'web');
-              console.log('[NotificationContext] FCM token registered:', token.slice(0, 15) + '...');
-              return token;
-            }
-          } catch (tokenErr) {
-            console.warn('[NotificationContext] FCM token retrieval note:', tokenErr.message);
-          }
-        }
+        showToast('Browser notifications enabled successfully!', 'success');
       }
+      return perm;
     } catch (err) {
       console.warn('[NotificationContext] Permission request error:', err.message);
+      return null;
     }
-    return null;
-  }, []);
+  }, [showToast]);
 
-  // Sync notifications on mount / auth state change
+  // Sync notifications on mount / auth state change & periodic check every 30s
   useEffect(() => {
     if (isAuthenticated) {
       fetchNotifications();
-      // Auto-register device if permission was already granted
-      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-        requestPermissionAndRegister();
-      }
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
     } else {
       setNotifications([]);
       setUnreadCount(0);
-      setDeviceToken(null);
     }
-  }, [isAuthenticated, fetchNotifications, requestPermissionAndRegister]);
-
-  // Listen to foreground FCM messages
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    let unsubscribe = null;
-    const setupListener = async () => {
-      const messaging = await getFirebaseMessaging();
-      if (messaging) {
-        unsubscribe = onMessage(messaging, (payload) => {
-          console.log('[NotificationContext] Foreground push received:', payload);
-          const title = payload.notification?.title || payload.data?.title || 'New Notification';
-          const body = payload.notification?.body || payload.data?.body || '';
-
-          // Show floating toast alert
-          showToast(`${title}: ${body}`, 'info');
-
-          // Prepend to notifications list
-          setNotifications((prev) => [
-            {
-              id: payload.data?.notificationId || String(Date.now()),
-              title,
-              body,
-              type: payload.data?.type || 'GENERAL',
-              createdAt: new Date().toISOString(),
-              isRead: false,
-              data: payload.data || {},
-            },
-            ...prev,
-          ]);
-          setUnreadCount((c) => c + 1);
-        });
-      }
-    };
-
-    setupListener();
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, [isAuthenticated, showToast]);
+  }, [isAuthenticated, fetchNotifications]);
 
   // Mark single notification as read
   const markAsRead = async (id) => {
@@ -189,11 +120,20 @@ export function NotificationProvider({ children }) {
     }
   };
 
-  // Send a test push notification
+  // Send a test notification
   const sendTestNotification = async () => {
     try {
       await api.sendTestNotification();
-      showToast('Push notification sent! Check your notification center.', 'success');
+      showToast('Notification dispatched! Check your notification list.', 'success');
+
+      // Native browser notification if permitted
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification('🎉 Test Notification', {
+          body: `Hello ${user?.name || 'User'}, your in-app notification system is active!`,
+          icon: '/favicon.svg',
+        });
+      }
+
       await fetchNotifications();
     } catch (err) {
       showToast(err.message || 'Failed to dispatch test notification', 'error');
@@ -207,7 +147,7 @@ export function NotificationProvider({ children }) {
         unreadCount,
         loading,
         permission,
-        deviceToken,
+        deviceToken: null,
         fetchNotifications,
         requestPermissionAndRegister,
         markAsRead,

@@ -1,9 +1,8 @@
 import { prisma } from '../config/database.js';
-import { messaging } from '../config/firebase.js';
 import { notDeleted, getPagination, getPaginationMeta } from '../utils/helpers.js';
 
 /**
- * Register or update an FCM device token for a user
+ * Register or update a device token for a user
  */
 export async function registerDeviceToken(userId, token, deviceType = 'web') {
   if (!token) return null;
@@ -36,39 +35,10 @@ export async function unregisterDeviceToken(token) {
 }
 
 /**
- * Clean up invalid or expired FCM registration tokens
- */
-async function cleanupInvalidTokens(responses, tokens) {
-  const invalidTokens = [];
-  responses.forEach((resp, idx) => {
-    if (!resp.success && resp.error) {
-      const code = resp.error.code;
-      if (
-        code === 'messaging/invalid-registration-token' ||
-        code === 'messaging/registration-token-not-registered'
-      ) {
-        invalidTokens.push(tokens[idx]);
-      }
-    }
-  });
-
-  if (invalidTokens.length > 0) {
-    try {
-      await prisma.deviceToken.deleteMany({
-        where: { token: { in: invalidTokens } },
-      });
-      console.log(`[Notification] Cleaned up ${invalidTokens.length} expired FCM tokens.`);
-    } catch (e) {
-      console.warn('[Notification] Error cleaning up tokens:', e.message);
-    }
-  }
-}
-
-/**
- * Send push notification to a specific user
+ * Send in-app notification to a specific user
  */
 export async function sendNotificationToUser(userId, { title, body, data = {}, type = 'GENERAL' }) {
-  // 1. Create in-app notification record
+  // Create in-app notification record
   const record = await prisma.notification.create({
     data: {
       userId,
@@ -78,44 +48,6 @@ export async function sendNotificationToUser(userId, { title, body, data = {}, t
       data: JSON.stringify(data),
     },
   });
-
-  // 2. Dispatch FCM push notification
-  if (messaging) {
-    try {
-      const deviceTokens = await prisma.deviceToken.findMany({
-        where: { userId },
-        select: { token: true },
-      });
-
-      if (deviceTokens.length > 0) {
-        const tokens = deviceTokens.map((d) => d.token);
-        const stringifiedData = {};
-        Object.entries(data).forEach(([k, v]) => {
-          stringifiedData[k] = typeof v === 'object' ? JSON.stringify(v) : String(v);
-        });
-
-        const message = {
-          tokens,
-          notification: { title, body },
-          data: {
-            ...stringifiedData,
-            type,
-            notificationId: record.id,
-            timestamp: new Date().toISOString(),
-          },
-        };
-
-        const response = await messaging.sendEachForMulticast(message);
-        console.log(`[Notification] Push sent to user ${userId}: ${response.successCount} success, ${response.failureCount} failure`);
-
-        if (response.failureCount > 0) {
-          await cleanupInvalidTokens(response.responses, tokens);
-        }
-      }
-    } catch (err) {
-      console.warn('[Notification] FCM push error:', err.message);
-    }
-  }
 
   return record;
 }

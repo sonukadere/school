@@ -562,7 +562,7 @@ model Setting {
 }
 
 // -------------------------------------------------------------
-// Firebase Push Notifications & Device Tokens
+// In-App Notifications & Device Tokens
 // -------------------------------------------------------------
 
 model DeviceToken {

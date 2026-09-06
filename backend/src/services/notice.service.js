@@ -63,7 +63,7 @@ export async function createNotice(data) {
     },
   });
 
-  // Automatically trigger Firebase Push Notification
+  // Automatically trigger In-App Notification
   try {
     const { broadcastNotification } = await import('./notification.service.js');
     await broadcastNotification({

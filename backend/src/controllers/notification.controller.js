@@ -65,13 +65,13 @@ export const sendPush = asyncHandler(async (req, res) => {
 
 export const sendTestPush = asyncHandler(async (req, res) => {
   const result = await notificationService.sendNotificationToUser(req.user.id, {
-    title: '🎉 Test Push Notification',
-    body: `Hello ${req.user.name}, your Firebase push notification service is working perfectly!`,
+    title: '🎉 Test Notification',
+    body: `Hello ${req.user.name}, your notification alert service is working perfectly!`,
     data: { test: true, url: '/dashboard' },
     type: 'GENERAL',
   });
 
-  res.status(200).json(new ApiResponse(200, 'Test push notification dispatched to your account.', result));
+  res.status(200).json(new ApiResponse(200, 'Test notification dispatched to your account.', result));
 });
 
 export const deleteNotification = asyncHandler(async (req, res) => {

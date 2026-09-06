@@ -706,7 +706,7 @@ export const api = {
     return apiClient.put('/settings', data)
   },
 
-  // --- Notifications (Firebase Cloud Messaging) ---
+  // --- Notifications ---
   getNotifications: async (params = {}) => {
     return apiClient.get('/notifications', params)
   },
