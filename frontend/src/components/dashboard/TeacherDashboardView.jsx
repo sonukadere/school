@@ -17,6 +17,7 @@ import Card from '../common/Card'
 import Badge from '../common/Badge'
 import Button from '../common/Button'
 import { api } from '../../services/api'
+import { formatDate } from '../../utils/helpers'
 
 export default function TeacherDashboardView({ data, user }) {
   const [classes, setClasses] = useState([])
@@ -40,12 +41,7 @@ export default function TeacherDashboardView({ data, user }) {
     }
   }, [])
 
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+  const today = formatDate(new Date())
 
   const todaySchedule = [
     { time: '08:30 AM - 09:15 AM', subject: 'Mathematics', class: 'Class 8-A', room: 'Room 401', status: 'Completed' },
@@ -56,8 +52,8 @@ export default function TeacherDashboardView({ data, user }) {
 
   const assignments = [
     { title: 'Quadratic Equations Exercise 4.2', class: 'Class 10-A', dueDate: 'Tomorrow, 5:00 PM', submissions: '28/32' },
-    { title: 'Triangle Congruence Theorems Proofs', class: 'Class 9-A', dueDate: 'Sep 08, 2026', submissions: '19/30' },
-    { title: 'Linear Equations in One Variable Worksheet', class: 'Class 8-A', dueDate: 'Sep 10, 2026', submissions: '12/28' },
+    { title: 'Triangle Congruence Theorems Proofs', class: 'Class 9-A', dueDate: '08/09/2026', submissions: '19/30' },
+    { title: 'Linear Equations in One Variable Worksheet', class: 'Class 8-A', dueDate: '10/09/2026', submissions: '12/28' },
   ]
 
   return (

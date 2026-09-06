@@ -1,4 +1,5 @@
 import { cn } from '../../utils/helpers'
+import DateInput from './DateInput'
 
 function Input({
   label,
@@ -8,8 +9,22 @@ function Input({
   icon: Icon = null,
   className,
   id,
+  type,
   ...props
 }) {
+  if (type === 'date') {
+    return (
+      <DateInput
+        label={label}
+        error={error}
+        helper={helper}
+        required={required}
+        className={className}
+        id={id}
+        {...props}
+      />
+    )
+  }
   const inputId = id || props.name || `input-${label?.toLowerCase().replace(/\s+/g, '-')}`
   return (
     <div className="w-full">

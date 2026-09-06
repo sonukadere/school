@@ -114,8 +114,18 @@ function normalizeExam(e) {
     id: e.id,
     name: e.name,
     classId: e.classId,
-    className: e.class ? `${e.class.name} ${e.class.section}`.trim() : (e.className || ''),
-    subject: e.subject?.name || e.subject || 'All Subjects',
+    className: e.class ? `${e.class.name} ${e.class.section || ''}`.trim() : (e.className || ''),
+    subject: e.subjectName || e.subject?.name || e.subject || 'All Subjects',
+    subjectName: e.subjectName || e.subject?.name || e.subject || 'All Subjects',
+    type: e.type || 'NORMAL',
+    status: e.status || 'DRAFT',
+    board: e.board || 'CBSE',
+    totalMarks: e.totalMarks ?? 100,
+    passingMarks: e.passingMarks ?? 33,
+    durationMinutes: e.durationMinutes ?? 180,
+    instructions: e.instructions || '',
+    questionCount: e._count?.questions ?? (Array.isArray(e.questions) ? e.questions.length : 0),
+    questions: e.questions || [],
     date: e.startDate ? e.startDate.slice(0, 10) : (e.date || ''),
     startDate: e.startDate ? e.startDate.slice(0, 10) : '',
     endDate: e.endDate ? e.endDate.slice(0, 10) : '',
@@ -439,15 +449,31 @@ export const api = {
     let classId = data.classId
     if (!classId && data.className) {
       const classes = await api.getClasses()
-      const found = classes.find((c) => c.name === data.className)
+      const found = classes.find(
+        (c) =>
+          c.name === data.className ||
+          `${c.name} ${c.section || ''}`.trim() === data.className ||
+          c.id === data.className
+      )
       if (found) classId = found.id
+    }
+
+    let teacherId = data.teacherId || null
+    if (!teacherId && data.assignedTeacher) {
+      const teachers = await api.getTeachers()
+      const foundTeacher = teachers.find(
+        (t) =>
+          t.name?.toLowerCase() === data.assignedTeacher.toLowerCase() ||
+          t.id === data.assignedTeacher
+      )
+      if (foundTeacher) teacherId = foundTeacher.id
     }
 
     const payload = {
       name: data.name,
       code: data.code || `${data.name.slice(0, 3).toUpperCase()}-101`,
       classId: classId,
-      teacherId: data.teacherId || null,
+      teacherId: teacherId,
     }
     const res = await apiClient.post('/subjects', payload)
     return normalizeSubject(res)
@@ -590,8 +616,17 @@ export const api = {
     const payload = {
       name: data.name,
       classId: classId,
+      type: data.type || 'NORMAL',
+      status: data.status || 'DRAFT',
+      board: data.board || 'CBSE',
+      subjectName: data.subjectName || data.subject || '',
+      totalMarks: data.totalMarks ? Number(data.totalMarks) : 100,
+      passingMarks: data.passingMarks ? Number(data.passingMarks) : 33,
+      durationMinutes: data.durationMinutes ? Number(data.durationMinutes) : 180,
+      instructions: data.instructions || '',
       startDate: data.startDate ? new Date(data.startDate) : new Date(data.date || Date.now()),
       endDate: data.endDate ? new Date(data.endDate) : new Date(data.date || Date.now() + 5 * 86400000),
+      questions: data.questions || [],
     }
     const res = await apiClient.post('/exams', payload)
     return normalizeExam(res)
@@ -601,6 +636,14 @@ export const api = {
     const payload = {
       ...(data.name ? { name: data.name } : {}),
       ...(data.classId ? { classId: data.classId } : {}),
+      ...(data.type ? { type: data.type } : {}),
+      ...(data.status ? { status: data.status } : {}),
+      ...(data.board ? { board: data.board } : {}),
+      ...(data.subjectName ? { subjectName: data.subjectName } : {}),
+      ...(data.totalMarks !== undefined ? { totalMarks: Number(data.totalMarks) } : {}),
+      ...(data.passingMarks !== undefined ? { passingMarks: Number(data.passingMarks) } : {}),
+      ...(data.durationMinutes !== undefined ? { durationMinutes: Number(data.durationMinutes) } : {}),
+      ...(data.instructions !== undefined ? { instructions: data.instructions } : {}),
       ...(data.startDate ? { startDate: new Date(data.startDate) } : {}),
       ...(data.endDate ? { endDate: new Date(data.endDate) } : {}),
     }
@@ -610,6 +653,56 @@ export const api = {
 
   deleteExam: async (id) => {
     return apiClient.delete(`/exams/${id}`)
+  },
+
+  addExamQuestions: async (examId, questions) => {
+    return apiClient.post(`/exams/${examId}/questions`, { questions })
+  },
+
+  getExamPaper: async (examId) => {
+    return apiClient.get(`/exams/${examId}/paper`)
+  },
+
+  startDigitalAttempt: async (examId) => {
+    return apiClient.post(`/exams/${examId}/digital/attempt`)
+  },
+
+  submitDigitalAttempt: async (examId, answers) => {
+    return apiClient.post(`/exams/${examId}/digital/submit`, { answers })
+  },
+
+  evaluateDigitalAttempt: async (attemptId, evaluations) => {
+    return apiClient.post(`/exams/attempts/${attemptId}/evaluate`, { evaluations })
+  },
+
+  // --- Question Bank & Question Matching ---
+  matchQuestions: async (params) => {
+    return apiClient.post('/questions/match', params)
+  },
+
+  checkDuplicateQuestion: async (params) => {
+    return apiClient.post('/questions/check-duplicate', params)
+  },
+
+  getQuestions: async (params = {}) => {
+    const res = await apiClient.get('/questions', params)
+    return Array.isArray(res) ? res : (res?.data || [])
+  },
+
+  getQuestion: async (id) => {
+    return apiClient.get(`/questions/${id}`)
+  },
+
+  addQuestion: async (data) => {
+    return apiClient.post('/questions', data)
+  },
+
+  updateQuestion: async (id, data) => {
+    return apiClient.put(`/questions/${id}`, data)
+  },
+
+  deleteQuestion: async (id) => {
+    return apiClient.delete(`/questions/${id}`)
   },
 
   // --- Marks ---

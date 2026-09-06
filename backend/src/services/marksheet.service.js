@@ -182,6 +182,11 @@ export async function getStudentMarksheets(studentId, actor = null) {
  * Get class-wide marksheets for an exam (Teacher/Admin).
  */
 export async function getClassMarksheets(classId, examId, actor = null) {
+  if (actor && actor.role === 'TEACHER') {
+    const { assertTeacherAssignedToClass } = await import('../utils/teacherAccess.js');
+    await assertTeacherAssignedToClass(actor, classId);
+  }
+
   const visibleStudentIds = actor ? await getVisibleStudentIds(actor) : null;
   const where = {
     classId,

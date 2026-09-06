@@ -15,6 +15,7 @@ import PageHeader from '../../components/common/PageHeader'
 import StudentForm from '../../components/students/StudentForm'
 import Button from '../../components/common/Button'
 import { api } from '../../services/api'
+import { formatDate } from '../../utils/helpers'
 import { useToast } from '../../context/ToastContext'
 
 function AddStudent() {
@@ -98,7 +99,7 @@ function AddStudent() {
           <div class="row"><span class="label">Temporary Password:</span><span class="value" style="font-family: monospace; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${createdResult.credentials?.temporaryPassword}</span></div>
           <div class="row"><span class="label">Account Status:</span><span class="value"><span class="badge">Active</span></span></div>
           <div class="row"><span class="label">Portal Web Address:</span><span class="value">${window.location.origin}/login</span></div>
-          <div class="row"><span class="label">Admission Date:</span><span class="value">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span></div>
+          <div class="row"><span class="label">Admission Date:</span><span class="value">${formatDate(new Date())}</span></div>
         </div>
         <div class="notice">
           <p>⚠️ <strong>Security Notice:</strong> The student is required to change their temporary password upon their first login to ensure account security.</p>
@@ -132,7 +133,7 @@ Temporary Password: ${createdResult.credentials?.temporaryPassword}
 Account Status:     Active
 
 Portal URL:         ${window.location.origin}/login
-Admission Date:     ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+Admission Date:     ${formatDate(new Date())}
 
 NOTE:
 For account security, the student will be required to change 

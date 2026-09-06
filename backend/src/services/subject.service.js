@@ -6,6 +6,7 @@ import {
   notDeleted,
   searchFilter,
 } from '../utils/helpers.js';
+import { getTeacherScope, assertTeacherAssignedToSubject } from '../utils/teacherAccess.js';
 
 const SORTABLE_FIELDS = new Set(['name', 'code', 'createdAt', 'updatedAt']);
 
@@ -14,14 +15,24 @@ const DEFAULT_INCLUDE = {
   teacher: { select: { id: true, teacherId: true, name: true } },
 };
 
-export async function listSubjects(query = {}) {
+export async function listSubjects(query = {}, actor = null) {
   const { page, limit, skip } = getPagination(query);
   const { search, classId, teacherId, sortBy = 'name', sortOrder = 'asc' } = query;
+
+  let assignedSubjectIds = null;
+  if (actor && actor.role === 'TEACHER') {
+    const scope = await getTeacherScope(actor);
+    assignedSubjectIds = scope.assignedSubjectIds;
+    if (assignedSubjectIds.length === 0) {
+      return { data: [], pagination: getPaginationMeta(page, limit, 0) };
+    }
+  }
 
   const where = {
     ...notDeleted(),
     ...(classId ? { classId } : {}),
     ...(teacherId ? { teacherId } : {}),
+    ...(assignedSubjectIds ? { id: { in: assignedSubjectIds } } : {}),
     ...searchFilter(['name', 'code'], search),
   };
 
@@ -41,7 +52,11 @@ export async function listSubjects(query = {}) {
   return { data, pagination: getPaginationMeta(page, limit, total) };
 }
 
-export async function getSubject(id) {
+export async function getSubject(id, actor = null) {
+  if (actor && actor.role === 'TEACHER') {
+    await assertTeacherAssignedToSubject(actor, id);
+  }
+
   const subject = await prisma.subject.findFirst({
     where: { id, ...notDeleted() },
     include: {

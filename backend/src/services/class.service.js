@@ -6,21 +6,34 @@ import {
   notDeleted,
   searchFilter,
 } from '../utils/helpers.js';
+import { getVisibleClassIds } from '../utils/access.js';
+import { assertTeacherAssignedToClass } from '../utils/teacherAccess.js';
 
 const SORTABLE_FIELDS = new Set(['name', 'section', 'roomNumber', 'createdAt', 'updatedAt']);
 
 const DEFAULT_INCLUDE = {
   classTeacher: { select: { id: true, teacherId: true, name: true, email: true } },
-  _count: { select: { students: true, subjects: true } },
+  _count: {
+    select: {
+      students: { where: notDeleted() },
+      subjects: { where: notDeleted() },
+    },
+  },
 };
 
-export async function listClasses(query = {}) {
+export async function listClasses(query = {}, actor = null) {
   const { page, limit, skip } = getPagination(query);
   const { search, classTeacherId, sortBy = 'name', sortOrder = 'asc' } = query;
+
+  const visibleClassIds = actor ? await getVisibleClassIds(actor) : null;
+  if (visibleClassIds !== null && visibleClassIds.length === 0 && actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
+    return { data: [], pagination: getPaginationMeta(page, limit, 0) };
+  }
 
   const where = {
     ...notDeleted(),
     ...(classTeacherId ? { classTeacherId } : {}),
+    ...(visibleClassIds ? { id: { in: visibleClassIds } } : {}),
     ...searchFilter(['name', 'section', 'roomNumber'], search),
   };
 
@@ -40,7 +53,11 @@ export async function listClasses(query = {}) {
   return { data, pagination: getPaginationMeta(page, limit, total) };
 }
 
-export async function getClass(id) {
+export async function getClass(id, actor = null) {
+  if (actor && actor.role === 'TEACHER') {
+    await assertTeacherAssignedToClass(actor, id);
+  }
+
   const cls = await prisma.class.findFirst({
     where: { id, ...notDeleted() },
     include: {

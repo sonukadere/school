@@ -2,12 +2,19 @@ import { prisma } from '../config/database.js';
 import ApiError from '../utils/ApiError.js';
 import {
   addDays,
+  formatDate,
   getPagination,
   getPaginationMeta,
   notDeleted,
   toDateOnly,
 } from '../utils/helpers.js';
 import { getVisibleStudentIds } from '../utils/access.js';
+import {
+  assertTeacherCanMarkAttendance,
+  assertTeacherAssignedToStudent,
+  assertTeacherAssignedToClass,
+} from '../utils/teacherAccess.js';
+import { logAudit } from '../utils/auditLogger.js';
 
 const SORTABLE_FIELDS = new Set(['date', 'createdAt', 'updatedAt']);
 
@@ -33,19 +40,23 @@ const buildRange = (from, to) => {
 
 export async function listAttendances(query = {}, actor = null) {
   const { page, limit, skip } = getPagination(query);
-  const { studentId, status, from, to, sortBy = 'date', sortOrder = 'desc' } = query;
+  const { studentId, classId, status, date, from, to, sortBy = 'date', sortOrder = 'desc' } = query;
 
   const visibleIds = actor ? await getVisibleStudentIds(actor) : null;
   if (visibleIds !== null && visibleIds.length === 0 && actor.role !== 'ADMIN') {
     return { data: [], pagination: getPaginationMeta(page, limit, 0) };
   }
 
+  const effectiveFrom = from || date;
+  const effectiveTo = to || date;
+
   const where = {
     ...notDeleted(),
     ...(studentId ? { studentId } : {}),
     ...(visibleIds ? { studentId: { in: visibleIds } } : {}),
+    ...(classId ? { student: { classId } } : {}),
     ...(status ? { status } : {}),
-    ...buildRange(from, to),
+    ...buildRange(effectiveFrom, effectiveTo),
   };
 
   const [data, total] = await Promise.all([
@@ -70,8 +81,8 @@ export async function getAttendance(id, actor = null) {
   if (!attendance) {
     throw ApiError.notFound('Attendance record not found.');
   }
-  if (actor) {
-    await assertStudentVisible(actor, attendance.studentId);
+  if (actor && actor.role === 'TEACHER') {
+    await assertTeacherAssignedToStudent(actor, attendance.studentId);
   }
   return attendance;
 }
@@ -80,7 +91,7 @@ export async function getAttendance(id, actor = null) {
  * Mark (or update) attendance for a single student on a date.
  * Uses the unique [studentId, date] key as upsert.
  */
-export async function markAttendance(data, userId = null) {
+export async function markAttendance(data, actor = null) {
   const date = toDateOnly(data.date);
   const student = await prisma.student.findFirst({
     where: { id: data.studentId, ...notDeleted() },
@@ -89,8 +100,15 @@ export async function markAttendance(data, userId = null) {
     throw ApiError.badRequest('The selected student does not exist.');
   }
 
+  if (actor && actor.role === 'TEACHER') {
+    await assertTeacherCanMarkAttendance(actor, { studentId: data.studentId });
+  }
+
   let teacherId = null;
-  if (userId) {
+  const userId = actor?.id || (typeof actor === 'string' ? actor : null);
+  if (actor && actor.role === 'TEACHER' && actor.teacher?.id) {
+    teacherId = actor.teacher.id;
+  } else if (userId) {
     const teacher = await prisma.teacher.findFirst({ where: { userId } });
     teacherId = teacher?.id ?? null;
   }
@@ -112,12 +130,23 @@ export async function markAttendance(data, userId = null) {
     include: DEFAULT_INCLUDE,
   });
 
+  if (actor && typeof actor === 'object') {
+    logAudit({
+      action: 'MARK_ATTENDANCE',
+      user: actor,
+      resource: 'Attendance',
+      resourceId: result.id,
+      status: 'SUCCESS',
+      details: { studentId: data.studentId, date: data.date, status: data.status },
+    });
+  }
+
   // Automatically dispatch notification if marked Absent or Leave
   if (data.status === 'ABSENT' || data.status === 'LEAVE') {
     try {
       const { sendNotificationToUser } = await import('./notification.service.js');
       const studentName = `${student.firstName} ${student.lastName || ''}`.trim();
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = formatDate(date);
       const isAbsent = data.status === 'ABSENT';
 
       const userIdsToNotify = [];
@@ -146,15 +175,25 @@ export async function markAttendance(data, userId = null) {
 /**
  * Bulk-mark attendance for all (or many) students of a class on a date.
  */
-export async function bulkMarkAttendance(data, userId = null) {
+export async function bulkMarkAttendance(data, actor = null) {
   const date = toDateOnly(data.date);
   const cls = await prisma.class.findFirst({ where: { id: data.classId, ...notDeleted() } });
   if (!cls) {
     throw ApiError.badRequest('The selected class does not exist.');
   }
 
+  if (actor && actor.role === 'TEACHER') {
+    await assertTeacherCanMarkAttendance(actor, { classId: data.classId });
+    for (const record of data.records) {
+      await assertTeacherCanMarkAttendance(actor, { studentId: record.studentId });
+    }
+  }
+
   let teacherId = null;
-  if (userId) {
+  const userId = actor?.id || (typeof actor === 'string' ? actor : null);
+  if (actor && actor.role === 'TEACHER' && actor.teacher?.id) {
+    teacherId = actor.teacher.id;
+  } else if (userId) {
     const teacher = await prisma.teacher.findFirst({ where: { userId } });
     teacherId = teacher?.id ?? null;
   }
@@ -180,6 +219,16 @@ export async function bulkMarkAttendance(data, userId = null) {
     )
   );
 
+  if (actor && typeof actor === 'object') {
+    logAudit({
+      action: 'BULK_MARK_ATTENDANCE',
+      user: actor,
+      resource: 'Attendance',
+      status: 'SUCCESS',
+      details: { classId: data.classId, count: data.records.length, date: data.date },
+    });
+  }
+
   // Dispatch attendance absence notifications in background
   try {
     const absentOrLeaveRecords = data.records.filter((r) => r.status === 'ABSENT' || r.status === 'LEAVE');
@@ -191,7 +240,7 @@ export async function bulkMarkAttendance(data, userId = null) {
         include: { parent: { select: { userId: true } } },
       });
 
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = formatDate(date);
       for (const st of students) {
         const record = absentOrLeaveRecords.find((r) => r.studentId === st.id);
         const status = record?.status || 'ABSENT';
@@ -216,27 +265,60 @@ export async function bulkMarkAttendance(data, userId = null) {
   return results;
 }
 
-export async function updateAttendance(id, data) {
+export async function updateAttendance(id, data, actor = null) {
   const attendance = await prisma.attendance.findFirst({ where: { id, ...notDeleted() } });
   if (!attendance) {
     throw ApiError.notFound('Attendance record not found.');
   }
+
+  if (actor && actor.role === 'TEACHER') {
+    await assertTeacherCanMarkAttendance(actor, { studentId: attendance.studentId });
+    if (data.studentId && data.studentId !== attendance.studentId) {
+      await assertTeacherCanMarkAttendance(actor, { studentId: data.studentId });
+    }
+  }
+
   const updateData = { ...data };
   if (updateData.date) updateData.date = toDateOnly(updateData.date);
-  return prisma.attendance.update({
+  const updated = await prisma.attendance.update({
     where: { id },
     data: updateData,
     include: DEFAULT_INCLUDE,
   });
+
+  if (actor && typeof actor === 'object') {
+    logAudit({
+      action: 'UPDATE_ATTENDANCE',
+      user: actor,
+      resource: 'Attendance',
+      resourceId: id,
+      status: 'SUCCESS',
+      details: { status: data.status, remark: data.remark },
+    });
+  }
+
+  return updated;
 }
 
-export async function deleteAttendance(id) {
+export async function deleteAttendance(id, actor = null) {
   const attendance = await prisma.attendance.findFirst({ where: { id, ...notDeleted() } });
   if (!attendance) {
     throw ApiError.notFound('Attendance record not found.');
   }
-  return prisma.attendance.update({
+  const deleted = await prisma.attendance.update({
     where: { id },
     data: { deletedAt: new Date() },
   });
+
+  if (actor && typeof actor === 'object') {
+    logAudit({
+      action: 'DELETE_ATTENDANCE',
+      user: actor,
+      resource: 'Attendance',
+      resourceId: id,
+      status: 'SUCCESS',
+    });
+  }
+
+  return deleted;
 }

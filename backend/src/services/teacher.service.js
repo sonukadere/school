@@ -63,6 +63,10 @@ export async function listTeachers(query = {}, actor = null) {
     prisma.teacher.count({ where }),
   ]);
 
+  if (actor?.role === 'TEACHER') {
+    data.forEach((t) => delete t.salary);
+  }
+
   return { data, pagination: getPaginationMeta(page, limit, total) };
 }
 
@@ -80,6 +84,9 @@ export async function getTeacher(id, actor = null) {
   });
   if (!teacher) {
     throw ApiError.notFound('Teacher not found.');
+  }
+  if (actor?.role === 'TEACHER') {
+    delete teacher.salary;
   }
   return teacher;
 }
@@ -249,9 +256,14 @@ export async function updateTeacher(id, data) {
     }
   }
 
+  const updateData = { ...data };
+  if (updateData.joiningDate !== undefined) {
+    updateData.joiningDate = updateData.joiningDate ? toDateOnly(updateData.joiningDate) : null;
+  }
+
   return prisma.teacher.update({
     where: { id },
-    data,
+    data: updateData,
     include: DEFAULT_INCLUDE,
   });
 }

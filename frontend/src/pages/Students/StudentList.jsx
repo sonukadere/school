@@ -9,11 +9,14 @@ import Select from '../../components/common/Select'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
 import Avatar from '../../components/common/Avatar'
 import { api } from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { CLASS_OPTIONS, SECTION_OPTIONS } from '../../utils/constants'
 import { STATUS_STYLES, formatDate } from '../../utils/helpers'
 
 function StudentList() {
+  const { user } = useAuth()
+  const canManage = ['Admin', 'Super Admin'].includes(user?.role) || Boolean(user?.isAdmin)
   const { showToast } = useToast()
   const navigate = useNavigate()
   const [students, setStudents] = useState([])
@@ -112,21 +115,25 @@ function StudentList() {
           >
             <Eye size={14} />
           </Link>
-          <Link
-            to={`/students/edit/${student.id}`}
-            title="Edit Student"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-600"
-          >
-            <Pencil size={14} />
-          </Link>
-          <button
-            type="button"
-            onClick={() => setDeleteTarget(student)}
-            title="Delete Student"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-rose-300 hover:bg-rose-50/60 hover:text-rose-600"
-          >
-            <Trash2 size={14} />
-          </button>
+          {canManage && (
+            <>
+              <Link
+                to={`/students/edit/${student.id}`}
+                title="Edit Student"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-600"
+              >
+                <Pencil size={14} />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(student)}
+                title="Delete Student"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-rose-300 hover:bg-rose-50/60 hover:text-rose-600"
+              >
+                <Trash2 size={14} />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -139,9 +146,11 @@ function StudentList() {
         description="Manage student records, admissions and profiles"
         breadcrumb={[{ label: 'Students' }]}
         actions={
-          <Link to="/students/add">
-            <Button leftIcon={Plus}>Add Student</Button>
-          </Link>
+          canManage ? (
+            <Link to="/students/add">
+              <Button leftIcon={Plus}>Add Student</Button>
+            </Link>
+          ) : null
         }
       />
 

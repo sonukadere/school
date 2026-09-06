@@ -60,6 +60,9 @@ const EditProfile = lazyRetry(() => import('../pages/Profile/EditProfile'), 'edi
 const ChangePassword = lazyRetry(() => import('../pages/Profile/ChangePassword'), 'change_password')
 const SettingsPage = lazyRetry(() => import('../pages/Settings/SettingsPage'), 'settings')
 const NotificationList = lazyRetry(() => import('../pages/Notifications/NotificationList'), 'notifications')
+const QuestionBankList = lazyRetry(() => import('../pages/Questions/QuestionBankList'), 'question_bank')
+const ExamPaperView = lazyRetry(() => import('../pages/Exams/ExamPaperView'), 'exam_paper')
+const DigitalExamAttempt = lazyRetry(() => import('../pages/Exams/DigitalExamAttempt'), 'digital_exam')
 
 function ForbiddenRedirect() {
   const { showToast } = useToast()
@@ -85,11 +88,18 @@ function ProtectedRoute({ children }) {
     return children
   }
 
-  if (user?.role === 'Teacher') {
+  const roleUpper = (user?.role || '').toUpperCase()
+  if (roleUpper === 'TEACHER') {
     const forbiddenPrefixes = [
+      '/students/add',
+      '/students/edit',
+      '/classes/add',
+      '/classes/edit',
+      '/subjects/add',
       '/teachers',
       '/attendance/teachers',
       '/fees',
+      '/notices/create',
       '/settings',
     ]
     const isForbidden = forbiddenPrefixes.some((prefix) =>
@@ -108,6 +118,7 @@ function ProtectedRoute({ children }) {
       '/subjects',
       '/attendance',
       '/settings',
+      '/questions',
       '/exams/create',
       '/marks/entry',
       '/notices/create',
@@ -128,6 +139,7 @@ function ProtectedRoute({ children }) {
       '/subjects',
       '/attendance',
       '/settings',
+      '/questions',
       '/exams/create',
       '/marks/entry',
       '/notices/create',
@@ -215,6 +227,9 @@ function AppRoutes() {
 
         <Route path="/exams" element={<Suspense fallback={<Loader fullScreen label="Loading exams..." />}><ExamList /></Suspense>} />
         <Route path="/exams/create" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><CreateExam /></Suspense>} />
+        <Route path="/exams/:id/paper" element={<Suspense fallback={<Loader fullScreen label="Loading exam paper..." />}><ExamPaperView /></Suspense>} />
+        <Route path="/exams/:id/attempt" element={<Suspense fallback={<Loader fullScreen label="Loading digital exam..." />}><DigitalExamAttempt /></Suspense>} />
+        <Route path="/questions" element={<Suspense fallback={<Loader fullScreen label="Loading question bank..." />}><QuestionBankList /></Suspense>} />
 
         <Route path="/marks" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><Marks /></Suspense>} />
         <Route path="/marks/entry" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><MarksEntry /></Suspense>} />

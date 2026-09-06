@@ -13,6 +13,7 @@ import PageHeader from '../../components/common/PageHeader'
 import TeacherForm from '../../components/teachers/TeacherForm'
 import Button from '../../components/common/Button'
 import { api } from '../../services/api'
+import { formatDate } from '../../utils/helpers'
 import { useToast } from '../../context/ToastContext'
 
 function AddTeacher() {
@@ -96,7 +97,7 @@ function AddTeacher() {
           <div class="row"><span class="label">Temporary Password:</span><span class="value" style="font-family: monospace; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${createdResult.credentials?.temporaryPassword}</span></div>
           <div class="row"><span class="label">Account Status:</span><span class="value"><span class="badge">Active</span></span></div>
           <div class="row"><span class="label">Faculty Portal:</span><span class="value">${window.location.origin}/login</span></div>
-          <div class="row"><span class="label">Issue Date:</span><span class="value">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span></div>
+          <div class="row"><span class="label">Issue Date:</span><span class="value">${formatDate(new Date())}</span></div>
         </div>
         <div class="notice">
           <p>⚠️ <strong>Security Notice:</strong> The faculty member is required to change their temporary password upon first login.</p>
@@ -129,7 +130,7 @@ Temporary Password: ${createdResult.credentials?.temporaryPassword}
 Account Status:     Active
 
 Faculty Portal:     ${window.location.origin}/login
-Issue Date:         ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+Issue Date:         ${formatDate(new Date())}
 
 NOTE:
 For account security, the teacher will be required to change 

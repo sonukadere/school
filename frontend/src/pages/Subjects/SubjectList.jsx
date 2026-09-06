@@ -8,13 +8,18 @@ import Badge from '../../components/common/Badge'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { api } from '../../services/api'
 import { useToast } from '../../context/ToastContext'
+import { useAuth } from '../../context/AuthContext'
 
 function SubjectList() {
+  const { user } = useAuth()
   const { showToast } = useToast()
   const [subjects, setSubjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+
+  const roleUpper = (user?.role || '').toUpperCase()
+  const isAdmin = roleUpper === 'ADMIN' || roleUpper === 'SUPER_ADMIN'
 
   const loadSubjects = async () => {
     setLoading(true)
@@ -36,7 +41,7 @@ function SubjectList() {
     loadSubjects()
   }
 
-  const columns = [
+  const baseColumns = [
     {
       key: 'name',
       header: 'Subject',
@@ -58,24 +63,30 @@ function SubjectList() {
     ) },
     { key: 'className', header: 'Class', render: (item) => item.className },
     { key: 'assignedTeacher', header: 'Assigned Teacher', render: (item) => item.assignedTeacher },
-    {
-      key: 'actions',
-      header: 'Actions',
-      className: 'text-right',
-      render: (item) => (
-        <div className="flex justify-end gap-1">
-          <button
-            type="button"
-            onClick={() => setDeleteTarget(item)}
-            title="Delete"
-            className="rounded-lg p-2 text-rose-600 transition hover:bg-rose-50"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
-      ),
-    },
   ]
+
+  const columns = isAdmin
+    ? [
+        ...baseColumns,
+        {
+          key: 'actions',
+          header: 'Actions',
+          className: 'text-right',
+          render: (item) => (
+            <div className="flex justify-end gap-1">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(item)}
+                title="Delete"
+                className="rounded-lg p-2 text-rose-600 transition hover:bg-rose-50"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          ),
+        },
+      ]
+    : baseColumns
 
   return (
     <div>
@@ -84,9 +95,11 @@ function SubjectList() {
         description="Manage subjects offered and their assigned teachers"
         breadcrumb={[{ label: 'Subjects' }]}
         actions={
-          <Link to="/subjects/add">
-            <Button leftIcon={Plus}>Add Subject</Button>
-          </Link>
+          isAdmin ? (
+            <Link to="/subjects/add">
+              <Button leftIcon={Plus}>Add Subject</Button>
+            </Link>
+          ) : null
         }
       />
 

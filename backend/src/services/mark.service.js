@@ -2,6 +2,11 @@ import { prisma } from '../config/database.js';
 import ApiError from '../utils/ApiError.js';
 import { getPagination, getPaginationMeta, notDeleted } from '../utils/helpers.js';
 import { getVisibleStudentIds } from '../utils/access.js';
+import {
+  assertTeacherCanManageMark,
+  assertTeacherAssignedToStudent,
+} from '../utils/teacherAccess.js';
+import { logAudit } from '../utils/auditLogger.js';
 
 const SORTABLE_FIELDS = new Set(['marks', 'grade', 'createdAt', 'updatedAt']);
 
@@ -71,13 +76,17 @@ export async function getMark(id, actor = null) {
   if (!mark) {
     throw ApiError.notFound('Mark record not found.');
   }
-  if (actor) {
-    await assertStudentVisible(actor, mark.studentId);
+  if (actor && actor.role === 'TEACHER') {
+    await assertTeacherAssignedToStudent(actor, mark.studentId);
   }
   return mark;
 }
 
-export async function createMark(data) {
+export async function createMark(data, actor = null) {
+  if (actor && actor.role === 'TEACHER') {
+    await assertTeacherCanManageMark(actor, { studentId: data.studentId, subjectId: data.subjectId });
+  }
+
   const [student, subject, exam] = await Promise.all([
     prisma.student.findFirst({ where: { id: data.studentId, ...notDeleted() } }),
     prisma.subject.findFirst({ where: { id: data.subjectId, ...notDeleted() } }),
@@ -98,6 +107,22 @@ export async function createMark(data) {
     },
     include: DEFAULT_INCLUDE,
   });
+
+  if (actor && typeof actor === 'object') {
+    logAudit({
+      action: 'CREATE_MARK',
+      user: actor,
+      resource: 'Mark',
+      resourceId: mark.id,
+      status: 'SUCCESS',
+      details: {
+        studentId: mark.studentId,
+        subjectId: mark.subjectId,
+        examId: mark.examId,
+        marks: mark.marks,
+      },
+    });
+  }
 
   // Automatically dispatch notification for new marks
   try {
@@ -126,12 +151,23 @@ export async function createMark(data) {
   return mark;
 }
 
-export async function updateMark(id, data) {
+export async function updateMark(id, data, actor = null) {
   const mark = await prisma.mark.findFirst({ where: { id, ...notDeleted() } });
   if (!mark) {
     throw ApiError.notFound('Mark record not found.');
   }
-  return prisma.mark.update({
+
+  if (actor && actor.role === 'TEACHER') {
+    await assertTeacherCanManageMark(actor, { markId: id });
+    if (data.studentId || data.subjectId) {
+      await assertTeacherCanManageMark(actor, {
+        studentId: data.studentId || mark.studentId,
+        subjectId: data.subjectId || mark.subjectId,
+      });
+    }
+  }
+
+  const updated = await prisma.mark.update({
     where: { id },
     data: {
       ...data,
@@ -139,12 +175,31 @@ export async function updateMark(id, data) {
     },
     include: DEFAULT_INCLUDE,
   });
+
+  if (actor && typeof actor === 'object') {
+    logAudit({
+      action: 'UPDATE_MARK',
+      user: actor,
+      resource: 'Mark',
+      resourceId: id,
+      status: 'SUCCESS',
+      details: { marks: data.marks, grade: updated.grade },
+    });
+  }
+
+  return updated;
 }
 
-export async function bulkCreateMarks(data) {
+export async function bulkCreateMarks(data, actor = null) {
   const exam = await prisma.exam.findFirst({ where: { id: data.examId, ...notDeleted() } });
   if (!exam) {
     throw ApiError.badRequest('The selected exam does not exist.');
+  }
+
+  if (actor && actor.role === 'TEACHER') {
+    for (const r of data.records) {
+      await assertTeacherCanManageMark(actor, { studentId: r.studentId, subjectId: r.subjectId });
+    }
   }
 
   const records = data.records.map((r) => ({
@@ -168,6 +223,16 @@ export async function bulkCreateMarks(data) {
       })
     )
   );
+
+  if (actor && typeof actor === 'object') {
+    logAudit({
+      action: 'BULK_CREATE_MARKS',
+      user: actor,
+      resource: 'Mark',
+      status: 'SUCCESS',
+      details: { examId: data.examId, count: data.records.length },
+    });
+  }
 
   // Dispatch notifications for students in bulk entry
   try {
@@ -197,10 +262,22 @@ export async function bulkCreateMarks(data) {
   return results;
 }
 
-export async function deleteMark(id) {
+export async function deleteMark(id, actor = null) {
   const mark = await prisma.mark.findFirst({ where: { id, ...notDeleted() } });
   if (!mark) {
     throw ApiError.notFound('Mark record not found.');
   }
-  return prisma.mark.update({ where: { id }, data: { deletedAt: new Date() } });
+  const deleted = await prisma.mark.update({ where: { id }, data: { deletedAt: new Date() } });
+
+  if (actor && typeof actor === 'object') {
+    logAudit({
+      action: 'DELETE_MARK',
+      user: actor,
+      resource: 'Mark',
+      resourceId: id,
+      status: 'SUCCESS',
+    });
+  }
+
+  return deleted;
 }

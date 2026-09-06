@@ -21,7 +21,7 @@ import {
 import Card from '../common/Card'
 import Badge from '../common/Badge'
 import Button from '../common/Button'
-import { formatCurrency } from '../../utils/helpers'
+import { formatCurrency, formatDate } from '../../utils/helpers'
 
 export default function SuperAdminDashboardView({ data, user }) {
   const [systemStats, setSystemStats] = useState({
@@ -33,12 +33,7 @@ export default function SuperAdminDashboardView({ data, user }) {
     lastBackup: 'Today, 04:00 AM',
   })
 
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+  const today = formatDate(new Date())
 
   const userDistribution = [
     { role: 'Super Admins', count: 2, icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-50', link: '/settings' },

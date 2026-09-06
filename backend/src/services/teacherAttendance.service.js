@@ -7,6 +7,7 @@ import {
   notDeleted,
   toDateOnly,
 } from '../utils/helpers.js';
+import { logAudit } from '../utils/auditLogger.js';
 
 const SORTABLE_FIELDS = new Set(['date', 'createdAt', 'updatedAt']);
 
@@ -21,13 +22,25 @@ const buildRange = (from, to) => {
   return { date: { ...(gte ? { gte } : {}), ...(lt ? { lt } : {}) } };
 };
 
-export async function listTeacherAttendances(query = {}) {
+export async function listTeacherAttendances(query = {}, actor = null) {
   const { page, limit, skip } = getPagination(query);
   const { teacherId, status, from, to, sortBy = 'date', sortOrder = 'desc' } = query;
 
+  let effectiveTeacherId = teacherId;
+  if (actor && actor.role === 'TEACHER') {
+    const ownTeacherId = actor.teacher?.id;
+    if (!ownTeacherId) {
+      return { data: [], pagination: getPaginationMeta(page, limit, 0) };
+    }
+    if (teacherId && teacherId !== ownTeacherId) {
+      throw ApiError.forbidden('Access denied. You may only view your own attendance records.');
+    }
+    effectiveTeacherId = ownTeacherId;
+  }
+
   const where = {
     ...notDeleted(),
-    ...(teacherId ? { teacherId } : {}),
+    ...(effectiveTeacherId ? { teacherId: effectiveTeacherId } : {}),
     ...(status ? { status } : {}),
     ...buildRange(from, to),
   };
@@ -46,7 +59,7 @@ export async function listTeacherAttendances(query = {}) {
   return { data, pagination: getPaginationMeta(page, limit, total) };
 }
 
-export async function getTeacherAttendance(id) {
+export async function getTeacherAttendance(id, actor = null) {
   const attendance = await prisma.teacherAttendance.findFirst({
     where: { id, ...notDeleted() },
     include: DEFAULT_INCLUDE,
@@ -54,13 +67,18 @@ export async function getTeacherAttendance(id) {
   if (!attendance) {
     throw ApiError.notFound('Teacher attendance record not found.');
   }
+  if (actor && actor.role === 'TEACHER') {
+    if (attendance.teacherId !== actor.teacher?.id) {
+      throw ApiError.forbidden('Access denied. You may only view your own attendance records.');
+    }
+  }
   return attendance;
 }
 
 /**
  * Mark (or update) attendance for a single teacher on a date.
  */
-export async function markTeacherAttendance(data) {
+export async function markTeacherAttendance(data, actor = null) {
   const date = toDateOnly(data.date);
   const teacher = await prisma.teacher.findFirst({
     where: { id: data.teacherId, ...notDeleted() },
@@ -69,7 +87,7 @@ export async function markTeacherAttendance(data) {
     throw ApiError.badRequest('The selected teacher does not exist.');
   }
 
-  return prisma.teacherAttendance.upsert({
+  const result = await prisma.teacherAttendance.upsert({
     where: { teacherId_date: { teacherId: data.teacherId, date } },
     create: {
       teacherId: data.teacherId,
@@ -83,9 +101,22 @@ export async function markTeacherAttendance(data) {
     },
     include: DEFAULT_INCLUDE,
   });
+
+  if (actor && typeof actor === 'object') {
+    logAudit({
+      action: 'MARK_TEACHER_ATTENDANCE',
+      user: actor,
+      resource: 'TeacherAttendance',
+      resourceId: result.id,
+      status: 'SUCCESS',
+      details: { teacherId: data.teacherId, date: data.date, status: data.status },
+    });
+  }
+
+  return result;
 }
 
-export async function bulkMarkTeacherAttendance(data) {
+export async function bulkMarkTeacherAttendance(data, actor = null) {
   const date = toDateOnly(data.date);
   const results = await prisma.$transaction(
     data.records.map((record) =>
@@ -105,10 +136,21 @@ export async function bulkMarkTeacherAttendance(data) {
       })
     )
   );
+
+  if (actor && typeof actor === 'object') {
+    logAudit({
+      action: 'BULK_MARK_TEACHER_ATTENDANCE',
+      user: actor,
+      resource: 'TeacherAttendance',
+      status: 'SUCCESS',
+      details: { count: data.records.length, date: data.date },
+    });
+  }
+
   return results;
 }
 
-export async function updateTeacherAttendance(id, data) {
+export async function updateTeacherAttendance(id, data, actor = null) {
   const attendance = await prisma.teacherAttendance.findFirst({
     where: { id, ...notDeleted() },
   });
@@ -117,22 +159,47 @@ export async function updateTeacherAttendance(id, data) {
   }
   const updateData = { ...data };
   if (updateData.date) updateData.date = toDateOnly(updateData.date);
-  return prisma.teacherAttendance.update({
+  const updated = await prisma.teacherAttendance.update({
     where: { id },
     data: updateData,
     include: DEFAULT_INCLUDE,
   });
+
+  if (actor && typeof actor === 'object') {
+    logAudit({
+      action: 'UPDATE_TEACHER_ATTENDANCE',
+      user: actor,
+      resource: 'TeacherAttendance',
+      resourceId: id,
+      status: 'SUCCESS',
+      details: { status: data.status, remark: data.remark },
+    });
+  }
+
+  return updated;
 }
 
-export async function deleteTeacherAttendance(id) {
+export async function deleteTeacherAttendance(id, actor = null) {
   const attendance = await prisma.teacherAttendance.findFirst({
     where: { id, ...notDeleted() },
   });
   if (!attendance) {
     throw ApiError.notFound('Teacher attendance record not found.');
   }
-  return prisma.teacherAttendance.update({
+  const deleted = await prisma.teacherAttendance.update({
     where: { id },
     data: { deletedAt: new Date() },
   });
+
+  if (actor && typeof actor === 'object') {
+    logAudit({
+      action: 'DELETE_TEACHER_ATTENDANCE',
+      user: actor,
+      resource: 'TeacherAttendance',
+      resourceId: id,
+      status: 'SUCCESS',
+    });
+  }
+
+  return deleted;
 }

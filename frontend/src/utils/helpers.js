@@ -34,19 +34,157 @@ export function formatCurrency(value) {
   }).format(value || 0)
 }
 
-export function formatDate(dateString) {
-  if (!dateString) return '—'
-  const date = new Date(dateString)
-  if (Number.isNaN(date.getTime())) return dateString
-  return date.toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+/**
+ * Validate that day, month, year form a valid calendar date.
+ * Rejects 32/01/2026, 31/02/2026, 00/12/2026, handles leap years.
+ */
+export function isValidDate(day, month, year) {
+  const d = Number(day)
+  const m = Number(month)
+  const y = Number(year)
+  if (!d || !m || !y) return false
+  if (y < 1900 || y > 2100) return false
+  if (m < 1 || m > 12) return false
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return d >= 1 && d <= daysInMonth
+}
+
+/**
+ * Parses a date string (DD/MM/YYYY or YYYY-MM-DD) into unambiguous parts.
+ * Never relies on ambiguous JavaScript new Date("06/09/2026").
+ */
+export function parseDisplayDate(str) {
+  if (!str) return null
+  const trimmed = String(str).trim()
+
+  // Format 1: DD/MM/YYYY or DD-MM-YYYY
+  const dmMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
+  if (dmMatch) {
+    const day = Number(dmMatch[1])
+    const month = Number(dmMatch[2])
+    const year = Number(dmMatch[3])
+    if (!isValidDate(day, month, year)) return null
+    const padD = String(day).padStart(2, '0')
+    const padM = String(month).padStart(2, '0')
+    const isoString = `${year}-${padM}-${padD}`
+    return {
+      day,
+      month,
+      year,
+      display: `${padD}/${padM}/${year}`,
+      isoString,
+      dateObj: new Date(Date.UTC(year, month - 1, day)),
+      isValid: true,
+    }
+  }
+
+  // Format 2: YYYY-MM-DD
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+  if (isoMatch) {
+    const year = Number(isoMatch[1])
+    const month = Number(isoMatch[2])
+    const day = Number(isoMatch[3])
+    if (!isValidDate(day, month, year)) return null
+    const padD = String(day).padStart(2, '0')
+    const padM = String(month).padStart(2, '0')
+    return {
+      day,
+      month,
+      year,
+      display: `${padD}/${padM}/${year}`,
+      isoString: `${year}-${padM}-${padD}`,
+      dateObj: new Date(Date.UTC(year, month - 1, day)),
+      isValid: true,
+    }
+  }
+
+  // Fallback for Date objects or ISO strings
+  const d = new Date(str)
+  if (Number.isNaN(d.getTime())) return null
+  const day = d.getUTCDate()
+  const month = d.getUTCMonth() + 1
+  const year = d.getUTCFullYear()
+  const padD = String(day).padStart(2, '0')
+  const padM = String(month).padStart(2, '0')
+  return {
+    day,
+    month,
+    year,
+    display: `${padD}/${padM}/${year}`,
+    isoString: `${year}-${padM}-${padD}`,
+    dateObj: d,
+    isValid: true,
+  }
+}
+
+/**
+ * Format any date input strictly as DD/MM/YYYY.
+ * Example: 2026-09-06 -> 06/09/2026
+ */
+export function formatDate(dateInput) {
+  if (!dateInput) return '—'
+
+  // If already in DD/MM/YYYY format, validate and return
+  if (typeof dateInput === 'string') {
+    const trimmed = dateInput.trim()
+    const match = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
+    if (match) {
+      const d = match[1].padStart(2, '0')
+      const m = match[2].padStart(2, '0')
+      const y = match[3]
+      return `${d}/${m}/${y}`
+    }
+    // If string matches YYYY-MM-DD
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+    if (isoMatch) {
+      const y = isoMatch[1]
+      const m = isoMatch[2].padStart(2, '0')
+      const d = isoMatch[3].padStart(2, '0')
+      return `${d}/${m}/${y}`
+    }
+  }
+
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput)
+  if (Number.isNaN(date.getTime())) return String(dateInput)
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}/${month}/${year}`
+}
+
+/**
+ * Format date-time as DD/MM/YYYY, hh:mm A
+ */
+export function formatDateTime(dateInput) {
+  if (!dateInput) return '—'
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput)
+  if (Number.isNaN(date.getTime())) return formatDate(dateInput)
+
+  const datePart = formatDate(date)
+  let hours = date.getHours()
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  hours = hours % 12
+  hours = hours ? hours : 12 // 0 should be 12
+  const formattedHours = String(hours).padStart(2, '0')
+
+  return `${datePart}, ${formattedHours}:${minutes} ${ampm}`
 }
 
 export function todayISO() {
-  return new Date().toISOString().slice(0, 10)
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+export function todayDDMMYYYY() {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${d}/${m}/${y}`
 }
 
 export function gradeFromPercentage(percentage) {

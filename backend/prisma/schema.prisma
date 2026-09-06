@@ -97,6 +97,51 @@ enum TcStatus {
   CANCELLED
 }
 
+enum ExamType {
+  NORMAL
+  DIGITAL
+}
+
+enum ExamStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  COMPLETED
+  PUBLISHED
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE
+  SHORT_ANSWER
+  LONG_ANSWER
+  NUMERICAL
+  MATCH_FOLLOWING
+  CASE_STUDY
+  ASSERTION_REASON
+  DIAGRAM
+}
+
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionSource {
+  SCHOOL_QUESTION_BANK
+  TEACHER_UPLOADED
+  OPEN_EDUCATIONAL_RESOURCE
+  LICENSED_QUESTION_BANK
+  AI_GENERATED
+}
+
+enum ExamAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EVALUATED
+}
+
 // -------------------------------------------------------------
 // User
 // -------------------------------------------------------------
@@ -180,6 +225,7 @@ model Student {
   payments    Payment[]
   receipts    PaymentReceipt[]
   marks       Mark[]
+  examAttempts ExamAttempt[]
   transferCertificates TransferCertificate[]
 
   createdAt   DateTime      @default(now())
@@ -301,7 +347,7 @@ model Class {
   updatedAt     DateTime @updatedAt
   deletedAt     DateTime?
 
-  @@unique([name, section])
+  @@index([name, section])
   @@index([classTeacherId])
 }
 
@@ -329,7 +375,7 @@ model Subject {
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
-  @@unique([classId, name])
+  @@index([classId, name])
   @@index([teacherId])
 }
 
@@ -408,22 +454,134 @@ model Fee {
 // -------------------------------------------------------------
 
 model Exam {
-  id        String   @id @default(cuid()) @map("_id")
-  name      String
-  startDate DateTime @db.Date
-  endDate   DateTime @db.Date
+  id              String         @id @default(cuid()) @map("_id")
+  name            String
+  type            ExamType       @default(NORMAL)
+  status          ExamStatus     @default(SCHEDULED)
+  startDate       DateTime       @db.Date
+  endDate         DateTime       @db.Date
+  board           String?        @default("CBSE")
+  subjectName     String?
+  totalMarks      Float?         @default(100)
+  passingMarks    Float?         @default(33)
+  durationMinutes Int?           @default(180)
+  instructions    String?
 
-  classId   String
-  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId         String
+  class           Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
 
-  marks     Mark[]
+  marks           Mark[]
+  questions       ExamQuestion[]
+  attempts        ExamAttempt[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  deletedAt       DateTime?
 
-  @@unique([name, classId])
+  @@index([name, classId])
   @@index([classId])
+}
+
+// -------------------------------------------------------------
+// Question Bank & Examination Models
+// -------------------------------------------------------------
+
+model Question {
+  id                 String             @id @default(cuid()) @map("_id")
+  text               String
+  type               QuestionType       @default(SHORT_ANSWER)
+  classId            String?
+  className          String?
+  board              String?            @default("CBSE")
+  subjectId          String?
+  subjectName        String?
+  chapter            String?
+  topic              String?
+  difficulty         QuestionDifficulty @default(MEDIUM)
+  marks              Float              @default(1)
+  negativeMarks      Float?             @default(0)
+  language           String?            @default("English")
+  options            Json?
+  correctAnswer      String?
+  explanation        String?
+  rubric             Json?
+  source             QuestionSource     @default(SCHOOL_QUESTION_BANK)
+  sourceName         String?
+  sourceUrl          String?
+  licenseInfo        String?
+  retrievalDate      DateTime?
+  aiModel            String?
+  isArchived         Boolean            @default(false)
+  createdByTeacherId String?
+  createdById        String?
+
+  examQuestions      ExamQuestion[]
+
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  deletedAt          DateTime?
+
+  @@index([classId])
+  @@index([subjectName])
+  @@index([chapter])
+  @@index([source])
+  @@index([difficulty])
+}
+
+model ExamQuestion {
+  id          String   @id @default(cuid()) @map("_id")
+  order       Int      @default(1)
+  marks       Float    @default(1)
+  sectionName String?
+
+  examId      String
+  exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([examId, questionId])
+  @@index([examId])
+  @@index([questionId])
+}
+
+model ExamAttempt {
+  id            String            @id @default(cuid()) @map("_id")
+  startTime     DateTime          @default(now())
+  submittedAt   DateTime?
+  status        ExamAttemptStatus @default(IN_PROGRESS)
+  answers       Json?
+  score         Float?
+  feedback      String?
+  autoEvaluated Boolean?          @default(false)
+
+  examId        String
+  exam          Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  studentId     String
+  student       Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([examId, studentId])
+  @@index([examId])
+  @@index([studentId])
+}
+
+model QuestionSourceConfig {
+  id          String   @id @default(cuid()) @map("_id")
+  sourceType  String   @unique
+  name        String
+  baseUrl     String?
+  apiKey      String?
+  isEnabled   Boolean  @default(true)
+  licenseInfo String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // -------------------------------------------------------------

@@ -373,9 +373,9 @@ export default function FeeStructureTab() {
               onChange={(e) => setDueDate(e.target.value)}
             />
             <Input
-              label="Late Fee Penalty ($)"
+              label="Late Fee Penalty (₹)"
               type="number"
-              step="0.01"
+              step="1"
               value={lateFee}
               onChange={(e) => setLateFee(e.target.value)}
               placeholder="e.g. 500"

@@ -3,14 +3,14 @@ import asyncHandler from '../utils/asyncHandler.js';
 import * as classService from '../services/class.service.js';
 
 export const listClasses = asyncHandler(async (req, res) => {
-  const result = await classService.listClasses(req.query);
+  const result = await classService.listClasses(req.query, req.user);
   res
     .status(200)
     .json(new ApiResponse(200, 'Classes fetched successfully.', result.data, result.pagination));
 });
 
 export const getClass = asyncHandler(async (req, res) => {
-  const cls = await classService.getClass(req.params.id);
+  const cls = await classService.getClass(req.params.id, req.user);
   res.status(200).json(new ApiResponse(200, 'Class fetched successfully.', cls));
 });
 

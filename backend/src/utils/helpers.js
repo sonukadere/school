@@ -116,13 +116,56 @@ export function serializeUser(user) {
 }
 
 /**
- * Normalize any date-like value to a UTC midnight Date (date-only).
+ * Validate that day, month, year form a valid calendar date.
  */
-export function toDateOnly(value) {
+export function isValidDateParts(day, month, year) {
+  const d = Number(day);
+  const m = Number(month);
+  const y = Number(year);
+  if (!d || !m || !y) return false;
+  if (y < 1900 || y > 2100) return false;
+  if (m < 1 || m > 12) return false;
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return d >= 1 && d <= daysInMonth;
+}
+
+/**
+ * Unambiguously parse any date string or Date object.
+ * Strictly interprets "06/09/2026" as 6 September 2026 (never 9 June 2026).
+ */
+export function parseDate(value) {
   if (!value) return null;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    // 1. DD/MM/YYYY or DD-MM-YYYY
+    const dmMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dmMatch) {
+      const day = Number(dmMatch[1]);
+      const month = Number(dmMatch[2]);
+      const year = Number(dmMatch[3]);
+      if (!isValidDateParts(day, month, year)) return null;
+      return new Date(Date.UTC(year, month - 1, day));
+    }
+    // 2. YYYY-MM-DD
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (isoMatch) {
+      const year = Number(isoMatch[1]);
+      const month = Number(isoMatch[2]);
+      const day = Number(isoMatch[3]);
+      if (!isValidDateParts(day, month, year)) return null;
+      return new Date(Date.UTC(year, month - 1, day));
+    }
+  }
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return null;
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
+/**
+ * Normalize any date-like value to a UTC midnight Date (date-only).
+ */
+export function toDateOnly(value) {
+  return parseDate(value);
 }
 
 /**
@@ -139,6 +182,30 @@ export function addDays(value, days) {
   const d = value instanceof Date ? new Date(value) : new Date(value);
   d.setUTCDate(d.getUTCDate() + days);
   return d;
+}
+
+/**
+ * Format a date strictly as DD/MM/YYYY.
+ */
+export function formatDate(value) {
+  if (!value) return '';
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    const dmMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dmMatch) {
+      return `${dmMatch[1].padStart(2, '0')}/${dmMatch[2].padStart(2, '0')}/${dmMatch[3]}`;
+    }
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (isoMatch) {
+      return `${isoMatch[3].padStart(2, '0')}/${isoMatch[2].padStart(2, '0')}/${isoMatch[1]}`;
+    }
+  }
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  const day = String(d.getUTCDate ? d.getUTCDate() : d.getDate()).padStart(2, '0');
+  const month = String((d.getUTCMonth ? d.getUTCMonth() : d.getMonth()) + 1).padStart(2, '0');
+  const year = d.getUTCFullYear ? d.getUTCFullYear() : d.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 /**

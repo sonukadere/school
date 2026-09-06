@@ -15,23 +15,23 @@ export const getAttendance = asyncHandler(async (req, res) => {
 });
 
 export const markAttendance = asyncHandler(async (req, res) => {
-  const attendance = await attendanceService.markAttendance(req.body, req.user.id);
+  const attendance = await attendanceService.markAttendance(req.body, req.user);
   res.status(201).json(new ApiResponse(201, 'Attendance marked successfully.', attendance));
 });
 
 export const bulkMarkAttendance = asyncHandler(async (req, res) => {
-  const results = await attendanceService.bulkMarkAttendance(req.body, req.user.id);
+  const results = await attendanceService.bulkMarkAttendance(req.body, req.user);
   res
     .status(201)
     .json(new ApiResponse(201, `${results.length} attendance records marked successfully.`, results));
 });
 
 export const updateAttendance = asyncHandler(async (req, res) => {
-  const attendance = await attendanceService.updateAttendance(req.params.id, req.body);
+  const attendance = await attendanceService.updateAttendance(req.params.id, req.body, req.user);
   res.status(200).json(new ApiResponse(200, 'Attendance record updated successfully.', attendance));
 });
 
 export const deleteAttendance = asyncHandler(async (req, res) => {
-  await attendanceService.deleteAttendance(req.params.id);
+  await attendanceService.deleteAttendance(req.params.id, req.user);
   res.status(200).json(new ApiResponse(200, 'Attendance record deleted successfully.', null));
 });

@@ -7,6 +7,11 @@ export const getMyProfile = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, 'Profile fetched successfully.', profile));
 });
 
+export const updateMyProfile = asyncHandler(async (req, res) => {
+  const profile = await meService.updateMyProfile(req.user, req.body);
+  res.status(200).json(new ApiResponse(200, 'Profile updated successfully.', profile));
+});
+
 export const getMyAttendance = asyncHandler(async (req, res) => {
   const data = await meService.getMyAttendance(req.user);
   res.status(200).json(new ApiResponse(200, 'Attendance fetched successfully.', data));

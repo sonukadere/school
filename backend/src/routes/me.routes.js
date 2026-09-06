@@ -7,6 +7,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/profile', meController.getMyProfile);
+router.put('/profile', meController.updateMyProfile);
 router.get('/attendance', meController.getMyAttendance);
 router.get('/results', meController.getMyResults);
 router.get('/fees', meController.getMyFees);

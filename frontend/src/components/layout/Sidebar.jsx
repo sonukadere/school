@@ -12,7 +12,8 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
   const filteredMenuItems = MENU_ITEMS.map((group) => {
     const items = group.items
       .filter((item) => {
-        if (user?.role === 'Teacher') {
+        const roleUpper = (user?.role || '').toUpperCase()
+        if (roleUpper === 'TEACHER') {
           const forbidden = ['/teachers', '/fees', '/settings']
           return !forbidden.some((path) => item.path.startsWith(path))
         }
@@ -24,6 +25,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
             '/subjects',
             '/attendance',
             '/settings',
+            '/questions',
           ]
           return !forbidden.some((path) => item.path.startsWith(path))
         }
@@ -35,6 +37,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
             '/subjects',
             '/attendance',
             '/settings',
+            '/questions',
           ]
           return !forbidden.some((path) => item.path.startsWith(path))
         }

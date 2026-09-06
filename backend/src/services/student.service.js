@@ -77,13 +77,14 @@ export async function getStudent(id, actor = null) {
   if (actor) {
     await assertStudentVisible(actor, id);
   }
+  const isTeacher = actor?.role === 'TEACHER';
   const student = await prisma.student.findFirst({
     where: { id, ...notDeleted() },
     include: {
       ...DEFAULT_INCLUDE,
       parent: { select: { id: true, parentId: true, firstName: true, lastName: true, phone: true, email: true } },
       attendances: { orderBy: { date: 'desc' }, take: 30 },
-      fees: { orderBy: { createdAt: 'desc' }, take: 30 },
+      ...(isTeacher ? {} : { fees: { orderBy: { createdAt: 'desc' }, take: 30 } }),
     },
   });
   if (!student) {
@@ -295,9 +296,17 @@ export async function updateStudent(id, data) {
     }
   }
 
+  const updateData = { ...data };
+  if (updateData.dob !== undefined) {
+    updateData.dob = updateData.dob ? toDateOnly(updateData.dob) : null;
+  }
+  if (updateData.admissionDate !== undefined) {
+    updateData.admissionDate = updateData.admissionDate ? toDateOnly(updateData.admissionDate) : null;
+  }
+
   return prisma.student.update({
     where: { id },
-    data,
+    data: updateData,
     include: DEFAULT_INCLUDE,
   });
 }

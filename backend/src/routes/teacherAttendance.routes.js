@@ -17,7 +17,7 @@ const router = Router();
 router.use(authenticate);
 
 const canRead = authorize(ROLES.ADMIN, ROLES.TEACHER);
-const canWrite = authorize(ROLES.ADMIN, ROLES.TEACHER);
+const canWrite = authorize(ROLES.ADMIN);
 
 router.get('/', canRead, validate({ query: teacherAttendanceQuerySchema }), teacherAttendanceController.listTeacherAttendances);
 router.get('/:id', canRead, validate({ params: idParamSchema }), teacherAttendanceController.getTeacherAttendance);

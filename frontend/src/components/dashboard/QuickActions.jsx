@@ -24,7 +24,7 @@ function QuickActions() {
     ? STUDENT_ACTIONS
     : ACTIONS.filter((action) => {
         if (user?.role === 'Teacher') {
-          const forbidden = ['/teachers/add', '/fees']
+          const forbidden = ['/students/add', '/classes/add', '/teachers/add', '/fees']
           return !forbidden.includes(action.to)
         }
         return true

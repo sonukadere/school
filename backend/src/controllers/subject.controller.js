@@ -3,14 +3,14 @@ import asyncHandler from '../utils/asyncHandler.js';
 import * as subjectService from '../services/subject.service.js';
 
 export const listSubjects = asyncHandler(async (req, res) => {
-  const result = await subjectService.listSubjects(req.query);
+  const result = await subjectService.listSubjects(req.query, req.user);
   res
     .status(200)
     .json(new ApiResponse(200, 'Subjects fetched successfully.', result.data, result.pagination));
 });
 
 export const getSubject = asyncHandler(async (req, res) => {
-  const subject = await subjectService.getSubject(req.params.id);
+  const subject = await subjectService.getSubject(req.params.id, req.user);
   res.status(200).json(new ApiResponse(200, 'Subject fetched successfully.', subject));
 });
 

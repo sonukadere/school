@@ -7,11 +7,16 @@ import Button from '../../components/common/Button'
 import Badge from '../../components/common/Badge'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { api } from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 
 function ClassList() {
+  const { user } = useAuth()
+  const canManage = ['Admin', 'Super Admin'].includes(user?.role) || Boolean(user?.isAdmin)
   const { showToast } = useToast()
   const [classes, setClasses] = useState([])
+  const [totalStudentsCount, setTotalStudentsCount] = useState(null)
+  const [totalTeachersCount, setTotalTeachersCount] = useState(null)
   const [loading, setLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
@@ -19,8 +24,19 @@ function ClassList() {
   const loadClasses = async () => {
     setLoading(true)
     try {
-      const data = await api.getClasses()
-      setClasses(Array.isArray(data) ? data : [])
+      const [classRes, studentRes, teacherRes] = await Promise.allSettled([
+        api.getClasses(),
+        api.getStudents(),
+        api.getTeachers(),
+      ])
+
+      const classData = classRes.status === 'fulfilled' && Array.isArray(classRes.value) ? classRes.value : []
+      const studentData = studentRes.status === 'fulfilled' && Array.isArray(studentRes.value) ? studentRes.value : []
+      const teacherData = teacherRes.status === 'fulfilled' && Array.isArray(teacherRes.value) ? teacherRes.value : []
+
+      setClasses(classData)
+      setTotalStudentsCount(studentData.length)
+      setTotalTeachersCount(teacherData.length)
     } catch {
       showToast('Failed to load classes', 'error')
       setClasses([])
@@ -35,13 +51,20 @@ function ClassList() {
 
   const stats = useMemo(() => {
     const total = classes.length
-    const totalStudents = classes.reduce((sum, c) => sum + (c.studentCount ?? (c._count?.students ?? 0)), 0)
+    // Sum students from classes in DB, or use total active enrolled students from DB
+    const studentsFromClasses = classes.reduce(
+      (sum, c) => sum + (c.studentCount ?? (c._count?.students ?? 0)),
+      0
+    )
+    const totalStudents = totalStudentsCount !== null ? totalStudentsCount : studentsFromClasses
     const withTeacher = classes.filter(
-      (c) => c.classTeacher && c.classTeacher !== 'Not Assigned' && c.classTeacherName !== 'Not Assigned'
+      (c) =>
+        Boolean(c.classTeacherId) ||
+        (c.classTeacher && c.classTeacher !== 'Not Assigned' && c.classTeacherName !== 'Not Assigned')
     ).length
-    const avgStudents = total > 0 ? (totalStudents / total).toFixed(1) : 0
+    const avgStudents = total > 0 ? (totalStudents / total).toFixed(1) : '0.0'
     return { total, totalStudents, withTeacher, avgStudents }
-  }, [classes])
+  }, [classes, totalStudentsCount])
 
   const handleDelete = async () => {
     if (!deleteTarget) return
@@ -138,30 +161,34 @@ function ClassList() {
         </span>
       ),
     },
-    {
-      key: 'actions',
-      header: 'Actions',
-      className: 'text-right',
-      render: (item) => (
-        <div className="flex items-center justify-end gap-1.5">
-          <Link
-            to={`/classes/edit/${item.id}`}
-            title="Edit Class"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all duration-150 hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-600"
-          >
-            <Pencil size={14} />
-          </Link>
-          <button
-            type="button"
-            onClick={() => setDeleteTarget(item)}
-            title="Delete Class"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all duration-150 hover:border-rose-300 hover:bg-rose-50/60 hover:text-rose-600"
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
-      ),
-    },
+    ...(canManage
+      ? [
+          {
+            key: 'actions',
+            header: 'Actions',
+            className: 'text-right',
+            render: (item) => (
+              <div className="flex items-center justify-end gap-1.5">
+                <Link
+                  to={`/classes/edit/${item.id}`}
+                  title="Edit Class"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all duration-150 hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-600"
+                >
+                  <Pencil size={14} />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget(item)}
+                  title="Delete Class"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all duration-150 hover:border-rose-300 hover:bg-rose-50/60 hover:text-rose-600"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ),
+          },
+        ]
+      : []),
   ]
 
   return (
@@ -171,57 +198,84 @@ function ClassList() {
         description="Manage classes, sections, and assigned class teachers"
         breadcrumb={[{ label: 'Classes' }]}
         actions={
-          <Link to="/classes/add">
-            <Button leftIcon={Plus}>Add Class</Button>
-          </Link>
+          canManage ? (
+            <Link to="/classes/add">
+              <Button leftIcon={Plus}>Add Class</Button>
+            </Link>
+          ) : null
         }
       />
 
       {/* KPI Metric Cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
+        <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition hover:shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-slate-500">Total Classes</p>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
               <School size={16} />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{stats.total}</p>
+          <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+            {loading ? (
+              <div className="h-8 w-14 animate-pulse rounded bg-slate-100" />
+            ) : (
+              stats.total
+            )}
+          </div>
           <p className="mt-0.5 text-xs text-slate-400">Active class groups</p>
         </div>
 
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
+        <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition hover:shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-slate-500">Total Students</p>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
               <Users size={16} />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{stats.totalStudents}</p>
+          <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+            {loading ? (
+              <div className="h-8 w-14 animate-pulse rounded bg-slate-100" />
+            ) : (
+              stats.totalStudents
+            )}
+          </div>
           <p className="mt-0.5 text-xs text-slate-400">Enrolled across classes</p>
         </div>
 
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
+        <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition hover:shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-slate-500">Assigned Teachers</p>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
               <UserCheck size={16} />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-            {stats.withTeacher} <span className="text-xs font-normal text-slate-400">/ {stats.total}</span>
-          </p>
+          <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+            {loading ? (
+              <div className="h-8 w-16 animate-pulse rounded bg-slate-100" />
+            ) : (
+              <>
+                {stats.withTeacher}{' '}
+                <span className="text-xs font-normal text-slate-400">/ {stats.total}</span>
+              </>
+            )}
+          </div>
           <p className="mt-0.5 text-xs text-slate-400">Classes with lead teachers</p>
         </div>
 
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
+        <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition hover:shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium text-slate-500">Avg. Class Size</p>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
               <BookOpen size={16} />
             </div>
           </div>
-          <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{stats.avgStudents}</p>
+          <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+            {loading ? (
+              <div className="h-8 w-14 animate-pulse rounded bg-slate-100" />
+            ) : (
+              stats.avgStudents
+            )}
+          </div>
           <p className="mt-0.5 text-xs text-slate-400">Students per section</p>
         </div>
       </div>

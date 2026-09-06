@@ -32,6 +32,7 @@ export const MENU_ITEMS = [
     items: [
       { label: 'Attendance', path: '/attendance', icon: CalendarCheck },
       { label: 'Exams', path: '/exams', icon: FileText },
+      { label: 'Question Bank', path: '/questions', icon: BookOpen },
       { label: 'Marks', path: '/marks', icon: ClipboardList },
       { label: 'Certificates (TC)', path: '/certificates', icon: FileText },
     ],
@@ -69,6 +70,7 @@ export const PAGE_TITLES = {
   '/fees': 'Fees',
   '/exams': 'Exams',
   '/exams/create': 'Create Exam',
+  '/questions': 'Question Bank',
   '/marks': 'Marks',
   '/marks/entry': 'Marks Entry',
   '/marks/results': 'Result View',

@@ -88,7 +88,7 @@ export default function PendingFeesTab({ onCollectPayment }) {
       item.totalFee || 0,
       item.paidAmount || 0,
       item.dueAmount || 0,
-      item.dueDate ? item.dueDate.slice(0, 10) : '',
+      item.dueDate ? formatDate(item.dueDate) : '',
       item.daysOverdue || 0,
       item.status || '',
     ])

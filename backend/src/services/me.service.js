@@ -6,6 +6,7 @@ import {
   getVisibleAudiences,
   resolveActorClassIds,
 } from '../utils/access.js';
+import { logAudit } from '../utils/auditLogger.js';
 
 const today = () => toDateOnly(new Date());
 
@@ -63,6 +64,74 @@ export async function getMyProfile(user) {
     default:
       throw ApiError.forbidden('Your role does not have a profile view.');
   }
+}
+
+/**
+ * Updates editable profile information for the authenticated user.
+ * Strictly prevents non-admins from modifying role, salary, permissions, account status, etc.
+ */
+export async function updateMyProfile(user, data = {}) {
+  if (!user) throw ApiError.unauthorized('Authentication required.');
+
+  if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+    const FORBIDDEN_FIELDS = [
+      'role',
+      'salary',
+      'teacherId',
+      'studentId',
+      'parentId',
+      'employeeId',
+      'permissions',
+      'isActive',
+      'status',
+      'schoolId',
+      'subjectId',
+    ];
+    for (const field of FORBIDDEN_FIELDS) {
+      if (data[field] !== undefined) {
+        throw ApiError.forbidden(`Access denied. You are not allowed to modify '${field}'.`);
+      }
+    }
+  }
+
+  // Update base User model fields (name, avatar)
+  const userUpdate = {};
+  if (data.name !== undefined) userUpdate.name = data.name;
+  if (data.avatar !== undefined) userUpdate.avatar = data.avatar;
+
+  if (Object.keys(userUpdate).length > 0) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: userUpdate,
+    });
+  }
+
+  // Update Teacher profile fields if authenticated as Teacher
+  if (user.role === 'TEACHER' && user.teacher?.id) {
+    const teacherUpdate = {};
+    if (data.name !== undefined) teacherUpdate.name = data.name;
+    if (data.phone !== undefined) teacherUpdate.phone = data.phone;
+    if (data.address !== undefined) teacherUpdate.address = data.address;
+    if (data.qualification !== undefined) teacherUpdate.qualification = data.qualification;
+
+    if (Object.keys(teacherUpdate).length > 0) {
+      await prisma.teacher.update({
+        where: { id: user.teacher.id },
+        data: teacherUpdate,
+      });
+    }
+  }
+
+  logAudit({
+    action: 'UPDATE_OWN_PROFILE',
+    user,
+    resource: 'Profile',
+    resourceId: user.id,
+    status: 'SUCCESS',
+    details: { fields: Object.keys(data) },
+  });
+
+  return getMyProfile(user);
 }
 
 /**

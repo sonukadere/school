@@ -307,7 +307,7 @@ export default function ParentDashboardView({ data, user }) {
             <div key={n.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50">
               <div className="flex items-center justify-between mb-1">
                 <h4 className="text-sm font-bold text-slate-900">{n.title}</h4>
-                <span className="text-[10px] text-slate-400">{n.date || 'Recent'}</span>
+                <span className="text-[10px] text-slate-400">{n.date ? formatDate(n.date) : 'Recent'}</span>
               </div>
               <p className="text-xs text-slate-600 line-clamp-2">{n.content}</p>
             </div>

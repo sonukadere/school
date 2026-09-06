@@ -20,15 +20,10 @@ import RecentActivities from './RecentActivities'
 import QuickActions from './QuickActions'
 import Card from '../common/Card'
 import Button from '../common/Button'
-import { formatCurrency } from '../../utils/helpers'
+import { formatCurrency, formatDate } from '../../utils/helpers'
 
 export default function SchoolAdminDashboardView({ data, user }) {
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+  const today = formatDate(new Date())
 
   return (
     <div className="space-y-6 animate-fade-in">
