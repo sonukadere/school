@@ -5,17 +5,29 @@ node_modules/
 .env
 .env.*
 !.env.example
+!frontend/.env.example
+!frontend/.env.production
+!backend/.env.example
 
 # Local Data and databases
 backend/data/
+backend/.mongo_data/
 backend/prisma/*.db
 
-# Sensitive credentials
+# Sensitive credentials and Firebase service account
+*firebase-service-account*.json
+firebase-service-account.json
+firebase-adminsdk*.json
+serviceAccountKey.json
 backend/src/config/firebase-service-account.json
+secrets/
+*.pem
+*.key
 
 # Build outputs
 dist/
 build/
+frontend/dist/
 
 # Logs
 logs/

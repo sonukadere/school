@@ -8,20 +8,23 @@ async function start() {
   const connected = await testConnection();
   if (!connected) {
     console.error(
-      '[server] Could not connect to MongoDB. Check DATABASE_URL and that the database is running.'
+      '[server] Could not connect to MongoDB Atlas. Check MONGODB_URI or DATABASE_URL.'
     );
     process.exit(1);
   }
-  console.log('[server] MongoDB connection established.');
+  console.log('[server] MongoDB Atlas connection established successfully.');
 
-  server = app.listen(env.port, () => {
-    console.log(`[server] API listening on http://localhost:${env.port} (${env.nodeEnv})`);
+  const PORT = process.env.PORT || 5000;
+  const HOST = '0.0.0.0';
+
+  server = app.listen(PORT, HOST, () => {
+    console.log(`[server] School Management API listening on http://${HOST}:${PORT} (${env.nodeEnv})`);
   });
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.error(`[server] Port ${env.port} is already in use by another process.`);
-      console.error(`[server] Free port ${env.port} or change PORT in backend/.env to another port.`);
+      console.error(`[server] Port ${PORT} is already in use by another process.`);
+      console.error(`[server] Free port ${PORT} or change PORT in backend/.env to another port.`);
     } else {
       console.error('[server] Server error:', err.message);
     }

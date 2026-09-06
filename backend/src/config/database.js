@@ -17,8 +17,16 @@ if (env.nodeEnv === 'production') {
 
 async function testConnection() {
   try {
-    // Ensure local replica set instance is active if pointing to localhost
-    await ensureMongoRunning();
+    const isProduction = env.nodeEnv === 'production';
+    const dbUrl = env.databaseUrl || process.env.MONGODB_URI || '';
+    const isAtlas =
+      dbUrl.startsWith('mongodb+srv://') ||
+      (!dbUrl.includes('127.0.0.1') && !dbUrl.includes('localhost'));
+
+    // NEVER attempt to spawn local MongoDB when in production or using MongoDB Atlas
+    if (!isProduction && !isAtlas) {
+      await ensureMongoRunning();
+    }
 
     await prisma.setting.findFirst();
     return true;
@@ -27,7 +35,7 @@ async function testConnection() {
     if (err.message && err.message.includes('replica set')) {
       console.error(
         '[database] Prisma requires MongoDB to run as a replica set.\n' +
-        'Please ensure mongod is running with --replSet rs0.'
+        'For production, use MongoDB Atlas (process.env.MONGODB_URI) which is already configured as a replica set.'
       );
     }
     return false;
@@ -36,4 +44,3 @@ async function testConnection() {
 
 export { prisma, testConnection, ensureMongoRunning };
 export default prisma;
-

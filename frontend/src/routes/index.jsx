@@ -8,38 +8,58 @@ import { useToast } from '../context/ToastContext'
 import Login from '../pages/Auth/Login'
 import ForgotPassword from '../pages/Auth/ForgotPassword'
 
-const RegisterStudent = lazy(() => import('../pages/Auth/RegisterStudent'))
-const Dashboard = lazy(() => import('../pages/Dashboard/Dashboard'))
-const StudentList = lazy(() => import('../pages/Students/StudentList'))
-const AddStudent = lazy(() => import('../pages/Students/AddStudent'))
-const EditStudent = lazy(() => import('../pages/Students/EditStudent'))
-const StudentDetails = lazy(() => import('../pages/Students/StudentDetails'))
-const TeacherList = lazy(() => import('../pages/Teachers/TeacherList'))
-const AddTeacher = lazy(() => import('../pages/Teachers/AddTeacher'))
-const EditTeacher = lazy(() => import('../pages/Teachers/EditTeacher'))
-const TeacherDetails = lazy(() => import('../pages/Teachers/TeacherDetails'))
-const ClassList = lazy(() => import('../pages/Classes/ClassList'))
-const AddClass = lazy(() => import('../pages/Classes/AddClass'))
-const EditClass = lazy(() => import('../pages/Classes/EditClass'))
-const SubjectList = lazy(() => import('../pages/Subjects/SubjectList'))
-const AddSubject = lazy(() => import('../pages/Subjects/AddSubject'))
-const Attendance = lazy(() => import('../pages/Attendance/Attendance'))
-const StudentAttendance = lazy(() => import('../pages/Attendance/StudentAttendance'))
-const TeacherAttendance = lazy(() => import('../pages/Attendance/TeacherAttendance'))
-const FeeList = lazy(() => import('../pages/Fees/FeeList'))
-const ExamList = lazy(() => import('../pages/Exams/ExamList'))
-const CreateExam = lazy(() => import('../pages/Exams/CreateExam'))
-const Marks = lazy(() => import('../pages/Marks/Marks'))
-const MarksEntry = lazy(() => import('../pages/Marks/MarksEntry'))
-const ResultView = lazy(() => import('../pages/Marks/ResultView'))
-const TransferCertificateList = lazy(() => import('../pages/Certificates/TransferCertificateList'))
-const NoticeList = lazy(() => import('../pages/Notices/NoticeList'))
-const CreateNotice = lazy(() => import('../pages/Notices/CreateNotice'))
-const ProfilePage = lazy(() => import('../pages/Profile/ProfilePage'))
-const EditProfile = lazy(() => import('../pages/Profile/EditProfile'))
-const ChangePassword = lazy(() => import('../pages/Profile/ChangePassword'))
-const SettingsPage = lazy(() => import('../pages/Settings/SettingsPage'))
-const NotificationList = lazy(() => import('../pages/Notifications/NotificationList'))
+/**
+ * Safe lazy loader with auto-retry on dynamic chunk fetch failure (common during redeployments)
+ */
+function lazyRetry(componentImport, key = '') {
+  return lazy(async () => {
+    const pageHasBeenRefreshed = sessionStorage.getItem(`sms_retry_${key}`);
+    try {
+      return await componentImport();
+    } catch (error) {
+      if (!pageHasBeenRefreshed) {
+        sessionStorage.setItem(`sms_retry_${key}`, 'true');
+        window.location.reload();
+        return new Promise(() => {});
+      }
+      sessionStorage.removeItem(`sms_retry_${key}`);
+      throw error;
+    }
+  });
+}
+
+const RegisterStudent = lazyRetry(() => import('../pages/Auth/RegisterStudent'), 'reg_student')
+const Dashboard = lazyRetry(() => import('../pages/Dashboard/Dashboard'), 'dashboard')
+const StudentList = lazyRetry(() => import('../pages/Students/StudentList'), 'student_list')
+const AddStudent = lazyRetry(() => import('../pages/Students/AddStudent'), 'add_student')
+const EditStudent = lazyRetry(() => import('../pages/Students/EditStudent'), 'edit_student')
+const StudentDetails = lazyRetry(() => import('../pages/Students/StudentDetails'), 'student_details')
+const TeacherList = lazyRetry(() => import('../pages/Teachers/TeacherList'), 'teacher_list')
+const AddTeacher = lazyRetry(() => import('../pages/Teachers/AddTeacher'), 'add_teacher')
+const EditTeacher = lazyRetry(() => import('../pages/Teachers/EditTeacher'), 'edit_teacher')
+const TeacherDetails = lazyRetry(() => import('../pages/Teachers/TeacherDetails'), 'teacher_details')
+const ClassList = lazyRetry(() => import('../pages/Classes/ClassList'), 'class_list')
+const AddClass = lazyRetry(() => import('../pages/Classes/AddClass'), 'add_class')
+const EditClass = lazyRetry(() => import('../pages/Classes/EditClass'), 'edit_class')
+const SubjectList = lazyRetry(() => import('../pages/Subjects/SubjectList'), 'subject_list')
+const AddSubject = lazyRetry(() => import('../pages/Subjects/AddSubject'), 'add_subject')
+const Attendance = lazyRetry(() => import('../pages/Attendance/Attendance'), 'attendance')
+const StudentAttendance = lazyRetry(() => import('../pages/Attendance/StudentAttendance'), 'student_attendance')
+const TeacherAttendance = lazyRetry(() => import('../pages/Attendance/TeacherAttendance'), 'teacher_attendance')
+const FeeList = lazyRetry(() => import('../pages/Fees/FeeList'), 'fee_list')
+const ExamList = lazyRetry(() => import('../pages/Exams/ExamList'), 'exam_list')
+const CreateExam = lazyRetry(() => import('../pages/Exams/CreateExam'), 'create_exam')
+const Marks = lazyRetry(() => import('../pages/Marks/Marks'), 'marks')
+const MarksEntry = lazyRetry(() => import('../pages/Marks/MarksEntry'), 'marks_entry')
+const ResultView = lazyRetry(() => import('../pages/Marks/ResultView'), 'result_view')
+const TransferCertificateList = lazyRetry(() => import('../pages/Certificates/TransferCertificateList'), 'tc_list')
+const NoticeList = lazyRetry(() => import('../pages/Notices/NoticeList'), 'notice_list')
+const CreateNotice = lazyRetry(() => import('../pages/Notices/CreateNotice'), 'create_notice')
+const ProfilePage = lazyRetry(() => import('../pages/Profile/ProfilePage'), 'profile')
+const EditProfile = lazyRetry(() => import('../pages/Profile/EditProfile'), 'edit_profile')
+const ChangePassword = lazyRetry(() => import('../pages/Profile/ChangePassword'), 'change_password')
+const SettingsPage = lazyRetry(() => import('../pages/Settings/SettingsPage'), 'settings')
+const NotificationList = lazyRetry(() => import('../pages/Notifications/NotificationList'), 'notifications')
 
 function ForbiddenRedirect() {
   const { showToast } = useToast()

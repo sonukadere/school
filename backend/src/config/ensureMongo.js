@@ -14,12 +14,10 @@ const __dirname = path.dirname(__filename);
 export function isPortOpen(port, host = '127.0.0.1', timeoutMs = 1000) {
   return new Promise((resolve) => {
     const socket = new net.Socket();
-    let isConnected = false;
 
     socket.setTimeout(timeoutMs);
 
     socket.on('connect', () => {
-      isConnected = true;
       socket.destroy();
       resolve(true);
     });
@@ -67,9 +65,9 @@ function findMongodExecutable() {
 function parseLocalMongoUrl(urlStr) {
   if (!urlStr) return null;
   try {
-    // Handle mongodb:// or mongodb+srv://
+    // Handle mongodb+srv:// - Remote MongoDB Atlas
     if (urlStr.startsWith('mongodb+srv://')) {
-      return null; // Remote Atlas cluster
+      return null;
     }
 
     const match = urlStr.match(/mongodb:\/\/(?:([^:@]+)(?::([^@]+))?@)?([^:\/?]+)(?::(\d+))?/i);
@@ -91,11 +89,26 @@ function parseLocalMongoUrl(urlStr) {
 }
 
 /**
- * Ensures that the local MongoDB replica set instance is running.
- * If not running, launches it in the background from backend/.mongo_data.
+ * Ensures that MongoDB is reachable.
+ * IMPORTANT: In production or when using MongoDB Atlas, this NEVER attempts to start local mongod.
  */
 export async function ensureMongoRunning() {
-  const localConfig = parseLocalMongoUrl(env.databaseUrl);
+  // Never attempt to start local MongoDB in production
+  if (process.env.NODE_ENV === 'production') {
+    return true;
+  }
+
+  const dbUrl = process.env.MONGODB_URI || process.env.DATABASE_URL || env.databaseUrl || '';
+
+  // If using MongoDB Atlas (mongodb+srv://) or non-local database, skip local mongod launch
+  if (
+    dbUrl.startsWith('mongodb+srv://') ||
+    (!dbUrl.includes('127.0.0.1') && !dbUrl.includes('localhost'))
+  ) {
+    return true;
+  }
+
+  const localConfig = parseLocalMongoUrl(dbUrl);
   if (!localConfig) {
     // Remote database or unable to parse; let Prisma handle it directly
     return true;
@@ -109,7 +122,7 @@ export async function ensureMongoRunning() {
     return true;
   }
 
-  console.log(`[database] MongoDB is not running on ${host}:${port}. Attempting to start local replica set...`);
+  console.log(`[database] Local MongoDB is not running on ${host}:${port}. Attempting to start local replica set...`);
 
   const mongodPath = findMongodExecutable();
   const mongoDataDir = path.resolve(__dirname, '../../.mongo_data');
@@ -152,7 +165,7 @@ export async function ensureMongoRunning() {
     return false;
   } catch (err) {
     console.error(`[database] Failed to launch MongoDB executable at "${mongodPath}":`, err.message);
-    console.error(`[database] Please start MongoDB manually: mongod --dbpath .mongo_data --port ${port} --replSet ${replicaSet}`);
+    console.error(`[database] Please start MongoDB manually or use MongoDB Atlas (process.env.MONGODB_URI)`);
     return false;
   }
 }

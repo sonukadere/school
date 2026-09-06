@@ -4,6 +4,8 @@ node_modules/
 # Environment
 .env
 .env.local
+.env.*.local
+!.env.example
 
 # Build output
 dist/
@@ -42,3 +44,11 @@ Thumbs.db
 # MongoDB Local Data
 .mongo_data/
 
+# Firebase & Sensitive Credentials
+*firebase-service-account*.json
+firebase-service-account.json
+firebase-adminsdk*.json
+serviceAccountKey.json
+secrets/
+*.pem
+*.key
