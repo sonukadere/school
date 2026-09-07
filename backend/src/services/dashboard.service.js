@@ -60,81 +60,135 @@ async function getAdminDashboard(user) {
     classStats,
     chartRecords,
   ] = await Promise.all([
-    prisma.student.count({ where: notDeleted() }),
-    prisma.teacher.count({ where: notDeleted() }),
-    prisma.parent.count({ where: notDeleted() }),
-    prisma.class.count({ where: notDeleted() }),
-    prisma.subject.count({ where: notDeleted() }),
-    prisma.staff.count({ where: notDeleted() }),
-    prisma.payment.aggregate({
-      _sum: { amount: true },
-      where: { ...notDeleted(), paymentStatus: { not: 'CANCELLED' } },
-    }),
-    prisma.feeInvoice.aggregate({
-      _sum: { pendingAmount: true, finalAmount: true },
-      where: notDeleted(),
-    }),
-    prisma.payroll.aggregate({
-      _sum: { netSalary: true },
-      where: { ...notDeleted(), paymentStatus: 'PAID' },
-    }),
-    prisma.payroll.aggregate({
-      _sum: { netSalary: true },
-      where: { ...notDeleted(), paymentStatus: 'PENDING' },
-    }),
-    prisma.attendance.findMany({
-      where: { ...notDeleted(), date: today() },
-      select: { status: true },
-    }),
-    prisma.exam.findMany({
-      where: { ...notDeleted(), startDate: { gte: today() } },
-      include: { class: { select: { name: true, section: true } } },
-      orderBy: { startDate: 'asc' },
-      take: 5,
-    }),
-    prisma.student.findMany({
-      where: { ...notDeleted(), admissionDate: { gte: thirtyDaysAgo } },
-      orderBy: { admissionDate: 'desc' },
-      take: 5,
-    }),
-    prisma.notice.findMany({ where: notDeleted(), orderBy: { publishDate: 'desc' }, take: 5 }),
-    prisma.event.findMany({
-      where: { ...notDeleted(), date: { gte: today() } },
-      orderBy: { date: 'asc' },
-      take: 5,
-    }),
-    prisma.holiday.findMany({
-      where: { ...notDeleted(), date: { gte: today() } },
-      orderBy: { date: 'asc' },
-      take: 5,
-    }),
-    prisma.student.findMany({ where: notDeleted(), orderBy: { createdAt: 'desc' }, take: 5 }),
-    prisma.notice.findMany({ where: notDeleted(), orderBy: { createdAt: 'desc' }, take: 5 }),
-    prisma.event.findMany({ where: notDeleted(), orderBy: { createdAt: 'desc' }, take: 5 }),
-    prisma.student.groupBy({
-      by: ['classId'],
-      where: notDeleted(),
-      _count: { _all: true },
-    }),
-    prisma.attendance.findMany({
-      where: { ...notDeleted(), date: { gte: addDays(today(), -7) } },
-      select: { date: true, status: true },
-    }),
+    prisma.student?.count ? prisma.student.count({ where: notDeleted() }).catch(() => 0) : 0,
+    prisma.teacher?.count ? prisma.teacher.count({ where: notDeleted() }).catch(() => 0) : 0,
+    prisma.parent?.count ? prisma.parent.count({ where: notDeleted() }).catch(() => 0) : 0,
+    prisma.class?.count ? prisma.class.count({ where: notDeleted() }).catch(() => 0) : 0,
+    prisma.subject?.count ? prisma.subject.count({ where: notDeleted() }).catch(() => 0) : 0,
+    prisma.staff?.count ? prisma.staff.count({ where: notDeleted() }).catch(() => 0) : 0,
+    prisma.payment?.aggregate
+      ? prisma.payment
+          .aggregate({
+            _sum: { amount: true },
+            where: { ...notDeleted(), paymentStatus: { not: 'CANCELLED' } },
+          })
+          .catch(() => ({ _sum: { amount: 0 } }))
+      : Promise.resolve({ _sum: { amount: 0 } }),
+    prisma.feeInvoice?.aggregate
+      ? prisma.feeInvoice
+          .aggregate({
+            _sum: { pendingAmount: true, finalAmount: true },
+            where: notDeleted(),
+          })
+          .catch(() => ({ _sum: { pendingAmount: 0, finalAmount: 0 } }))
+      : Promise.resolve({ _sum: { pendingAmount: 0, finalAmount: 0 } }),
+    prisma.payroll?.aggregate
+      ? prisma.payroll
+          .aggregate({
+            _sum: { netSalary: true },
+            where: { ...notDeleted(), paymentStatus: 'PAID' },
+          })
+          .catch(() => ({ _sum: { netSalary: 0 } }))
+      : Promise.resolve({ _sum: { netSalary: 0 } }),
+    prisma.payroll?.aggregate
+      ? prisma.payroll
+          .aggregate({
+            _sum: { netSalary: true },
+            where: { ...notDeleted(), paymentStatus: 'PENDING' },
+          })
+          .catch(() => ({ _sum: { netSalary: 0 } }))
+      : Promise.resolve({ _sum: { netSalary: 0 } }),
+    prisma.attendance?.findMany
+      ? prisma.attendance
+          .findMany({
+            where: { ...notDeleted(), date: today() },
+            select: { status: true },
+          })
+          .catch(() => [])
+      : Promise.resolve([]),
+    prisma.exam?.findMany
+      ? prisma.exam
+          .findMany({
+            where: { ...notDeleted(), startDate: { gte: today() } },
+            include: { class: { select: { name: true, section: true } } },
+            orderBy: { startDate: 'asc' },
+            take: 5,
+          })
+          .catch(() => [])
+      : Promise.resolve([]),
+    prisma.student?.findMany
+      ? prisma.student
+          .findMany({
+            where: { ...notDeleted(), admissionDate: { gte: thirtyDaysAgo } },
+            orderBy: { admissionDate: 'desc' },
+            take: 5,
+          })
+          .catch(() => [])
+      : Promise.resolve([]),
+    prisma.notice?.findMany
+      ? prisma.notice.findMany({ where: notDeleted(), orderBy: { publishDate: 'desc' }, take: 5 }).catch(() => [])
+      : Promise.resolve([]),
+    prisma.event?.findMany
+      ? prisma.event
+          .findMany({
+            where: { ...notDeleted(), date: { gte: today() } },
+            orderBy: { date: 'asc' },
+            take: 5,
+          })
+          .catch(() => [])
+      : Promise.resolve([]),
+    prisma.holiday?.findMany
+      ? prisma.holiday
+          .findMany({
+            where: { ...notDeleted(), date: { gte: today() } },
+            orderBy: { date: 'asc' },
+            take: 5,
+          })
+          .catch(() => [])
+      : Promise.resolve([]),
+    prisma.student?.findMany
+      ? prisma.student.findMany({ where: notDeleted(), orderBy: { createdAt: 'desc' }, take: 5 }).catch(() => [])
+      : Promise.resolve([]),
+    prisma.notice?.findMany
+      ? prisma.notice.findMany({ where: notDeleted(), orderBy: { createdAt: 'desc' }, take: 5 }).catch(() => [])
+      : Promise.resolve([]),
+    prisma.event?.findMany
+      ? prisma.event.findMany({ where: notDeleted(), orderBy: { createdAt: 'desc' }, take: 5 }).catch(() => [])
+      : Promise.resolve([]),
+    prisma.student?.groupBy
+      ? prisma.student
+          .groupBy({
+            by: ['classId'],
+            where: notDeleted(),
+            _count: { _all: true },
+          })
+          .catch(() => [])
+      : Promise.resolve([]),
+    prisma.attendance?.findMany
+      ? prisma.attendance
+          .findMany({
+            where: { ...notDeleted(), date: { gte: addDays(today(), -7) } },
+            select: { date: true, status: true },
+          })
+          .catch(() => [])
+      : Promise.resolve([]),
   ]);
 
-  const totalPresent = todayRecords.filter((r) => r.status === 'PRESENT').length;
-  const todayAttendance = todayRecords.length
+  const totalPresent = (todayRecords || []).filter((r) => r.status === 'PRESENT').length;
+  const todayAttendance = todayRecords?.length
     ? Math.round((totalPresent / todayRecords.length) * 100)
     : 0;
 
-  const classIds = classStats.map((c) => c.classId).filter(Boolean);
-  const classNames = classIds.length
-    ? await prisma.class.findMany({
-        where: { id: { in: classIds } },
-        select: { id: true, name: true, section: true },
-      })
+  const classIds = (classStats || []).map((c) => c.classId).filter(Boolean);
+  const classNames = classIds.length && prisma.class?.findMany
+    ? await prisma.class
+        .findMany({
+          where: { id: { in: classIds } },
+          select: { id: true, name: true, section: true },
+        })
+        .catch(() => [])
     : [];
-  const nameById = new Map(classNames.map((c) => [c.id, `${c.name} ${c.section}`]));
+  const nameById = new Map((classNames || []).map((c) => [c.id, `${c.name} ${c.section}`]));
 
   const activities = [
     ...recentStudents.map((s) => ({
