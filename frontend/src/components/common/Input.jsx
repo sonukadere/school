@@ -9,7 +9,7 @@ function Input({
   icon: Icon = null,
   className,
   id,
-  type,
+  type = 'text',
   ...props
 }) {
   if (type === 'date') {
@@ -46,6 +46,7 @@ function Input({
         )}
         <input
           id={inputId}
+          type={type}
           className={cn(
             'w-full h-11 rounded-xl border bg-slate-50/40 px-3.5 text-sm text-slate-900 transition-all duration-200',
             'placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-4',

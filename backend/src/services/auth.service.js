@@ -52,40 +52,49 @@ const findActiveUser = async (identifier) => {
 
   return prisma.user.findFirst({
     where: {
-      ...notDeleted(),
-      OR: [
-        { email: cleanLower },
-        { username: clean },
-        { username: cleanLower },
+      AND: [
         {
-          student: {
-            is: {
-              OR: [
-                { studentId: clean },
-                { studentId: cleanUpper },
-              ],
-            },
-          },
+          OR: [
+            { deletedAt: null },
+            { deletedAt: { isSet: false } },
+          ],
         },
         {
-          teacher: {
-            is: {
-              OR: [
-                { teacherId: clean },
-                { teacherId: cleanUpper },
-              ],
+          OR: [
+            { email: cleanLower },
+            { username: clean },
+            { username: cleanLower },
+            {
+              student: {
+                is: {
+                  OR: [
+                    { studentId: clean },
+                    { studentId: cleanUpper },
+                  ],
+                },
+              },
             },
-          },
-        },
-        {
-          parent: {
-            is: {
-              OR: [
-                { parentId: clean },
-                { parentId: cleanUpper },
-              ],
+            {
+              teacher: {
+                is: {
+                  OR: [
+                    { teacherId: clean },
+                    { teacherId: cleanUpper },
+                  ],
+                },
+              },
             },
-          },
+            {
+              parent: {
+                is: {
+                  OR: [
+                    { parentId: clean },
+                    { parentId: cleanUpper },
+                  ],
+                },
+              },
+            },
+          ],
         },
       ],
     },

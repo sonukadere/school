@@ -9,9 +9,11 @@ import { upload } from '../middleware/upload.js';
 
 const router = Router();
 
-router.use(authenticate, authorize(ROLES.ADMIN));
-
+// Public read access so login, headers, notices, etc. can display school branding
 router.get('/', settingController.getSettings);
+
+// Admin-only for updating school settings
+router.use(authenticate, authorize(ROLES.ADMIN));
 router.put('/', validate({ body: settingUpsertSchema }), settingController.updateSettings);
 router.post('/logo', upload.single('logo'), settingController.uploadLogo);
 
