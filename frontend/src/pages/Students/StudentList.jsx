@@ -68,7 +68,7 @@ function StudentList() {
           )}
           <div className="min-w-0">
             <p className="font-semibold text-slate-900">{student.fullName}</p>
-            <p className="text-xs font-mono text-slate-400">ID: {student.studentId || student.id.slice(-6)}</p>
+            <p className="text-xs font-mono text-slate-400">ID: {student.studentId || (student.id ? `STU-${student.id.slice(-4).toUpperCase()}` : '—')}</p>
           </div>
         </div>
       ),
@@ -86,6 +86,15 @@ function StudentList() {
         {student.rollNumber ?? '—'}
       </span>
     ) },
+    {
+      key: 'admissionDate',
+      header: 'Admission Date',
+      render: (student) => (
+        <span className="text-xs text-slate-600 font-medium">
+          {formatDate(student.admissionDate)}
+        </span>
+      ),
+    },
     {
       key: 'gender',
       header: 'Gender',
@@ -165,23 +174,25 @@ function StudentList() {
         emptyIcon={GraduationCap}
         onRowClick={(student) => navigate(`/students/${student.id}`)}
         toolbar={
-          <>
-            <Select
-              name="classFilter"
-              value={classFilter}
-              onChange={(event) => setClassFilter(event.target.value)}
-              options={CLASS_OPTIONS}
-              placeholder="All Classes"
-              className="w-40"
-            />
-            <Select
-              name="sectionFilter"
-              value={sectionFilter}
-              onChange={(event) => setSectionFilter(event.target.value)}
-              options={SECTION_OPTIONS}
-              placeholder="All Sections"
-              className="w-40"
-            />
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div className="w-full sm:w-36 md:w-40">
+              <Select
+                name="classFilter"
+                value={classFilter}
+                onChange={(event) => setClassFilter(event.target.value)}
+                options={CLASS_OPTIONS}
+                placeholder="All Classes"
+              />
+            </div>
+            <div className="w-full sm:w-36 md:w-40">
+              <Select
+                name="sectionFilter"
+                value={sectionFilter}
+                onChange={(event) => setSectionFilter(event.target.value)}
+                options={SECTION_OPTIONS}
+                placeholder="All Sections"
+              />
+            </div>
             {(classFilter || sectionFilter) && (
               <Button
                 variant="ghost"
@@ -194,7 +205,7 @@ function StudentList() {
                 Clear
               </Button>
             )}
-          </>
+          </div>
         }
       />
 

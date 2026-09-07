@@ -50,8 +50,8 @@ function DataTable({
   return (
     <div className={cn('overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs', className)}>
       {(toolbar || searchPlaceholder) && (
-        <div className="flex flex-col gap-3 border-b border-slate-200/70 bg-white px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-3">
+        <div className="flex flex-col gap-3 border-b border-slate-200/70 bg-white px-3.5 py-3 sm:px-5 sm:py-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-1 flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
             {toolbar ? (
               toolbar
             ) : (
@@ -63,7 +63,7 @@ function DataTable({
           <SearchBar value={search} onChange={setSearch} placeholder={searchPlaceholder} />
         </div>
       )}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto touch-scroll">
         {loading ? (
           <Loader label="Loading data..." />
         ) : filteredData.length === 0 ? (
@@ -81,7 +81,7 @@ function DataTable({
                     key={column.key}
                     scope="col"
                     className={cn(
-                      'px-5 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase',
+                      'px-3.5 py-2.5 sm:px-5 sm:py-3 text-[10px] sm:text-[11px] font-semibold tracking-wider text-slate-500 uppercase whitespace-nowrap',
                       column.className,
                     )}
                   >
@@ -103,7 +103,7 @@ function DataTable({
                   {columns.map((column) => (
                     <td
                       key={column.key}
-                      className={cn('px-5 py-3.5 text-sm text-slate-700 align-middle', column.className)}
+                      className={cn('px-3.5 py-3 sm:px-5 sm:py-3.5 text-xs sm:text-sm text-slate-700 align-middle', column.className)}
                     >
                       {column.render ? column.render(row, index) : row[column.key]}
                     </td>

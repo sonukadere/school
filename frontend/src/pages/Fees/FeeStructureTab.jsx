@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Edit2, Trash2, Calendar, BookOpen, Layers, CheckCircle2 } from 'lucide-react'
+import { Plus, Edit2, Trash2, Calendar, BookOpen, Layers, CheckCircle2, Users } from 'lucide-react'
 import Card from '../../components/common/Card'
 import Button from '../../components/common/Button'
 import Badge from '../../components/common/Badge'
@@ -8,6 +8,7 @@ import Select from '../../components/common/Select'
 import Modal from '../../components/common/Modal'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
 import DataTable from '../../components/common/DataTable'
+import AssignFeeModal from '../../components/payments/AssignFeeModal'
 import { api } from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 import { formatCurrency, formatDate } from '../../utils/helpers'
@@ -52,19 +53,27 @@ export default function FeeStructureTab() {
   const [deletingId, setDeletingId] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
+  // Assign modal
+  const [assignModalOpen, setAssignModalOpen] = useState(false)
+  const [assigningStructure, setAssigningStructure] = useState(null)
+
   const loadData = async () => {
     setLoading(true)
     try {
-      const [structRes, classList] = await Promise.all([
+      const [structRes, classList, settingsRes] = await Promise.all([
         api.getFeeStructures(),
         api.getClasses(),
+        api.getSettings().catch(() => null),
       ])
       const data = structRes?.data || structRes || []
       setStructures(Array.isArray(data) ? data : [])
       setClasses(classList || [])
+      if (settingsRes?.academicYear) {
+        setAcademicYear(settingsRes.academicYear)
+      }
     } catch (err) {
       console.error(err)
-      showToast('Failed to load fee structures', 'error')
+      showToast('Failed to load fee structures from database', 'error')
     } finally {
       setLoading(false)
     }
@@ -74,9 +83,25 @@ export default function FeeStructureTab() {
     loadData()
   }, [])
 
+  // Dynamically extract fee types created in the database
+  const dynamicFeeTypes = useMemo(() => {
+    const fromDb = structures.map((s) => s.feeType).filter(Boolean)
+    const defaults = [
+      'Tuition Fee',
+      'Admission Fee',
+      'Examination Fee',
+      'Transport Fee',
+      'Library Fee',
+      'Computer Lab Fee',
+      'Sports & Activity Fee',
+      'Hostel Fee',
+      'Other Fee',
+    ]
+    return Array.from(new Set([...fromDb, ...defaults]))
+  }, [structures])
+
   const openAddModal = () => {
     setEditingItem(null)
-    setAcademicYear('2026-2027')
     setSelectedClassId(classes[0]?.id || '')
     setFeeType('Tuition Fee')
     setTotalFee('')
@@ -89,7 +114,7 @@ export default function FeeStructureTab() {
 
   const openEditModal = (item) => {
     setEditingItem(item)
-    setAcademicYear(item.academicYear || '2026-2027')
+    setAcademicYear(item.academicYear || academicYear)
     setSelectedClassId(item.classId || '')
     setFeeType(item.feeType || 'Tuition Fee')
     setTotalFee(String(item.totalFee || ''))
@@ -230,6 +255,18 @@ export default function FeeStructureTab() {
       className: 'text-right',
       render: (s) => (
         <div className="flex items-center justify-end gap-1.5">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setAssigningStructure(s)
+              setAssignModalOpen(true)
+            }}
+            title="Assign Fee to Class / Student"
+            className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 text-xs"
+          >
+            Assign
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => openEditModal(s)} title="Edit">
             <Edit2 size={15} />
           </Button>
@@ -260,9 +297,21 @@ export default function FeeStructureTab() {
             Define standard tuition rates, term examination dues, transportation, and special fees per class.
           </p>
         </div>
-        <Button variant="primary" leftIcon={Plus} onClick={openAddModal}>
-          Add Fee Structure
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            leftIcon={Layers}
+            onClick={() => {
+              setAssigningStructure(null)
+              setAssignModalOpen(true)
+            }}
+          >
+            Assign Invoices
+          </Button>
+          <Button variant="primary" leftIcon={Plus} onClick={openAddModal}>
+            Add Fee Structure
+          </Button>
+        </div>
       </div>
 
       <DataTable
@@ -351,13 +400,14 @@ export default function FeeStructureTab() {
               <Select
                 value={feeType}
                 onChange={(e) => setFeeType(e.target.value)}
-                options={FEE_TYPE_OPTIONS.map((f) => ({ value: f, label: f }))}
+                options={dynamicFeeTypes.map((f) => ({ value: f, label: f }))}
               />
             </div>
             <Input
-              label="Base Fee Amount ($)"
+              label="Base Fee Amount (₹)"
               type="number"
-              step="0.01"
+              step="1"
+              min="1"
               value={totalFee}
               onChange={(e) => setTotalFee(e.target.value)}
               placeholder="e.g. 15000"
@@ -415,6 +465,15 @@ export default function FeeStructureTab() {
         title="Delete Fee Structure"
         message="Are you sure you want to remove this fee structure? Existing student billing invoices will not be modified."
       />
+
+      {/* Bulk / Individual Fee Assignment Modal */}
+      <AssignFeeModal
+        open={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+        initialStructure={assigningStructure}
+        onAssigned={loadData}
+      />
     </div>
   )
 }
+

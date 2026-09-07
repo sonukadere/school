@@ -49,21 +49,21 @@ function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 p-4">
-      <div className="animate-fade-in w-full max-w-md">
-        <div className="mb-8 flex flex-col items-center text-center">
+    <div className="flex min-h-screen min-h-[100dvh] items-center justify-center bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 p-3 sm:p-4">
+      <div className="animate-fade-in w-full max-w-md my-4">
+        <div className="mb-6 sm:mb-8 flex flex-col items-center text-center">
           <img
             src={settings?.schoolLogo || '/logo.svg'}
             alt={`${schoolName} logo`}
-            className="h-16 w-16 rounded-2xl object-cover shadow-lg"
+            className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl object-cover shadow-lg"
           />
-          <h1 className="mt-4 text-2xl font-bold text-white">{schoolName}</h1>
-          <p className="mt-1 text-sm text-indigo-200">School Management System</p>
+          <h1 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-white">{schoolName}</h1>
+          <p className="mt-1 text-xs sm:text-sm text-indigo-200">School Management System</p>
         </div>
 
-        <div className="rounded-2xl bg-white p-8 shadow-2xl">
-          <h2 className="text-xl font-bold text-slate-900">Sign in to your account</h2>
-          <p className="mt-1 text-sm text-slate-500">Enter your credentials to continue</p>
+        <div className="rounded-2xl bg-white p-5 sm:p-8 shadow-2xl">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900">Sign in to your account</h2>
+          <p className="mt-1 text-xs sm:text-sm text-slate-500">Enter your credentials to continue</p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate>
             <Input

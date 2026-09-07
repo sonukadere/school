@@ -72,6 +72,13 @@ router.delete(
   paymentController.deleteFeeStructure
 );
 
+// --- Finance Dashboard Summary ---
+router.get('/finance-summary', canManagePayments, paymentController.getFinanceSummary);
+
+// --- Fee Assignment Operations ---
+router.post('/assign-class', canManagePayments, paymentController.assignFeeStructureToClass);
+router.post('/assign-student', canManagePayments, paymentController.assignFeeToStudent);
+
 // --- Schools List ---
 router.get('/schools', canManagePayments, paymentController.listSchools);
 

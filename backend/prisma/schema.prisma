@@ -168,6 +168,7 @@ model User {
   schoolId      String?       @default("SCH001")
   paymentsCreated Payment[]   @relation("PaymentCreatedBy")
   receiptsGenerated PaymentReceipt[] @relation("ReceiptGeneratedBy")
+  payrollsCreated Payroll[]   @relation("PayrollCreatedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -267,6 +268,9 @@ model Teacher {
   attendances    TeacherAttendance[]
   timetableSlots Timetable[]
   markedAttendances Attendance[]
+  salaryStructure TeacherSalaryStructure?
+  payrolls       Payroll[]
+  payslips       Payslip[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -945,5 +949,100 @@ model PaymentReceipt {
   @@index([schoolId])
   @@index([studentId])
 }
+
+// -------------------------------------------------------------
+// Teacher Salary Structure
+// -------------------------------------------------------------
+
+model TeacherSalaryStructure {
+  id           String        @id @default(cuid()) @map("_id")
+  schoolId     String        @default("SCH001")
+  teacherId    String        @unique
+  teacher      Teacher       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  designation  String?       @default("Teacher")
+  basicSalary  Float         @default(0)
+  allowances   Float         @default(0)
+  bonus        Float         @default(0)
+  deductions   Float         @default(0)
+  advance      Float         @default(0)
+  grossSalary  Float         @default(0) // basicSalary + allowances + bonus
+  netSalary    Float         @default(0) // grossSalary - deductions - advance
+  paymentMethod PaymentMethod @default(BANK_TRANSFER)
+  bankAccount  String?
+  bankName     String?
+  ifscCode     String?
+  status       String        @default("ACTIVE") // ACTIVE, INACTIVE
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+
+  @@index([schoolId])
+}
+
+// -------------------------------------------------------------
+// Monthly Payroll Record
+// -------------------------------------------------------------
+
+model Payroll {
+  id              String        @id @default(cuid()) @map("_id")
+  payrollNumber   String        @unique // e.g. PAY/SCH001/2026/08/0001
+  schoolId        String        @default("SCH001")
+  teacherId       String
+  teacher         Teacher       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  salaryMonth     Int           // 1-12
+  salaryYear      Int           // e.g. 2026
+  designation     String?       @default("Teacher")
+  basicSalary     Float
+  allowances      Float         @default(0)
+  bonus           Float         @default(0)
+  deductions      Float         @default(0)
+  advance         Float         @default(0)
+  grossSalary     Float         // basicSalary + allowances + bonus
+  netSalary       Float         // grossSalary - deductions - advance
+  paymentStatus   PaymentStatus @default(PENDING) // PENDING, PAID
+  paymentDate     DateTime?
+  paymentMethod   PaymentMethod @default(BANK_TRANSFER)
+  transactionId   String?
+  referenceNumber String?
+  notes           String?
+  createdById     String?
+  createdBy       User?         @relation("PayrollCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  payslip         Payslip?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+
+  @@unique([teacherId, salaryMonth, salaryYear])
+  @@index([schoolId])
+  @@index([salaryYear, salaryMonth])
+  @@index([paymentStatus])
+}
+
+// -------------------------------------------------------------
+// Teacher Payslip
+// -------------------------------------------------------------
+
+model Payslip {
+  id            String    @id @default(cuid()) @map("_id")
+  payslipNumber String    @unique // e.g. PSLIP/SCH001/2026/08/0001
+  schoolId      String    @default("SCH001")
+  payrollId     String    @unique
+  payroll       Payroll   @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  teacherId     String
+  teacher       Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  issueDate     DateTime  @default(now())
+  metadata      String?   // JSON snapshot of school, teacher, breakdown, auth signature
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  @@index([schoolId])
+  @@index([teacherId])
+}
+
 
 

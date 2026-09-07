@@ -50,15 +50,16 @@ export function isValidDate(day, month, year) {
 }
 
 /**
- * Parses a date string (DD/MM/YYYY or YYYY-MM-DD) into unambiguous parts.
+ * Parses a date string (DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY, YYYY-MM-DD, or DDMMYYYY) into unambiguous parts.
  * Never relies on ambiguous JavaScript new Date("06/09/2026").
  */
 export function parseDisplayDate(str) {
   if (!str) return null
   const trimmed = String(str).trim()
+  if (!trimmed) return null
 
-  // Format 1: DD/MM/YYYY or DD-MM-YYYY
-  const dmMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
+  // Format 1: DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+  const dmMatch = trimmed.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/)
   if (dmMatch) {
     const day = Number(dmMatch[1])
     const month = Number(dmMatch[2])
@@ -78,8 +79,8 @@ export function parseDisplayDate(str) {
     }
   }
 
-  // Format 2: YYYY-MM-DD
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+  // Format 2: YYYY-MM-DD or YYYY/MM/DD
+  const isoMatch = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/)
   if (isoMatch) {
     const year = Number(isoMatch[1])
     const month = Number(isoMatch[2])
@@ -98,12 +99,34 @@ export function parseDisplayDate(str) {
     }
   }
 
-  // Fallback for Date objects or ISO strings
+  // Format 3: 8 continuous digits DDMMYYYY
+  const continuousMatch = trimmed.match(/^(\d{2})(\d{2})(\d{4})$/)
+  if (continuousMatch) {
+    const day = Number(continuousMatch[1])
+    const month = Number(continuousMatch[2])
+    const year = Number(continuousMatch[3])
+    if (isValidDate(day, month, year)) {
+      const padD = String(day).padStart(2, '0')
+      const padM = String(month).padStart(2, '0')
+      return {
+        day,
+        month,
+        year,
+        display: `${padD}/${padM}/${year}`,
+        isoString: `${year}-${padM}-${padD}`,
+        dateObj: new Date(Date.UTC(year, month - 1, day)),
+        isValid: true,
+      }
+    }
+  }
+
+  // Fallback for Date objects or full ISO strings (e.g. 2026-09-07T00:00:00.000Z)
   const d = new Date(str)
   if (Number.isNaN(d.getTime())) return null
   const day = d.getUTCDate()
   const month = d.getUTCMonth() + 1
   const year = d.getUTCFullYear()
+  if (!isValidDate(day, month, year)) return null
   const padD = String(day).padStart(2, '0')
   const padM = String(month).padStart(2, '0')
   return {
@@ -118,8 +141,123 @@ export function parseDisplayDate(str) {
 }
 
 /**
+ * Format date for input field without returning placeholder dash '—'.
+ * Returns empty string if invalid or empty.
+ */
+export function formatDateForInput(dateInput) {
+  if (!dateInput) return ''
+  const parsed = parseDisplayDate(dateInput)
+  return parsed ? parsed.display : ''
+}
+
+/**
+ * Converts any valid date input to YYYY-MM-DD.
+ */
+export function toISODateString(dateInput) {
+  if (!dateInput) return ''
+  const parsed = parseDisplayDate(dateInput)
+  return parsed ? parsed.isoString : ''
+}
+
+/**
+ * Detailed validation for user-typed dates.
+ * Rejects 31/02/2026, 31/04/2026, checks leap years, min, and max.
+ * Returns { isValid, error, isoString, display }
+ */
+export function validateDateString(str, min, max) {
+  if (!str || !String(str).trim()) {
+    return { isValid: false, error: 'Date is required', isoString: null, display: null }
+  }
+
+  const trimmed = String(str).trim()
+
+  // Match DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+  const partsMatch = trimmed.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/)
+  if (!partsMatch) {
+    // Check if it's in YYYY-MM-DD format
+    const isoMatch = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/)
+    if (isoMatch) {
+      const year = Number(isoMatch[1])
+      const month = Number(isoMatch[2])
+      const day = Number(isoMatch[3])
+      if (!isValidDate(day, month, year)) {
+        return { isValid: false, error: 'Invalid calendar date', isoString: null, display: null }
+      }
+      const padD = String(day).padStart(2, '0')
+      const padM = String(month).padStart(2, '0')
+      const isoString = `${year}-${padM}-${padD}`
+      const display = `${padD}/${padM}/${year}`
+
+      if (min) {
+        const minIso = toISODateString(min)
+        if (minIso && isoString < minIso) {
+          return { isValid: false, error: `Date cannot be earlier than ${formatDate(min)}`, isoString, display }
+        }
+      }
+      if (max) {
+        const maxIso = toISODateString(max)
+        if (maxIso && isoString > maxIso) {
+          return { isValid: false, error: `Date cannot be later than ${formatDate(max)}`, isoString, display }
+        }
+      }
+      return { isValid: true, error: null, isoString, display }
+    }
+
+    return { isValid: false, error: 'Please enter date in DD/MM/YYYY format', isoString: null, display: null }
+  }
+
+  const day = Number(partsMatch[1])
+  const month = Number(partsMatch[2])
+  const year = Number(partsMatch[3])
+
+  if (year < 1920 || year > 2050) {
+    return { isValid: false, error: 'Year must be between 1920 and 2050', isoString: null, display: null }
+  }
+  if (month < 1 || month > 12) {
+    return { isValid: false, error: 'Month must be between 01 and 12', isoString: null, display: null }
+  }
+
+  // Days in month check
+  const maxDays = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  if (day < 1 || day > maxDays) {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ]
+    const mName = monthNames[month - 1] || 'month'
+    return {
+      isValid: false,
+      error: `Invalid date (${mName} has ${maxDays} days in ${year})`,
+      isoString: null,
+      display: null,
+    }
+  }
+
+  const padD = String(day).padStart(2, '0')
+  const padM = String(month).padStart(2, '0')
+  const isoString = `${year}-${padM}-${padD}`
+  const display = `${padD}/${padM}/${year}`
+
+  if (min) {
+    const minIso = toISODateString(min)
+    if (minIso && isoString < minIso) {
+      return { isValid: false, error: `Date cannot be earlier than ${formatDate(min)}`, isoString, display }
+    }
+  }
+  if (max) {
+    const maxIso = toISODateString(max)
+    if (maxIso && isoString > maxIso) {
+      return { isValid: false, error: `Date cannot be later than ${formatDate(max)}`, isoString, display }
+    }
+  }
+
+  return { isValid: true, error: null, isoString, display }
+}
+
+/**
  * Format any date input strictly as DD/MM/YYYY.
  * Example: 2026-09-06 -> 06/09/2026
+ * Timezone-safe: never shifts dates across timezones.
  */
 export function formatDate(dateInput) {
   if (!dateInput) return '—'
@@ -127,7 +265,7 @@ export function formatDate(dateInput) {
   // If already in DD/MM/YYYY format, validate and return
   if (typeof dateInput === 'string') {
     const trimmed = dateInput.trim()
-    const match = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
+    const match = trimmed.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/)
     if (match) {
       const d = match[1].padStart(2, '0')
       const m = match[2].padStart(2, '0')
@@ -135,7 +273,7 @@ export function formatDate(dateInput) {
       return `${d}/${m}/${y}`
     }
     // If string matches YYYY-MM-DD
-    const isoMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+    const isoMatch = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/)
     if (isoMatch) {
       const y = isoMatch[1]
       const m = isoMatch[2].padStart(2, '0')
@@ -146,9 +284,9 @@ export function formatDate(dateInput) {
 
   const date = dateInput instanceof Date ? dateInput : new Date(dateInput)
   if (Number.isNaN(date.getTime())) return String(dateInput)
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear()
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const year = date.getUTCFullYear()
   return `${day}/${month}/${year}`
 }
 

@@ -122,7 +122,7 @@ export default function TransferCertificateList() {
           />
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="w-full sm:w-48">
           <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -144,7 +144,7 @@ export default function TransferCertificateList() {
             <Loader label="Loading transfer certificates..." />
           </div>
         ) : filteredCertificates.length === 0 ? (
-          <div className="p-8">
+          <div className="p-6 sm:p-8">
             <EmptyState
               icon={FileText}
               title="No Transfer Certificates Found"
@@ -154,24 +154,24 @@ export default function TransferCertificateList() {
             />
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto touch-scroll">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3.5 px-5">TC Number</th>
-                  <th className="py-3.5 px-5">Student</th>
-                  <th className="py-3.5 px-5">Class</th>
-                  <th className="py-3.5 px-5">Date of Issue</th>
-                  <th className="py-3.5 px-5">Reason</th>
-                  <th className="py-3.5 px-5 text-center">Status</th>
-                  <th className="py-3.5 px-5 text-right">Actions</th>
+                <tr className="bg-slate-50 border-b border-slate-200 text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                  <th className="py-3 px-3.5 sm:py-3.5 sm:px-5">TC Number</th>
+                  <th className="py-3 px-3.5 sm:py-3.5 sm:px-5">Student</th>
+                  <th className="py-3 px-3.5 sm:py-3.5 sm:px-5">Class</th>
+                  <th className="py-3 px-3.5 sm:py-3.5 sm:px-5">Date of Issue</th>
+                  <th className="py-3 px-3.5 sm:py-3.5 sm:px-5">Reason</th>
+                  <th className="py-3 px-3.5 sm:py-3.5 sm:px-5 text-center">Status</th>
+                  <th className="py-3 px-3.5 sm:py-3.5 sm:px-5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
+              <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
                 {filteredCertificates.map((tc) => (
                   <tr key={tc.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3.5 px-5 font-mono font-bold text-indigo-900">{tc.tcNumber}</td>
-                    <td className="py-3.5 px-5">
+                    <td className="py-3 px-3.5 sm:py-3.5 sm:px-5 font-mono font-bold text-indigo-900 whitespace-nowrap">{tc.tcNumber}</td>
+                    <td className="py-3 px-3.5 sm:py-3.5 sm:px-5">
                       <div className="font-semibold text-slate-900">
                         {tc.student ? `${tc.student.firstName} ${tc.student.lastName || ''}`.trim() : '—'}
                       </div>

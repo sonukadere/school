@@ -379,8 +379,8 @@ function StudentAttendance() {
 
         {/* Selected Class Database Info & Quick Action Bar */}
         {activeClass && (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/40 px-4 py-2.5">
-            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/40 p-3 sm:px-4 sm:py-2.5">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-slate-600">
               <span className="font-semibold text-indigo-900">
                 {activeClass.name} - Section {activeClass.section}
               </span>
@@ -394,13 +394,10 @@ function StudentAttendance() {
                   Teacher: {activeClass.classTeacher}
                 </span>
               )}
-              <span className="text-slate-500 font-mono text-[11px]">
-                DB ID: {activeClass.id.slice(0, 10)}...
-              </span>
             </div>
 
             {students.length > 0 && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => markAll('Present')}
@@ -497,20 +494,20 @@ function StudentAttendance() {
           className="overflow-hidden"
           bodyClassName="p-0"
         >
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto touch-scroll">
             <table className="min-w-full divide-y divide-slate-200 text-left">
               <thead className="bg-slate-50/80">
                 <tr>
-                  <th className="px-5 py-3 text-xs font-semibold tracking-wider text-slate-500 uppercase">
+                  <th className="px-3.5 py-2.5 sm:px-5 sm:py-3 text-[10px] sm:text-xs font-semibold tracking-wider text-slate-500 uppercase whitespace-nowrap">
                     Roll No
                   </th>
-                  <th className="px-5 py-3 text-xs font-semibold tracking-wider text-slate-500 uppercase">
+                  <th className="px-3.5 py-2.5 sm:px-5 sm:py-3 text-[10px] sm:text-xs font-semibold tracking-wider text-slate-500 uppercase whitespace-nowrap">
                     Student Details
                   </th>
-                  <th className="px-5 py-3 text-xs font-semibold tracking-wider text-slate-500 uppercase">
+                  <th className="px-3.5 py-2.5 sm:px-5 sm:py-3 text-[10px] sm:text-xs font-semibold tracking-wider text-slate-500 uppercase whitespace-nowrap">
                     Student ID
                   </th>
-                  <th className="px-5 py-3 text-xs font-semibold tracking-wider text-slate-500 uppercase text-right pr-6">
+                  <th className="px-3.5 py-2.5 sm:px-5 sm:py-3 text-[10px] sm:text-xs font-semibold tracking-wider text-slate-500 uppercase text-right pr-4 sm:pr-6 whitespace-nowrap">
                     Attendance Status
                   </th>
                 </tr>
@@ -521,28 +518,28 @@ function StudentAttendance() {
                     key={student.id}
                     className="transition-colors hover:bg-slate-50/70"
                   >
-                    <td className="px-5 py-3.5 text-sm font-semibold text-slate-700">
+                    <td className="px-3.5 py-3 sm:px-5 sm:py-3.5 text-xs sm:text-sm font-semibold text-slate-700 whitespace-nowrap">
                       {student.rollNumber ?? '—'}
                     </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
+                    <td className="px-3.5 py-3 sm:px-5 sm:py-3.5">
+                      <div className="flex items-center gap-2.5 sm:gap-3">
                         <Avatar name={student.fullName} size="sm" />
                         <div className="min-w-0">
-                          <p className="font-semibold text-slate-900 text-sm">
+                          <p className="font-semibold text-slate-900 text-xs sm:text-sm whitespace-nowrap">
                             {student.fullName}
                           </p>
                           {student.email && (
-                            <p className="text-xs text-slate-400 truncate">
+                            <p className="text-[11px] sm:text-xs text-slate-400 truncate">
                               {student.email}
                             </p>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-xs font-mono text-slate-500">
+                    <td className="px-3.5 py-3 sm:px-5 sm:py-3.5 text-xs font-mono text-slate-500 whitespace-nowrap">
                       {student.studentId || student.id.slice(0, 10)}
                     </td>
-                    <td className="px-5 py-3.5 text-right pr-6">
+                    <td className="px-3.5 py-3 sm:px-5 sm:py-3.5 text-right pr-4 sm:pr-6 whitespace-nowrap">
                       <StatusRadio
                         selected={records[student.id] || ''}
                         onChange={(status) => updateStatus(student.id, status)}
@@ -554,15 +551,15 @@ function StudentAttendance() {
             </table>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between border-t border-slate-100 bg-slate-50/60 p-4">
-            <div className="text-xs text-slate-500">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/60 p-3.5 sm:p-4">
+            <div className="text-xs text-slate-500 text-center sm:text-left">
               Showing {students.length} students from database • Marking for {formatDate(date)}
             </div>
             <Button
               onClick={handleSave}
               loading={saving}
               leftIcon={Save}
-              className="shadow-sm"
+              className="shadow-sm w-full sm:w-auto"
             >
               Save Attendance
             </Button>

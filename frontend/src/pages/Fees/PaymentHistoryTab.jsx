@@ -5,6 +5,7 @@ import Button from '../../components/common/Button'
 import Badge from '../../components/common/Badge'
 import Select from '../../components/common/Select'
 import Input from '../../components/common/Input'
+import DateInput from '../../components/common/DateInput'
 import DataTable from '../../components/common/DataTable'
 import { api } from '../../services/api'
 import { useToast } from '../../context/ToastContext'
@@ -201,22 +202,22 @@ export default function PaymentHistoryTab({ onViewReceipt }) {
               options={PAYMENT_METHODS}
               className="w-40"
             />
-            <div className="flex items-center gap-1 text-xs text-slate-500">
-              <Input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                placeholder="From"
-                className="w-36"
-              />
-              <span>to</span>
-              <Input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                placeholder="To"
-                className="w-36"
-              />
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <div className="w-36">
+                <DateInput
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  placeholder="From Date"
+                />
+              </div>
+              <span className="text-slate-400">to</span>
+              <div className="w-36">
+                <DateInput
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  placeholder="To Date"
+                />
+              </div>
             </div>
             {(methodFilter || fromDate || toDate) && (
               <Button

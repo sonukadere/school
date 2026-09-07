@@ -98,3 +98,19 @@ export const listSchools = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, 'Schools fetched successfully.', schools));
 });
+
+export const assignFeeStructureToClass = asyncHandler(async (req, res) => {
+  const result = await paymentService.assignFeeStructureToClass(req.body, req.user);
+  res.status(201).json(new ApiResponse(201, result.message, result));
+});
+
+export const assignFeeToStudent = asyncHandler(async (req, res) => {
+  const invoice = await paymentService.assignFeeToStudent(req.body, req.user);
+  res.status(201).json(new ApiResponse(201, 'Student fee invoice created successfully.', invoice));
+});
+
+export const getFinanceSummary = asyncHandler(async (req, res) => {
+  const summary = await paymentService.getFinanceSummary(req.query, req.user);
+  res.status(200).json(new ApiResponse(200, 'Finance summary fetched successfully.', summary));
+});
+

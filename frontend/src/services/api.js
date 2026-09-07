@@ -6,10 +6,14 @@ import { apiClient } from './apiClient'
 
 function normalizeStudent(s) {
   if (!s) return null
+  const cleanStudentId =
+    s.studentId && (!s.studentId.startsWith('cm') || s.studentId.length <= 15)
+      ? s.studentId
+      : (s.id && s.id.startsWith('STU') ? s.id : (s.studentId || (s.id ? `STU-${s.id.slice(-4).toUpperCase()}` : 'STU-001')))
   return {
     ...s,
     id: s.id,
-    studentId: s.studentId,
+    studentId: cleanStudentId,
     fullName: s.firstName && s.lastName ? `${s.firstName} ${s.lastName}`.trim() : (s.name || s.firstName || 'Student'),
     firstName: s.firstName,
     lastName: s.lastName,
@@ -589,8 +593,54 @@ export const api = {
     return apiClient.delete(`/payments/fee-structures/${id}`)
   },
 
+  assignFeeStructureToClass: async (data) => {
+    return apiClient.post('/payments/assign-class', data)
+  },
+
+  assignFeeToStudent: async (data) => {
+    return apiClient.post('/payments/assign-student', data)
+  },
+
+  getFinanceSummary: async (params = {}) => {
+    return apiClient.get('/payments/finance-summary', params)
+  },
+
   getPaymentSchools: async () => {
     return apiClient.get('/payments/schools')
+  },
+
+  // --- Teacher Salary & Payroll ---
+  getTeacherSalaryStructures: async (params = {}) => {
+    return apiClient.get('/payroll/structures', params)
+  },
+
+  saveTeacherSalaryStructure: async (data) => {
+    return apiClient.post('/payroll/structures', data)
+  },
+
+  generateMonthlyPayroll: async (data) => {
+    return apiClient.post('/payroll/generate', data)
+  },
+
+  getPayrollList: async (params = {}) => {
+    return apiClient.get('/payroll', params)
+  },
+
+  getPayrollById: async (id) => {
+    return apiClient.get(`/payroll/${id}`)
+  },
+
+  markSalaryPaid: async (id, data) => {
+    return apiClient.post(`/payroll/${id}/pay`, data)
+  },
+
+  getPayslip: async (idOrNumber) => {
+    const pathParam = encodeURIComponent(idOrNumber)
+    return apiClient.get(`/payroll/payslip/${pathParam}`)
+  },
+
+  getPayrollReports: async (params = {}) => {
+    return apiClient.get('/payroll/reports', params)
   },
 
   // --- Exams ---

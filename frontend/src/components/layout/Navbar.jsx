@@ -148,8 +148,8 @@ function Navbar({ collapsed, onToggleSidebar }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-md sm:px-6 shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-3 backdrop-blur-md sm:px-6 shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           type="button"
           onClick={onToggleSidebar}
@@ -166,18 +166,20 @@ function Navbar({ collapsed, onToggleSidebar }) {
         >
           <Menu size={20} />
         </button>
-        <div>
-          <p className="text-sm font-semibold tracking-tight text-slate-800">{currentTitle}</p>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold tracking-tight text-slate-800 truncate max-w-[125px] xs:max-w-[190px] sm:max-w-xs md:max-w-md">
+            {currentTitle}
+          </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <div className="relative" ref={quickActionsRef}>
           <button
             type="button"
             onClick={toggleQuickActions}
             className={cn(
-              "relative flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900 shadow-2xs",
+              "relative flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-slate-50/80 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900 shadow-2xs",
               quickActionsOpen && "bg-slate-100 ring-2 ring-indigo-500/20 border-indigo-300"
             )}
             title="Quick Actions"
@@ -187,7 +189,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
             <span className="hidden sm:inline">Quick Actions</span>
           </button>
           {quickActionsOpen && (
-            <div className="animate-scale-in absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+            <div className="animate-scale-in absolute right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl z-50">
               <div className="border-b border-slate-100 px-4 py-2">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Quick Actions</p>
               </div>
@@ -228,7 +230,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
             )}
           </button>
           {notificationsOpen && (
-            <div className="animate-scale-in absolute right-0 mt-2 w-84 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl z-50">
+            <div className="animate-scale-in absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-sm sm:w-84 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl z-50">
               <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-3">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-slate-900">Notifications</p>
@@ -337,7 +339,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
             <ChevronDown size={14} className="hidden text-slate-400 md:block" />
           </button>
           {profileOpen && (
-            <div className="animate-scale-in absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+            <div className="animate-scale-in absolute right-0 mt-2 w-60 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl z-50">
               <div className="border-b border-slate-100 px-4 py-3">
                 <p className="text-sm font-semibold text-slate-900">{user?.name}</p>
                 <p className="text-xs text-slate-500">{user?.email}</p>

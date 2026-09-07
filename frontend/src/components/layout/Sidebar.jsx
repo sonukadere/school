@@ -96,9 +96,9 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
       )}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 transition-all duration-300 lg:static lg:z-auto lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 transition-all duration-300 lg:static lg:z-auto lg:translate-x-0 shadow-2xl lg:shadow-none',
           collapsed && !mobileOpen ? 'lg:w-20' : 'lg:w-64',
-          mobileOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full lg:translate-x-0',
+          mobileOpen ? 'w-72 max-w-[85vw] translate-x-0' : 'w-72 max-w-[85vw] -translate-x-full lg:w-64 lg:translate-x-0',
         )}
       >
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 px-4">
@@ -157,7 +157,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           ))}
         </nav>
 
-        <div className="shrink-0 border-t border-slate-800 p-3">
+        <div className="shrink-0 border-t border-slate-800 p-3 pb-6 sm:pb-3">
           <button
             type="button"
             onClick={logout}

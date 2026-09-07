@@ -46,14 +46,14 @@ const buildPaymentRange = (from, to) => {
 
 export async function listFees(query = {}, actor = null) {
   const { page, limit, skip } = getPagination(query);
-  const { studentId, paymentStatus, paymentMethod, from, to, sortBy = 'createdAt', sortOrder = 'desc' } = query;
+  const { studentId, paymentStatus, paymentMethod, from, to } = query;
 
   const visibleIds = actor ? await getVisibleStudentIds(actor) : null;
   if (visibleIds !== null && visibleIds.length === 0 && actor.role !== 'ADMIN') {
     return { data: [], pagination: getPaginationMeta(page, limit, 0) };
   }
 
-  const where = {
+  const feeWhere = {
     ...notDeleted(),
     ...(studentId ? { studentId } : {}),
     ...(visibleIds ? { studentId: { in: visibleIds } } : {}),
@@ -62,18 +62,52 @@ export async function listFees(query = {}, actor = null) {
     ...buildPaymentRange(from, to),
   };
 
-  const [data, total] = await Promise.all([
+  const invoiceWhere = {
+    ...notDeleted(),
+    ...(studentId ? { studentId } : {}),
+    ...(visibleIds ? { studentId: { in: visibleIds } } : {}),
+    ...(paymentStatus ? { status: paymentStatus } : {}),
+  };
+
+  const [legacyFees, invoices] = await Promise.all([
     prisma.fee.findMany({
-      where,
+      where: feeWhere,
       include: DEFAULT_INCLUDE,
-      orderBy: SORTABLE_FIELDS.has(sortBy) ? { [sortBy]: sortOrder } : { createdAt: 'desc' },
-      skip,
-      take: limit,
+      orderBy: { createdAt: 'desc' },
+      take: 200,
     }),
-    prisma.fee.count({ where }),
+    prisma.feeInvoice.findMany({
+      where: invoiceWhere,
+      include: DEFAULT_INCLUDE,
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    }),
   ]);
 
-  return { data, pagination: getPaginationMeta(page, limit, total) };
+  // Format feeInvoice records to match standard fee shape
+  const mappedInvoices = invoices.map((inv) => ({
+    id: inv.id,
+    studentId: inv.studentId,
+    student: inv.student,
+    totalFee: inv.finalAmount || inv.totalFee,
+    paidAmount: inv.paidAmount,
+    dueAmount: inv.pendingAmount,
+    paymentDate: inv.updatedAt,
+    paymentStatus: inv.status,
+    paymentMethod: 'CASH',
+    feeType: inv.feeType,
+    invoiceNumber: inv.invoiceNumber,
+    dueDate: inv.dueDate,
+    createdAt: inv.createdAt,
+    updatedAt: inv.updatedAt,
+  }));
+
+  // Combine real database records
+  const combined = [...legacyFees, ...mappedInvoices];
+  const total = combined.length;
+  const paginated = combined.slice(skip, skip + limit);
+
+  return { data: paginated, pagination: getPaginationMeta(page, limit, total) };
 }
 
 export async function getFee(id, actor = null) {

@@ -107,9 +107,9 @@ function TeacherForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl">
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.02),0_6px_24px_0_rgba(15,23,42,0.06)]">
+      <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.02),0_6px_24px_0_rgba(15,23,42,0.06)]">
         {/* Header with Photo and Title */}
-        <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-50/50 via-slate-50/30 to-transparent p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6">
+        <div className="rounded-t-2xl border-b border-slate-100 bg-gradient-to-r from-indigo-50/50 via-slate-50/30 to-transparent p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6">
           <PhotoUploader value={values.photo} onChange={(photo) => setValues((prev) => ({ ...prev, photo }))} />
           <div className="text-center sm:text-left">
             <h3 className="text-lg font-bold text-slate-900 tracking-tight">Faculty Member Setup</h3>
@@ -227,7 +227,7 @@ function TeacherForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
         </div>
 
         {/* Integrated Action Footer */}
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/60 px-6 py-4 rounded-b-2xl">
           <Button type="button" variant="outline" onClick={() => window.history.back()} disabled={submitting}>
             Cancel
           </Button>

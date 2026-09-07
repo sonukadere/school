@@ -21,9 +21,35 @@ export default function PaymentReportsTab() {
   const { showToast } = useToast()
   const [reportData, setReportData] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [academicYear, setAcademicYear] = useState('2026-2027')
+  const [academicYear, setAcademicYear] = useState('')
+  const [academicYears, setAcademicYears] = useState([])
+
+  // Load active academic year and options dynamically from DB
+  useEffect(() => {
+    async function loadYears() {
+      try {
+        const [settingsRes, structuresRes] = await Promise.all([
+          api.getSettings().catch(() => null),
+          api.getFeeStructures().catch(() => null),
+        ])
+        const defaultYear = settingsRes?.data?.academicYear || settingsRes?.academicYear || '2026-2027'
+        const rawStructures = structuresRes?.data || structuresRes || []
+        const foundYears = Array.isArray(rawStructures)
+          ? rawStructures.map((s) => s.academicYear).filter(Boolean)
+          : []
+        const uniqueYears = Array.from(new Set([defaultYear, ...foundYears])).sort().reverse()
+        setAcademicYears(uniqueYears)
+        setAcademicYear(defaultYear)
+      } catch (err) {
+        console.error(err)
+        setAcademicYear('2026-2027')
+      }
+    }
+    loadYears()
+  }, [])
 
   const loadReports = async () => {
+    if (!academicYear) return
     setLoading(true)
     try {
       const res = await api.getPaymentReports({ academicYear })
@@ -38,7 +64,9 @@ export default function PaymentReportsTab() {
   }
 
   useEffect(() => {
-    loadReports()
+    if (academicYear) {
+      loadReports()
+    }
   }, [academicYear])
 
   if (loading) {
@@ -59,6 +87,34 @@ export default function PaymentReportsTab() {
 
   return (
     <div className="space-y-6">
+      {/* Dynamic Academic Year Filter Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+        <div>
+          <h3 className="text-base font-bold text-slate-900">Institutional Collection Analytics</h3>
+          <p className="text-xs text-slate-500">Live database aggregations across invoices and cleared payment receipts.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Calendar size={15} className="text-slate-500" />
+            <span className="text-xs font-semibold text-slate-600">Academic Session:</span>
+            <select
+              value={academicYear}
+              onChange={(e) => setAcademicYear(e.target.value)}
+              className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-xs focus:border-indigo-500 focus:outline-none"
+            >
+              {academicYears.map((yr) => (
+                <option key={yr} value={yr}>
+                  {yr}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button variant="outline" size="sm" onClick={loadReports}>
+            Refresh
+          </Button>
+        </div>
+      </div>
+
       {/* 1. KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-5 border-l-4 border-l-emerald-500">

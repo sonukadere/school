@@ -103,7 +103,9 @@ export async function createStudent(data) {
 
   // Transaction Rule: Atomic execution of ID generation, User Account, and Student Profile
   const result = await prisma.$transaction(async (tx) => {
-    const studentId = studentFields.studentId || (await generateStudentId(tx));
+    // Generate clean, understandable student ID (e.g. STU-2026-001) if not provided or if raw cuid was passed
+    const isCleanProvidedId = studentFields.studentId && !studentFields.studentId.startsWith('cm') && studentFields.studentId.length <= 20;
+    const studentId = isCleanProvidedId ? studentFields.studentId : (await generateStudentId(tx));
 
     const emailQuery = studentFields.email
       ? [{ email: { equals: studentFields.email, mode: 'insensitive' } }]
@@ -297,6 +299,10 @@ export async function updateStudent(id, data) {
   }
 
   const updateData = { ...data };
+  delete updateData.id;
+  if (updateData.studentId && updateData.studentId.startsWith('cm') && updateData.studentId.length > 20) {
+    delete updateData.studentId;
+  }
   if (updateData.dob !== undefined) {
     updateData.dob = updateData.dob ? toDateOnly(updateData.dob) : null;
   }

@@ -183,12 +183,16 @@ export async function recordPayment(data, actor) {
 
   // Find or determine the active FeeInvoice for this student & feeType
   let invoice = null;
-  if (data.invoiceId) {
+  const targetInvoiceId = data.invoiceId || data.feeInvoiceId;
+  if (targetInvoiceId) {
     invoice = await prisma.feeInvoice.findFirst({
-      where: { id: data.invoiceId, studentId: student.id, ...notDeleted() },
+      where: { id: targetInvoiceId },
     });
-    if (!invoice) {
+    if (!invoice || invoice.deletedAt) {
       throw ApiError.badRequest('The specified fee invoice was not found.');
+    }
+    if (invoice.studentId && invoice.studentId !== student.id) {
+      throw ApiError.badRequest('The specified invoice does not belong to the selected student.');
     }
   } else {
     invoice = await prisma.feeInvoice.findFirst({
@@ -265,9 +269,9 @@ export async function recordPayment(data, actor) {
     data: {
       receiptNumber,
       schoolId: school.code || schoolId,
-      studentId: student.id,
+      student: { connect: { id: student.id } },
       academicYear: data.academicYear || invoice.academicYear || '2026-2027',
-      invoiceId: invoice.id,
+      ...(invoice?.id ? { invoice: { connect: { id: invoice.id } } } : {}),
       feeType: data.feeType || invoice.feeType || 'Tuition Fee',
       amount: payAmount,
       previousDue,
@@ -281,7 +285,8 @@ export async function recordPayment(data, actor) {
       gateway: data.gateway || 'MANUAL',
       gatewayOrderId: data.gatewayOrderId || null,
       gatewayPaymentId: data.gatewayPaymentId || null,
-      createdById: actor.id,
+      ...(actor?.id ? { createdBy: { connect: { id: actor.id } } } : {}),
+      deletedAt: null,
     },
     include: {
       student: {
@@ -379,12 +384,13 @@ export async function recordPayment(data, actor) {
     data: {
       receiptNumber,
       schoolId: school.code || schoolId,
-      paymentId: payment.id,
-      invoiceId: invoice.id,
-      studentId: student.id,
+      payment: { connect: { id: payment.id } },
+      student: { connect: { id: student.id } },
+      ...(invoice?.id ? { invoice: { connect: { id: invoice.id } } } : {}),
       receiptDate: paymentDate,
-      generatedById: actor.id,
+      ...(actor?.id ? { generatedBy: { connect: { id: actor.id } } } : {}),
       metadata: JSON.stringify(receiptMetadata),
+      deletedAt: null,
     },
   });
 
@@ -561,7 +567,6 @@ export async function getPaymentReceipt(receiptNumberOrId, actor) {
   const receipt = await prisma.paymentReceipt.findFirst({
     where: {
       OR: [{ id: receiptNumberOrId }, { receiptNumber: receiptNumberOrId }, { paymentId: receiptNumberOrId }],
-      ...notDeleted(),
     },
     include: {
       payment: true,
@@ -576,7 +581,7 @@ export async function getPaymentReceipt(receiptNumberOrId, actor) {
     },
   });
 
-  if (!receipt) {
+  if (!receipt || receipt.deletedAt) {
     throw ApiError.notFound('Payment receipt not found.');
   }
 
@@ -1064,8 +1069,17 @@ export async function getStudentFeeLedger(studentId, actor) {
       pendingAmount,
       paymentStatus,
     },
+    summary: {
+      totalFee,
+      totalFees: totalFee,
+      paidAmount,
+      totalPaid: paidAmount,
+      pendingAmount,
+      paymentStatus,
+    },
     invoices,
     payments,
+    paymentHistory: payments,
     receipts,
   };
 }
@@ -1117,13 +1131,13 @@ export async function createFeeStructure(data, actor) {
     data: {
       schoolId: schoolId || 'SCH001',
       academicYear: data.academicYear || '2026-2027',
-      classId: data.classId || null,
-      feeType: data.feeType,
-      totalFee: Number(data.totalFee),
+      feeType: data.feeType || data.name,
+      totalFee: Number(data.totalFee ?? data.amount),
       dueDate: data.dueDate ? toDateOnly(data.dueDate) : null,
       lateFee: Number(data.lateFee || 0),
       description: data.description || null,
       status: data.status || 'ACTIVE',
+      ...(data.classId ? { class: { connect: { id: data.classId } } } : {}),
     },
     include: {
       class: { select: { id: true, name: true, section: true } },
@@ -1151,14 +1165,18 @@ export async function updateFeeStructure(id, data, actor) {
   const updated = await prisma.feeStructure.update({
     where: { id },
     data: {
-      ...(data.academicYear ? { academicYear: data.academicYear } : {}),
-      ...(data.classId !== undefined ? { classId: data.classId || null } : {}),
-      ...(data.feeType ? { feeType: data.feeType } : {}),
-      ...(data.totalFee !== undefined ? { totalFee: Number(data.totalFee) } : {}),
-      ...(data.dueDate !== undefined ? { dueDate: data.dueDate ? toDateOnly(data.dueDate) : null } : {}),
-      ...(data.lateFee !== undefined ? { lateFee: Number(data.lateFee) } : {}),
-      ...(data.description !== undefined ? { description: data.description } : {}),
-      ...(data.status ? { status: data.status } : {}),
+      academicYear: data.academicYear !== undefined ? data.academicYear : feeStructure.academicYear,
+      feeType: data.feeType !== undefined ? data.feeType : feeStructure.feeType,
+      totalFee: data.totalFee !== undefined ? Number(data.totalFee ?? data.amount) : feeStructure.totalFee,
+      dueDate: data.dueDate !== undefined ? (data.dueDate ? toDateOnly(data.dueDate) : null) : feeStructure.dueDate,
+      lateFee: data.lateFee !== undefined ? Number(data.lateFee) : feeStructure.lateFee,
+      description: data.description !== undefined ? data.description : feeStructure.description,
+      status: data.status !== undefined ? data.status : feeStructure.status,
+      ...(data.classId !== undefined
+        ? data.classId
+          ? { class: { connect: { id: data.classId } } }
+          : { class: { disconnect: true } }
+        : {}),
     },
     include: {
       class: { select: { id: true, name: true, section: true } },
@@ -1188,3 +1206,301 @@ export async function deleteFeeStructure(id, actor) {
     data: { deletedAt: new Date() },
   });
 }
+
+/**
+ * ASSIGN FEE STRUCTURE TO CLASS (BULK INVOICE GENERATION)
+ */
+export async function assignFeeStructureToClass(data, actor) {
+  if (actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
+    throw ApiError.forbidden('Only administrators can assign fee structures.');
+  }
+
+  const { feeStructureId, classId, discount = 0, dueDate, academicYear } = data;
+
+  const structure = await prisma.feeStructure.findFirst({
+    where: { id: feeStructureId, ...notDeleted() },
+  });
+
+  if (!structure) {
+    throw ApiError.badRequest('Selected fee structure does not exist.');
+  }
+
+  const schoolId = getEffectiveSchoolId(actor, structure.schoolId);
+  const school = await getSchoolInfo(schoolId);
+
+  const targetClassId = classId || structure.classId;
+  const studentWhere = {
+    ...notDeleted(),
+    ...(targetClassId ? { classId: targetClassId } : {}),
+  };
+
+  const students = await prisma.student.findMany({
+    where: studentWhere,
+    select: { id: true, studentId: true, firstName: true, lastName: true },
+  });
+
+  if (!students.length) {
+    throw ApiError.badRequest('No students found in the target class to assign fees.');
+  }
+
+  const targetAcademicYear = academicYear || structure.academicYear || '2026-2027';
+  const targetDueDate = dueDate ? toDateOnly(dueDate) : structure.dueDate;
+  const discountAmount = Math.max(Number(discount) || 0, 0);
+  const totalFee = structure.totalFee;
+  const lateFee = structure.lateFee || 0;
+  const finalAmount = Math.max(totalFee + lateFee - discountAmount, 0);
+
+  let assignedCount = 0;
+  let skippedCount = 0;
+
+  for (const student of students) {
+    // Check if invoice already exists
+    const existing = await prisma.feeInvoice.findFirst({
+      where: {
+        studentId: student.id,
+        feeType: structure.feeType,
+        academicYear: targetAcademicYear,
+        ...notDeleted(),
+      },
+    });
+
+    if (existing) {
+      skippedCount++;
+      continue;
+    }
+
+    const invoiceNumber = await generateInvoiceNumber(school.code || 'SCH001');
+
+    await prisma.feeInvoice.create({
+      data: {
+        invoiceNumber,
+        schoolId: school.code || schoolId || 'SCH001',
+        student: { connect: { id: student.id } },
+        academicYear: targetAcademicYear,
+        ...(structure.id ? { feeStructure: { connect: { id: structure.id } } } : {}),
+        feeType: structure.feeType,
+        totalFee,
+        paidAmount: 0,
+        pendingAmount: finalAmount,
+        discount: discountAmount,
+        lateFee,
+        finalAmount,
+        dueDate: targetDueDate,
+        status: 'PENDING',
+      },
+    });
+
+    assignedCount++;
+  }
+
+  return {
+    message: `Fee assignment completed. Assigned: ${assignedCount} students, Skipped (Already Assigned): ${skippedCount}.`,
+    assignedCount,
+    skippedCount,
+    totalStudents: students.length,
+    structureName: structure.feeType,
+  };
+}
+
+/**
+ * ASSIGN FEE INVOICE TO INDIVIDUAL STUDENT
+ */
+export async function assignFeeToStudent(data, actor) {
+  if (actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
+    throw ApiError.forbidden('Only administrators can assign student fees.');
+  }
+
+  const student = await prisma.student.findFirst({
+    where: { id: data.studentId, ...notDeleted() },
+  });
+
+  if (!student) {
+    throw ApiError.badRequest('Selected student does not exist.');
+  }
+
+  const schoolId = getEffectiveSchoolId(actor, data.schoolId || student.schoolId || 'SCH001');
+  const school = await getSchoolInfo(schoolId);
+
+  let totalFee = Number(data.totalFee ?? data.amount);
+  if (isNaN(totalFee) || totalFee <= 0) {
+    if (data.feeStructureId) {
+      const struct = await prisma.feeStructure.findUnique({ where: { id: data.feeStructureId } });
+      if (struct) totalFee = struct.totalFee;
+    }
+  }
+
+  if (isNaN(totalFee) || totalFee <= 0) {
+    throw ApiError.badRequest('Total fee must be greater than zero.');
+  }
+
+  const discount = Math.max(Number(data.discount ?? data.discountAmount) || 0, 0);
+  const lateFee = Math.max(Number(data.lateFee ?? data.lateFeeAmount) || 0, 0);
+  const finalAmount = Math.max(totalFee + lateFee - discount, 0);
+  const invoiceNumber = await generateInvoiceNumber(school.code || 'SCH001');
+  const dueDate = data.dueDate ? toDateOnly(data.dueDate) : null;
+
+  const invoice = await prisma.feeInvoice.create({
+    data: {
+      invoiceNumber,
+      schoolId: school.code || schoolId || 'SCH001',
+      student: { connect: { id: student.id } },
+      academicYear: data.academicYear || '2026-2027',
+      ...(data.feeStructureId ? { feeStructure: { connect: { id: data.feeStructureId } } } : {}),
+      feeType: data.feeType || 'Tuition Fee',
+      totalFee,
+      paidAmount: 0,
+      pendingAmount: finalAmount,
+      discount,
+      lateFee,
+      finalAmount,
+      dueDate,
+      status: 'PENDING',
+    },
+  });
+
+  return invoice;
+}
+
+/**
+ * UNIFIED FINANCE DASHBOARD SUMMARY (STUDENT FEES + TEACHER SALARY + CASHFLOW)
+ * All numbers calculated from real database records.
+ */
+export async function getFinanceSummary(query = {}, actor) {
+  if (!actor && query && query.role) {
+    actor = query;
+    query = {};
+  }
+  if (!actor) {
+    throw ApiError.unauthorized('Authentication required.');
+  }
+  if (actor.role === 'TEACHER' || actor.role === 'STUDENT' || actor.role === 'PARENT') {
+    throw ApiError.forbidden('You are not authorized to view the finance summary.');
+  }
+
+  const schoolId = getEffectiveSchoolId(actor, query.schoolId);
+  const academicYear = query.academicYear || '2026-2027';
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+
+  const invoiceWhere = {
+    ...notDeleted(),
+    ...(schoolId ? { schoolId } : {}),
+    ...(academicYear ? { academicYear } : {}),
+  };
+
+  const paymentWhere = {
+    ...notDeleted(),
+    paymentStatus: { not: 'CANCELLED' },
+    ...(schoolId ? { schoolId } : {}),
+    ...(academicYear ? { academicYear } : {}),
+  };
+
+  const payrollWhere = {
+    ...notDeleted(),
+    salaryYear: currentYear,
+    ...(schoolId ? { schoolId } : {}),
+  };
+
+  const [invoices, payments, payrolls, students] = await Promise.all([
+    prisma.feeInvoice.findMany({ where: invoiceWhere }),
+    prisma.payment.findMany({ where: paymentWhere }),
+    prisma.payroll.findMany({ where: payrollWhere }),
+    prisma.student.findMany({ where: notDeleted(), select: { id: true } }),
+  ]);
+
+  // Student Fee Metrics
+  const totalExpectedFees = invoices.reduce((sum, inv) => sum + (inv.finalAmount || 0), 0);
+  const totalCollectedFees = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalPendingFees = invoices.reduce((sum, inv) => sum + (inv.pendingAmount || 0), 0);
+
+  let totalOverdueFees = 0;
+  for (const inv of invoices) {
+    if (inv.pendingAmount > 0 && inv.dueDate && new Date(inv.dueDate) < now) {
+      totalOverdueFees += inv.pendingAmount;
+    }
+  }
+
+  // Student settlement distribution
+  const studentFeeStatusMap = new Map();
+  for (const s of students) {
+    studentFeeStatusMap.set(s.id, { total: 0, paid: 0, pending: 0 });
+  }
+
+  for (const inv of invoices) {
+    const s = studentFeeStatusMap.get(inv.studentId);
+    if (s) {
+      s.total += inv.finalAmount;
+      s.paid += inv.paidAmount;
+      s.pending += inv.pendingAmount;
+    }
+  }
+
+  let fullyPaidStudents = 0;
+  let partialPaidStudents = 0;
+  let unpaidStudents = 0;
+
+  for (const [, stat] of studentFeeStatusMap.entries()) {
+    if (stat.total > 0 && stat.pending === 0) {
+      fullyPaidStudents++;
+    } else if (stat.paid > 0 && stat.pending > 0) {
+      partialPaidStudents++;
+    } else if (stat.total > 0 && stat.paid === 0) {
+      unpaidStudents++;
+    }
+  }
+
+  // Teacher Salary Metrics
+  const totalSalaryPayable = payrolls.reduce((sum, p) => sum + (p.netSalary || 0), 0);
+  const totalSalaryPaid = payrolls
+    .filter((p) => p.paymentStatus === 'PAID')
+    .reduce((sum, p) => sum + (p.netSalary || 0), 0);
+  const totalSalaryPending = payrolls
+    .filter((p) => p.paymentStatus === 'PENDING')
+    .reduce((sum, p) => sum + (p.netSalary || 0), 0);
+
+  const currentMonthPayrolls = payrolls.filter(
+    (p) => p.salaryMonth === currentMonth && p.salaryYear === currentYear
+  );
+  const currentMonthPayrollTotal = currentMonthPayrolls.reduce(
+    (sum, p) => sum + (p.netSalary || 0),
+    0
+  );
+
+  // Financial Cashflow Summary
+  const totalIncome = totalCollectedFees;
+  const totalSalaryExpense = totalSalaryPaid;
+  const netBalance = totalIncome - totalSalaryExpense;
+
+  return {
+    academicYear,
+    totalIncome,
+    totalSalaryExpense,
+    netBalance,
+    studentFees: {
+      totalExpectedFees,
+      totalCollected: totalCollectedFees,
+      totalPending: totalPendingFees,
+      totalOverdue: totalOverdueFees,
+      fullyPaidStudents,
+      partialPaidStudents,
+      unpaidStudents,
+      totalInvoicedCount: invoices.length,
+    },
+    teacherSalary: {
+      totalSalaryPayable,
+      totalSalaryPaid,
+      totalSalaryPending,
+      currentMonthPayroll: currentMonthPayrollTotal,
+      currentMonth,
+      currentYear,
+      payrollRecordCount: payrolls.length,
+    },
+    financeSummary: {
+      totalIncome,
+      totalSalaryExpense,
+      netBalance,
+    },
+  };
+}
+

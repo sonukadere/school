@@ -45,7 +45,7 @@ export function pick(object = {}, keys = []) {
  */
 export function notDeleted() {
   return {
-    OR: [{ deletedAt: null }, { deletedAt: { isSet: false } }],
+    deletedAt: null,
   };
 }
 

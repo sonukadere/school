@@ -22,13 +22,40 @@ function Pagination({ currentPage, totalPages, onPageChange, totalItems, pageSiz
   }
 
   return (
-    <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row">
-      <p className="text-sm text-slate-500">
+    <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-3 py-3 sm:px-4 sm:flex-row">
+      <p className="text-xs sm:text-sm text-slate-500 text-center sm:text-left">
         Showing <span className="font-semibold text-slate-700">{start}</span> to{' '}
         <span className="font-semibold text-slate-700">{end}</span> of{' '}
         <span className="font-semibold text-slate-700">{totalItems}</span> entries
       </p>
-      <nav className="flex items-center gap-1" aria-label="Pagination">
+
+      {/* Mobile-only compact pagination */}
+      <div className="flex sm:hidden items-center gap-2">
+        <button
+          type="button"
+          disabled={currentPage === 1}
+          onClick={() => onPageChange(currentPage - 1)}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label="Previous page"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <span className="text-xs font-semibold text-slate-700 px-2">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          type="button"
+          disabled={currentPage === totalPages}
+          onClick={() => onPageChange(currentPage + 1)}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label="Next page"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+
+      {/* Tablet and Desktop full pagination numbers */}
+      <nav className="hidden sm:flex items-center gap-1" aria-label="Pagination">
         <button
           type="button"
           disabled={currentPage === 1}

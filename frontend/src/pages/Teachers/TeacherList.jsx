@@ -147,21 +147,22 @@ function TeacherList() {
         emptyIcon={Users}
         onRowClick={(teacher) => navigate(`/teachers/${teacher.id}`)}
         toolbar={
-          <>
-            <Select
-              name="subjectFilter"
-              value={subjectFilter}
-              onChange={(event) => setSubjectFilter(event.target.value)}
-              options={SUBJECT_OPTIONS}
-              placeholder="All Subjects"
-              className="w-44"
-            />
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div className="w-full sm:w-48">
+              <Select
+                name="subjectFilter"
+                value={subjectFilter}
+                onChange={(event) => setSubjectFilter(event.target.value)}
+                options={SUBJECT_OPTIONS}
+                placeholder="All Subjects"
+              />
+            </div>
             {subjectFilter && (
               <Button variant="ghost" size="sm" onClick={() => setSubjectFilter('')}>
                 Clear
               </Button>
             )}
-          </>
+          </div>
         }
       />
 

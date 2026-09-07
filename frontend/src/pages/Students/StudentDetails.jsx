@@ -176,22 +176,22 @@ function StudentDetails() {
         }
       />
 
-      <div className="space-y-6">
-        <Card className="p-6">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+      <div className="space-y-4 sm:space-y-6">
+        <Card bodyClassName="p-4 sm:p-6">
+          <div className="flex flex-col gap-4 sm:gap-6 sm:flex-row sm:items-center">
             {student.photo ? (
-              <img src={student.photo} alt={student.fullName} className="h-24 w-24 rounded-2xl object-cover shadow-md" />
+              <img src={student.photo} alt={student.fullName} className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover shadow-md mx-auto sm:mx-0" />
             ) : (
-              <Avatar name={student.fullName} size="xl" className="rounded-2xl" />
+              <Avatar name={student.fullName} size="xl" className="rounded-2xl mx-auto sm:mx-0" />
             )}
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="min-w-0 flex-1 text-center sm:text-left">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <h2 className="text-xl font-bold text-slate-900">{student.fullName}</h2>
                 <Badge className="bg-indigo-100 text-indigo-700">{student.className} - {student.section}</Badge>
                 <Badge className={STATUS_STYLES[student.gender]}>{student.gender}</Badge>
               </div>
-              <p className="mt-1 text-sm text-slate-500">Student ID: {student.id}</p>
-              <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-600">
+              <p className="mt-1 text-xs sm:text-sm text-slate-500 font-mono">Student ID: {student.studentId || student.id}</p>
+              <div className="mt-3 flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4 text-xs sm:text-sm text-slate-600">
                 <span className="flex items-center gap-1.5"><Mail size={15} className="text-slate-400" />{student.email}</span>
                 <span className="flex items-center gap-1.5"><Phone size={15} className="text-slate-400" />{student.phone}</span>
                 <span className="flex items-center gap-1.5"><MapPin size={15} className="text-slate-400" />{student.address}</span>
@@ -200,26 +200,26 @@ function StudentDetails() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Card className="flex items-center gap-4 p-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><GraduationCap size={22} /></div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+          <Card bodyClassName="flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><GraduationCap size={22} /></div>
             <div>
               <p className="text-xs text-slate-500">Roll Number</p>
-              <p className="text-lg font-bold text-slate-900">{student.rollNumber}</p>
+              <p className="text-base sm:text-lg font-bold text-slate-900">{student.rollNumber}</p>
             </div>
           </Card>
-          <Card className="flex items-center gap-4 p-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Phone size={22} /></div>
+          <Card bodyClassName="flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Phone size={22} /></div>
             <div>
               <p className="text-xs text-slate-500">Total Fees Paid</p>
-              <p className="text-lg font-bold text-emerald-600">{formatCurrency(totalPaid)}</p>
+              <p className="text-base sm:text-lg font-bold text-emerald-600">{formatCurrency(totalPaid)}</p>
             </div>
           </Card>
-          <Card className="flex items-center gap-4 p-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-50 text-rose-600"><MapPin size={22} /></div>
+          <Card bodyClassName="flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600"><MapPin size={22} /></div>
             <div>
               <p className="text-xs text-slate-500">Fees Due</p>
-              <p className="text-lg font-bold text-rose-600">{formatCurrency(totalDue)}</p>
+              <p className="text-base sm:text-lg font-bold text-rose-600">{formatCurrency(totalDue)}</p>
             </div>
           </Card>
         </div>
@@ -228,7 +228,7 @@ function StudentDetails() {
           <Card title="Personal Information" className="h-fit">
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <InfoItem label="Full Name" value={student.fullName} />
-              <InfoItem label="Student ID" value={student.id} />
+              <InfoItem label="Student ID" value={student.studentId || student.id} />
               <InfoItem label="Father Name" value={student.fatherName} />
               <InfoItem label="Mother Name" value={student.motherName} />
               <InfoItem label="Gender" value={student.gender} />
