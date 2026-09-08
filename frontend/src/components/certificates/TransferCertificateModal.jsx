@@ -55,6 +55,14 @@ export default function TransferCertificateModal({ open, onClose, studentId, tcI
     }
   }, [open, studentId, tcId, initialCertificate])
 
+  useEffect(() => {
+    if (!open) return
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
   if (!open) return null
 
   const handlePrint = () => {
@@ -77,7 +85,7 @@ export default function TransferCertificateModal({ open, onClose, studentId, tcI
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
         {/* Modal Topbar (hidden on print) */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 print:hidden flex-shrink-0">
@@ -116,7 +124,7 @@ export default function TransferCertificateModal({ open, onClose, studentId, tcI
         </div>
 
         {/* Modal Content */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/60">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/60 no-scrollbar">
           {loading ? (
             <div className="py-20">
               <Loader label="Fetching transfer certificate details..." />

@@ -45,6 +45,14 @@ export default function MarksheetModal({ open, onClose, studentId, examId, initi
     }
   }, [open, studentId, examId, initialMarksheet])
 
+  useEffect(() => {
+    if (!open) return
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
   if (!open) return null
 
   const handlePrint = () => {
@@ -52,7 +60,7 @@ export default function MarksheetModal({ open, onClose, studentId, examId, initi
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
       {/* Container */}
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
         {/* Modal Topbar (hidden during print) */}
@@ -81,7 +89,7 @@ export default function MarksheetModal({ open, onClose, studentId, examId, initi
         </div>
 
         {/* Modal Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/60">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/60 no-scrollbar">
           {loading ? (
             <div className="py-20">
               <Loader label="Generating official marksheet from database..." />
