@@ -54,8 +54,13 @@ export default function DigitalExamAttempt() {
         const paper = await api.getExamPaper(examId)
         setExam(paper)
 
-        // Flatten sections into flat questions array
-        const allQ = (paper.sections || []).flatMap((s) => s.questions)
+        // Flatten sections into flat questions array safely
+        let allQ = []
+        if (Array.isArray(paper?.sections)) {
+          allQ = paper.sections.flatMap((s) => s.questions || [])
+        } else if (paper?.sections && typeof paper.sections === 'object') {
+          allQ = Object.values(paper.sections).flat().filter(Boolean)
+        }
         setQuestions(allQ)
 
         // 2. Start or resume attempt

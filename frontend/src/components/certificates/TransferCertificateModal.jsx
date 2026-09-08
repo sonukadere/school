@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Printer, X, AlertCircle, CheckCircle2 } from 'lucide-react'
 import Button from '../common/Button'
 import Loader from '../common/Loader'
@@ -6,7 +7,14 @@ import TransferCertificateDocument from './TransferCertificateDocument'
 import { api } from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 
-export default function TransferCertificateModal({ open, onClose, studentId, tcId, initialCertificate = null, onStatusChange }) {
+export default function TransferCertificateModal({
+  open,
+  onClose,
+  studentId,
+  tcId,
+  initialCertificate = null,
+  onStatusChange,
+}) {
   const { showToast } = useToast()
   const [certificate, setCertificate] = useState(initialCertificate)
   const [loading, setLoading] = useState(!initialCertificate)
@@ -57,11 +65,21 @@ export default function TransferCertificateModal({ open, onClose, studentId, tcI
 
   useEffect(() => {
     if (!open) return
+    const prevBodyOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = ''
+    document.body.classList.add('modal-print-mode')
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose?.()
     }
-  }, [open])
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = prevBodyOverflow
+      document.body.classList.remove('modal-print-mode')
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open, onClose])
 
   if (!open) return null
 
@@ -84,16 +102,34 @@ export default function TransferCertificateModal({ open, onClose, studentId, tcI
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
-        {/* Modal Topbar (hidden on print) */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50 print:hidden flex-shrink-0">
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">Transfer Certificate</h3>
-            <p className="text-xs text-slate-500">Official School Leaving Certificate</p>
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 print:p-0 print:m-0 print:static print:block">
+      {/* Semi-transparent backdrop with click-to-close */}
+      <div
+        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity print:hidden"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Main Modal Dialog */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden z-10 animate-scale-in print:border-none print:shadow-none print:max-h-none print:w-full print:p-0 print:m-0 print:static print:block print:overflow-visible"
+      >
+        {/* Fixed Modal Topbar (hidden during print) */}
+        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 bg-slate-50 flex-shrink-0 print:hidden">
+          <div className="min-w-0 pr-3">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 truncate">
+              Transfer Certificate
+            </h3>
+            <p className="text-xs text-slate-500 truncate">
+              Official School Leaving Certificate
+              {certificate?.tcNumber ? ` • ${certificate.tcNumber}` : ''}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2 shrink-0">
             {certificate?.status === 'PENDING' && (
               <Button
                 variant="primary"
@@ -105,6 +141,7 @@ export default function TransferCertificateModal({ open, onClose, studentId, tcI
                 Approve TC
               </Button>
             )}
+
             <Button
               variant="outline"
               size="sm"
@@ -114,23 +151,26 @@ export default function TransferCertificateModal({ open, onClose, studentId, tcI
             >
               Print / Save PDF
             </Button>
+
             <button
+              type="button"
               onClick={onClose}
               className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"
+              aria-label="Close modal"
             >
               <X size={20} />
             </button>
           </div>
         </div>
 
-        {/* Modal Content */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-100/60 no-scrollbar">
+        {/* Scrollable Preview Workspace */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6 bg-slate-100/70 touch-scroll overscroll-contain print:bg-white print:p-0 print:m-0 print:overflow-visible print:block">
           {loading ? (
-            <div className="py-20">
+            <div className="py-24 flex items-center justify-center">
               <Loader label="Fetching transfer certificate details..." />
             </div>
           ) : error ? (
-            <div className="py-12 px-6 text-center max-w-md mx-auto">
+            <div className="py-16 px-6 text-center max-w-md mx-auto my-auto bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
               <div className="h-12 w-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-3">
                 <AlertCircle size={24} />
               </div>
@@ -141,10 +181,13 @@ export default function TransferCertificateModal({ open, onClose, studentId, tcI
               </Button>
             </div>
           ) : (
-            <TransferCertificateDocument certificate={certificate} />
+            <div className="w-full flex justify-center py-1 print:p-0 print:m-0 print:block">
+              <TransferCertificateDocument certificate={certificate} />
+            </div>
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

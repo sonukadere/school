@@ -96,26 +96,34 @@ body {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 12mm;
+    margin: 8mm 10mm;
   }
 
   body {
     background: white !important;
     color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  /* Hide app navigation and buttons during print */
-  aside,
-  header,
-  nav,
-  button,
-  [role="dialog"] > div > div:first-child {
+  /* When printing from a certificate/marksheet modal, hide the entire main application */
+  body.modal-print-mode #root,
+  body:has([role="dialog"]) #root {
     display: none !important;
   }
 
-  /* Reset fixed positioning of modal container so it flows as normal print page */
-  [role="dialog"],
-  .fixed {
+  /* Hide app navigation, header, sidebar, footer, and buttons during print */
+  aside,
+  header,
+  nav,
+  footer,
+  button,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Reset modal container so only the document prints cleanly on page 1 */
+  [role="dialog"] {
     position: static !important;
     background: transparent !important;
     padding: 0 !important;
@@ -131,10 +139,12 @@ body {
   .marksheet-printable,
   .tc-printable {
     box-shadow: none !important;
-    border-color: #cbd5e1 !important;
+    border: none !important;
     max-width: 100% !important;
+    width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
-    page-break-inside: avoid;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }

@@ -20,6 +20,7 @@ import {
   Zap,
   ArrowRight,
   ArrowLeft,
+  Layers,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
@@ -30,8 +31,9 @@ const QUICK_ACTIONS = [
   { label: 'Add Student', to: '/students/add', icon: GraduationCap, color: 'text-indigo-600 bg-indigo-50' },
   { label: 'Add Teacher', to: '/teachers/add', icon: Users, color: 'text-emerald-600 bg-emerald-50' },
   { label: 'Create Exam', to: '/exams/create', icon: FilePlus2, color: 'text-violet-600 bg-violet-50' },
-  { label: 'Mark Attendance', to: '/attendance/students', icon: CalendarCheck, color: 'text-amber-600 bg-amber-50' },
+  { label: 'Fee Structures', to: '/fees?tab=structures', icon: Layers, color: 'text-cyan-600 bg-cyan-50' },
   { label: 'Collect Fees', to: '/fees', icon: Wallet, color: 'text-rose-600 bg-rose-50' },
+  { label: 'Mark Attendance', to: '/attendance/students', icon: CalendarCheck, color: 'text-amber-600 bg-amber-50' },
   { label: 'Post Notice', to: '/notices/create', icon: Megaphone, color: 'text-sky-600 bg-sky-50' },
 ]
 
@@ -122,7 +124,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
     : QUICK_ACTIONS.filter((action) => {
         if (user?.role === 'Teacher') {
           const forbidden = ['/students/add', '/classes/add', '/teachers/add', '/fees']
-          return !forbidden.includes(action.to)
+          return !forbidden.some((prefix) => action.to.startsWith(prefix))
         }
         return true
       })

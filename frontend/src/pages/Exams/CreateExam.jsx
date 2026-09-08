@@ -416,19 +416,11 @@ export default function CreateExam() {
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="primary"
                 leftIcon={Plus}
                 onClick={() => setManualModalOpen(true)}
               >
-                Custom Question
-              </Button>
-              <Button
-                type="button"
-                leftIcon={Sparkles}
-                onClick={() => setIsDiscoveryOpen(true)}
-                className="bg-linear-to-r from-indigo-600 to-violet-600 text-white shadow-xs hover:from-indigo-700 hover:to-violet-700"
-              >
-                Find &amp; Match Questions
+                Add Question
               </Button>
             </div>
           </div>
@@ -441,16 +433,17 @@ export default function CreateExam() {
               </div>
               <h4 className="text-base font-semibold text-slate-800">No Questions Added Yet</h4>
               <p className="mt-1 max-w-md text-xs text-slate-500">
-                Click <strong>&quot;Find &amp; Match Questions&quot;</strong> to search open educational question banks (NCERT, CBSE, OpenStax) or add your own questions.
+                Click <strong>&quot;Add Question&quot;</strong> to create and add questions to this examination.
               </p>
               <div className="mt-4 flex gap-2">
                 <Button
                   type="button"
                   size="sm"
-                  leftIcon={Sparkles}
-                  onClick={() => setIsDiscoveryOpen(true)}
+                  variant="primary"
+                  leftIcon={Plus}
+                  onClick={() => setManualModalOpen(true)}
                 >
-                  Find Questions
+                  Add Question
                 </Button>
               </div>
             </div>

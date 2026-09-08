@@ -55,6 +55,27 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
     return { ...group, items }
   }).filter((group) => group.items.length > 0)
 
+  const roleUpper = (user?.role || '').toUpperCase()
+  const activeStyle = user?.isSuperAdmin || roleUpper === 'SUPER_ADMIN' || roleUpper === 'SUPER ADMIN'
+    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-md shadow-purple-900/50 ring-1 ring-purple-400/30'
+    : user?.isTeacher || roleUpper === 'TEACHER'
+    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-md shadow-emerald-900/50 ring-1 ring-emerald-400/30'
+    : user?.isStudent || roleUpper === 'STUDENT'
+    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold shadow-md shadow-blue-900/50 ring-1 ring-blue-400/30'
+    : user?.isParent || roleUpper === 'PARENT'
+    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold shadow-md shadow-amber-900/50 ring-1 ring-amber-400/30'
+    : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-md shadow-indigo-900/50 ring-1 ring-indigo-400/30'
+
+  const indicatorColor = user?.isSuperAdmin || roleUpper === 'SUPER_ADMIN' || roleUpper === 'SUPER ADMIN'
+    ? 'bg-purple-300'
+    : user?.isTeacher || roleUpper === 'TEACHER'
+    ? 'bg-emerald-300'
+    : user?.isStudent || roleUpper === 'STUDENT'
+    ? 'bg-blue-300'
+    : user?.isParent || roleUpper === 'PARENT'
+    ? 'bg-amber-300'
+    : 'bg-indigo-300'
+
   const renderLink = (item) => {
     const Icon = item.icon
     return (
@@ -64,23 +85,38 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
         onClick={onCloseMobile}
         className={({ isActive }) =>
           cn(
-            'group relative flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-all duration-150',
-            collapsed && !mobileOpen ? 'justify-center px-0' : 'px-3',
+            'group relative flex items-center gap-3 py-2.5 text-sm font-medium transition-all duration-150',
+            collapsed && !mobileOpen ? 'justify-center px-0 w-11 h-11 mx-auto rounded-xl' : 'px-3.5 rounded-xl',
             isActive
-              ? 'bg-indigo-600 text-white font-semibold shadow-xs'
-              : 'text-slate-400 hover:bg-slate-800/70 hover:text-slate-200',
+              ? activeStyle
+              : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-100',
           )
         }
         title={collapsed && !mobileOpen ? item.label : undefined}
       >
-        <Icon
-          size={18}
-          className={cn(
-            'shrink-0 transition-transform duration-150 group-hover:scale-105',
-            collapsed && !mobileOpen && 'mx-auto',
-          )}
-        />
-        {(!collapsed || mobileOpen) && <span className="truncate text-xs font-medium">{item.label}</span>}
+        {({ isActive }) => (
+          <>
+            {isActive && (!collapsed || mobileOpen) && (
+              <span
+                className={cn(
+                  'absolute left-0 top-2 bottom-2 w-1 rounded-r-full shadow-xs',
+                  indicatorColor,
+                )}
+              />
+            )}
+            <Icon
+              size={18}
+              className={cn(
+                'shrink-0 transition-transform duration-150 group-hover:scale-105',
+                collapsed && !mobileOpen && 'mx-auto',
+                isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200',
+              )}
+            />
+            {(!collapsed || mobileOpen) && (
+              <span className="truncate text-xs font-medium tracking-tight">{item.label}</span>
+            )}
+          </>
+        )}
       </NavLink>
     )
   }
@@ -96,13 +132,21 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
       )}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 transition-all duration-300 lg:static lg:z-auto lg:translate-x-0 shadow-2xl lg:shadow-none',
+          'fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 transition-all duration-300 shadow-2xl shrink-0',
+          'lg:static lg:z-auto lg:shadow-none lg:translate-x-0',
+          mobileOpen
+            ? 'w-72 max-w-[85vw] translate-x-0'
+            : '-translate-x-full w-72 max-w-[85vw]',
           collapsed && !mobileOpen ? 'lg:w-20' : 'lg:w-64',
-          mobileOpen ? 'w-72 max-w-[85vw] translate-x-0' : 'w-72 max-w-[85vw] -translate-x-full lg:w-64 lg:translate-x-0',
         )}
       >
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-800 px-4">
-          <div className={cn('flex items-center gap-3', collapsed && !mobileOpen && 'lg:justify-center')}>
+        <div
+          className={cn(
+            'flex h-16 shrink-0 items-center border-b border-slate-800 transition-all duration-300',
+            collapsed && !mobileOpen ? 'justify-center px-2' : 'justify-between px-4',
+          )}
+        >
+          <div className={cn('flex items-center gap-3 min-w-0', collapsed && !mobileOpen && 'justify-center')}>
             <img
               src="/logo.svg"
               alt={settings.schoolName}
@@ -134,19 +178,19 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
             <span className={cn(
               'px-2 py-0.5 text-[10px] font-bold rounded-md shrink-0 uppercase tracking-wide',
               user?.isSuperAdmin ? 'bg-purple-900/60 text-purple-300 border border-purple-500/40' :
-              user?.isTeacher ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-500/40' :
-              user?.isStudent ? 'bg-blue-900/60 text-blue-300 border border-blue-500/40' :
-              user?.isParent ? 'bg-amber-900/60 text-amber-300 border border-amber-500/40' :
-              'bg-indigo-900/60 text-indigo-300 border border-indigo-500/40'
+                user?.isTeacher ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-500/40' :
+                  user?.isStudent ? 'bg-blue-900/60 text-blue-300 border border-blue-500/40' :
+                    user?.isParent ? 'bg-amber-900/60 text-amber-300 border border-amber-500/40' :
+                      'bg-indigo-900/60 text-indigo-300 border border-indigo-500/40'
             )}>
               {user?.role || 'Admin'}
             </span>
           </div>
         )}
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
+        <nav className={cn('flex-1 overflow-y-auto py-4', collapsed && !mobileOpen ? 'px-2' : 'px-3')}>
           {filteredMenuItems.map((group) => (
-            <div key={group.heading} className="mb-4">
+            <div key={group.heading} className={cn(collapsed && !mobileOpen ? 'mb-2' : 'mb-4')}>
               {(!collapsed || mobileOpen) && (
                 <p className="mb-2 px-3 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
                   {group.heading}
@@ -157,7 +201,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           ))}
         </nav>
 
-        <div className="shrink-0 border-t border-slate-800 p-3 pb-6 sm:pb-3">
+        <div className={cn('shrink-0 border-t border-slate-800 pb-6 sm:pb-3', collapsed && !mobileOpen ? 'p-2' : 'p-3')}>
           <button
             type="button"
             onClick={logout}

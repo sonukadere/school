@@ -191,12 +191,12 @@ export default function QuestionBankList() {
         actions={
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
+              variant="primary"
               leftIcon={Plus}
               onClick={() => {
                 setEditingQuestion({
                   text: '',
-                  type: 'SHORT_ANSWER',
+                  type: 'MULTIPLE_CHOICE',
                   difficulty: 'MEDIUM',
                   marks: 2,
                   subject: 'Science',
@@ -213,13 +213,6 @@ export default function QuestionBankList() {
             >
               Add Question
             </Button>
-            <Button
-              leftIcon={Sparkles}
-              onClick={() => setIsDiscoveryOpen(true)}
-              className="bg-linear-to-r from-indigo-600 to-violet-600 text-white shadow-xs"
-            >
-              Find &amp; Match Questions
-            </Button>
           </div>
         }
       />
@@ -231,7 +224,7 @@ export default function QuestionBankList() {
         pageSize={10}
         searchPlaceholder="Search questions by text, subject, class, or chapter..."
         emptyTitle="Question Bank is empty"
-        emptyDescription="Click 'Find & Match Questions' to import verified curriculum questions from NCERT, CBSE OER, or add your own."
+        emptyDescription="Click 'Add Question' to add new questions to the bank."
         emptyIcon={BookOpen}
       />
 

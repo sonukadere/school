@@ -327,6 +327,12 @@ export async function getExamPaper(examId, actor = null) {
     sections[sName].push(sanitizedQuestion);
   });
 
+  // Format sections as standard array of section objects: [{ sectionName, questions }]
+  const sectionList = Object.entries(sections).map(([sectionName, questions]) => ({
+    sectionName,
+    questions,
+  }));
+
   return {
     examId: exam.id,
     name: exam.name,
@@ -342,7 +348,8 @@ export async function getExamPaper(examId, actor = null) {
     durationMinutes: exam.durationMinutes,
     instructions: exam.instructions,
     totalQuestions: exam.questions.length,
-    sections,
+    sections: sectionList,
+    sectionsMap: sections,
     isAnswerKeyIncluded: !isStudent,
   };
 }

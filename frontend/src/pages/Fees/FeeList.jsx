@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Wallet,
   CheckCircle2,
@@ -17,6 +18,8 @@ import {
   ShieldCheck,
   CreditCard,
   Receipt,
+  ChevronDown,
+  X,
 } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import Card from '../../components/common/Card'
@@ -38,18 +41,39 @@ import PayrollTab from './PayrollTab'
 import { api } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { STATUS_STYLES, formatDate, formatCurrency } from '../../utils/helpers'
+import { STATUS_STYLES, formatDate, formatCurrency, cn } from '../../utils/helpers'
 
 export default function FeeList() {
   const { user } = useAuth()
   const { showToast } = useToast()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN' || user?.isSuperAdmin
-  const isAdmin = user?.role === 'ADMIN' || isSuperAdmin
-  const isStudentOrParent = user?.isStudent || user?.isParent || user?.role === 'STUDENT' || user?.role === 'PARENT'
+  const isSuperAdmin = Boolean(user?.isSuperAdmin || user?.role === 'Super Admin' || user?.role === 'SUPER_ADMIN')
+  const isAdmin = Boolean(user?.isAdmin || isSuperAdmin || user?.role === 'Admin' || user?.role === 'ADMIN' || user?.role === 'Administrator')
+  const isStudentOrParent = Boolean(user?.isStudent || user?.isParent || user?.role === 'Student' || user?.role === 'STUDENT' || user?.role === 'Parent' || user?.role === 'PARENT')
 
   // Active tab: 'finance' | 'overview' | 'history' | 'pending' | 'structures' | 'salary-structures' | 'payroll' | 'reports'
-  const [activeTab, setActiveTab] = useState(isAdmin ? 'finance' : 'overview')
+  const tabFromUrl = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState(tabFromUrl || (isAdmin ? 'finance' : 'overview'))
+  const [tabSearch, setTabSearch] = useState('')
+  const [tabCategory, setTabCategory] = useState('all')
+
+  // Sync tab with URL search parameter if it changes
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab)
+    }
+  }, [searchParams])
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab)
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', newTab)
+      return next
+    })
+  }
 
   // Super Admin school selector
   const [schools, setSchools] = useState([])
@@ -141,6 +165,28 @@ export default function FeeList() {
   const totalDue = enrichedFees.reduce((sum, f) => sum + (f.dueFee || 0), 0)
   const paidCount = enrichedFees.filter((f) => f.status === 'Paid' || f.status === 'PAID').length
   const pendingCount = enrichedFees.filter((f) => f.status !== 'Paid' && f.status !== 'PAID').length
+
+  const TABS = useMemo(() => [
+    { id: 'finance', label: 'Finance Dashboard', icon: Scale, category: 'finance', desc: 'Overall institutional finance & revenue charts' },
+    { id: 'overview', label: 'Student Fees', icon: Wallet, category: 'student', desc: 'Student fee collection, ledgers & dues' },
+    { id: 'history', label: 'Payment History & Receipts', icon: FileText, category: 'student', desc: 'Transaction ledger & printable payment receipts' },
+    { id: 'pending', label: 'Pending & Overdue Fees', icon: AlertTriangle, category: 'student', badge: pendingCount > 0 ? pendingCount : null, badgeColor: 'bg-rose-100 text-rose-700', desc: 'Overdue balances, defaulters & payment collection' },
+    { id: 'structures', label: 'Fee Structures', icon: Layers, category: 'setup', desc: 'Tuition, transport & grade fee schedules' },
+    { id: 'salary-structures', label: 'Teacher Salaries', icon: Briefcase, category: 'payroll', desc: 'Teacher base pay, allowances & deductions' },
+    { id: 'payroll', label: 'Monthly Payroll', icon: DollarSign, category: 'payroll', desc: 'Monthly salary disbursement & slips' },
+    { id: 'reports', label: 'Collection Reports', icon: BarChart3, category: 'finance', desc: 'Comprehensive financial reports & breakdown' },
+  ], [pendingCount])
+
+  const filteredTabs = useMemo(() => {
+    return TABS.filter((tab) => {
+      if (tabCategory !== 'all' && tab.category !== tabCategory) return false
+      if (tabSearch.trim()) {
+        const q = tabSearch.trim().toLowerCase()
+        return tab.label.toLowerCase().includes(q) || tab.desc.toLowerCase().includes(q)
+      }
+      return true
+    })
+  }, [TABS, tabCategory, tabSearch])
 
   const openPaymentForStudent = (studentData) => {
     setSelectedStudentForPay(studentData)
@@ -495,105 +541,138 @@ export default function FeeList() {
         }
       />
 
-      {/* Navigation Tabs */}
-      <div className="border-b border-slate-200 -mx-3 px-3 sm:mx-0 sm:px-0">
-        <nav className="-mb-px flex space-x-3 sm:space-x-6 overflow-x-auto text-xs sm:text-sm font-medium no-scrollbar touch-scroll">
-          <button
-            onClick={() => setActiveTab('finance')}
-            className={`flex items-center gap-2 border-b-2 py-3 px-2 transition shrink-0 whitespace-nowrap ${
-              activeTab === 'finance'
-                ? 'border-indigo-600 text-indigo-600 font-bold'
-                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-            }`}
-          >
-            <Scale size={16} />
-            Finance Dashboard
-          </button>
+      {/* Modern Navigation Header with Search & Dropdown */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-2.5 sm:p-3.5 shadow-xs space-y-3">
+        {/* Top Control Bar: Search Input + Category / Module Dropdown + Mobile Tab Switcher */}
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+          {/* Mobile Tab Dropdown Switcher (visible on mobile only) */}
+          <div className="relative sm:hidden w-full">
+            <div className="relative">
+              <select
+                value={activeTab}
+                onChange={(e) => handleTabChange(e.target.value)}
+                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/90 py-2.5 pl-3.5 pr-10 text-xs font-semibold text-slate-800 shadow-2xs focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              >
+                {TABS.map((tab) => (
+                  <option key={tab.id} value={tab.id}>
+                    {tab.label} {tab.badge ? `(${tab.badge} pending)` : ''}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+                <ChevronDown size={16} />
+              </div>
+            </div>
+          </div>
 
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-2 border-b-2 py-3 px-2 transition shrink-0 whitespace-nowrap ${
-              activeTab === 'overview'
-                ? 'border-indigo-600 text-indigo-600 font-bold'
-                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-            }`}
-          >
-            <Wallet size={16} />
-            Student Fees
-          </button>
+          {/* Search Bar for Tabs & Modules */}
+          <div className="relative flex-1 sm:max-w-md">
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={tabSearch}
+              onChange={(e) => setTabSearch(e.target.value)}
+              placeholder="Search tabs & modules (e.g. payroll, history, pending)..."
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/80 py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 transition focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            />
+            {tabSearch && (
+              <button
+                type="button"
+                onClick={() => setTabSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
 
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`flex items-center gap-2 border-b-2 py-3 px-2 transition shrink-0 whitespace-nowrap ${
-              activeTab === 'history'
-                ? 'border-indigo-600 text-indigo-600 font-bold'
-                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-            }`}
-          >
-            <FileText size={16} />
-            Payment History & Receipts
-          </button>
+          {/* Dropdown: Category / Group Filter */}
+          <div className="flex items-center gap-2">
+            <div className="relative w-full sm:w-48">
+              <select
+                value={tabCategory}
+                onChange={(e) => setTabCategory(e.target.value)}
+                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/80 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 transition focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              >
+                <option value="all">All Modules ({TABS.length})</option>
+                <option value="finance">Finance & Reports</option>
+                <option value="student">Student Fee Accounts</option>
+                <option value="payroll">Faculty Payroll</option>
+                <option value="setup">Fee Structures</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400">
+                <ChevronDown size={14} />
+              </div>
+            </div>
+            {(tabCategory !== 'all' || tabSearch) && (
+              <button
+                type="button"
+                onClick={() => { setTabCategory('all'); setTabSearch(''); }}
+                className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-800 shrink-0"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
 
-          <button
-            onClick={() => setActiveTab('pending')}
-            className={`flex items-center gap-2 border-b-2 py-3 px-2 transition shrink-0 whitespace-nowrap ${
-              activeTab === 'pending'
-                ? 'border-indigo-600 text-indigo-600 font-bold'
-                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-            }`}
-          >
-            <AlertTriangle size={16} />
-            Pending & Overdue Fees
-          </button>
-
-          <button
-            onClick={() => setActiveTab('structures')}
-            className={`flex items-center gap-2 border-b-2 py-3 px-2 transition shrink-0 whitespace-nowrap ${
-              activeTab === 'structures'
-                ? 'border-indigo-600 text-indigo-600 font-bold'
-                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-            }`}
-          >
-            <Layers size={16} />
-            Fee Structures
-          </button>
-
-          <button
-            onClick={() => setActiveTab('salary-structures')}
-            className={`flex items-center gap-2 border-b-2 py-3 px-2 transition shrink-0 whitespace-nowrap ${
-              activeTab === 'salary-structures'
-                ? 'border-indigo-600 text-indigo-600 font-bold'
-                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-            }`}
-          >
-            <Briefcase size={16} />
-            Teacher Salaries
-          </button>
-
-          <button
-            onClick={() => setActiveTab('payroll')}
-            className={`flex items-center gap-2 border-b-2 py-3 px-2 transition shrink-0 whitespace-nowrap ${
-              activeTab === 'payroll'
-                ? 'border-indigo-600 text-indigo-600 font-bold'
-                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-            }`}
-          >
-            <DollarSign size={16} />
-            Monthly Payroll
-          </button>
-
-          <button
-            onClick={() => setActiveTab('reports')}
-            className={`flex items-center gap-2 border-b-2 py-3 px-2 transition shrink-0 whitespace-nowrap ${
-              activeTab === 'reports'
-                ? 'border-indigo-600 text-indigo-600 font-bold'
-                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700'
-            }`}
-          >
-            <BarChart3 size={16} />
-            Collection Reports
-          </button>
-        </nav>
+        {/* Modern Segmented Pill Tabs Navigation (Desktop & Tablet) */}
+        <div className="hidden sm:block pt-1 border-t border-slate-100">
+          <nav className="flex flex-wrap gap-1.5" aria-label="Finance navigation tabs">
+            {filteredTabs.map((tab) => {
+              const Icon = tab.icon
+              const isActive = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => handleTabChange(tab.id)}
+                  className={cn(
+                    'group relative inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all duration-150',
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-200 ring-1 ring-indigo-600'
+                      : 'bg-slate-50/80 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60'
+                  )}
+                  title={tab.desc}
+                >
+                  <Icon
+                    size={15}
+                    className={cn(
+                      'shrink-0 transition-transform duration-150 group-hover:scale-110',
+                      isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-700'
+                    )}
+                  />
+                  <span>{tab.label}</span>
+                  {tab.badge ? (
+                    <span
+                      className={cn(
+                        'ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold shrink-0',
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : tab.badgeColor || 'bg-rose-100 text-rose-700'
+                      )}
+                    >
+                      {tab.badge}
+                    </span>
+                  ) : null}
+                </button>
+              )
+            })}
+          </nav>
+          {filteredTabs.length === 0 && (
+            <div className="py-3 text-center text-xs text-slate-400">
+              No tabs match "{tabSearch}".{' '}
+              <button
+                type="button"
+                onClick={() => { setTabSearch(''); setTabCategory('all'); }}
+                className="text-indigo-600 font-semibold hover:underline"
+              >
+                Clear filter
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Tab 0: Finance Dashboard */}
@@ -685,21 +764,21 @@ export default function FeeList() {
       )}
 
       {/* Tab 3: Pending & Overdue Fees */}
-      {activeTab === 'pending' && isAdmin && (
+      {activeTab === 'pending' && (
         <PendingFeesTab onCollectPayment={openPaymentForStudent} />
       )}
 
       {/* Tab 4: Fee Structures */}
-      {activeTab === 'structures' && isAdmin && <FeeStructureTab />}
+      {activeTab === 'structures' && <FeeStructureTab />}
 
       {/* Tab 5: Teacher Salary Structures */}
-      {activeTab === 'salary-structures' && isAdmin && <SalaryStructureTab />}
+      {activeTab === 'salary-structures' && <SalaryStructureTab />}
 
       {/* Tab 6: Monthly Payroll */}
-      {activeTab === 'payroll' && isAdmin && <PayrollTab />}
+      {activeTab === 'payroll' && <PayrollTab />}
 
       {/* Tab 7: Collection Reports */}
-      {activeTab === 'reports' && isAdmin && <PaymentReportsTab />}
+      {activeTab === 'reports' && <PaymentReportsTab />}
 
       {/* Record Payment Modal */}
       <RecordPaymentModal

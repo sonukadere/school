@@ -30,16 +30,27 @@ function Layout() {
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
       />
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-slate-50">
         <Navbar collapsed={collapsed} onToggleSidebar={toggleSidebar} />
         <main
           className={cn(
-            'flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-7 lg:px-8 touch-scroll',
-            'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/25 via-slate-50/60 to-slate-100/60',
+            'relative flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7 touch-scroll',
+            'bg-slate-50/60',
             'transition-all duration-300',
           )}
         >
-          <div className="mx-auto max-w-7xl animate-fade-in pb-8 sm:pb-10">
+          {/* Subtle modern ambient background glow */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 -z-10 flex justify-center overflow-hidden"
+          >
+            <div className="h-72 w-[80rem] max-w-full flex-none bg-gradient-to-r from-indigo-500/10 via-sky-500/10 to-purple-500/10 blur-3xl opacity-70" />
+          </div>
+
+          <div
+            key={location.pathname}
+            className="w-full max-w-[1600px] mx-auto animate-fade-in pb-8 sm:pb-12"
+          >
             <Outlet />
           </div>
         </main>

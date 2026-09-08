@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Plus, Edit2, Trash2, Calendar, BookOpen, Layers, CheckCircle2, Users } from 'lucide-react'
+import { Plus, Edit2, Trash2, Calendar, BookOpen, Layers, CheckCircle2, Users, DollarSign, Building2 } from 'lucide-react'
 import Card from '../../components/common/Card'
 import Button from '../../components/common/Button'
 import Badge from '../../components/common/Badge'
@@ -61,7 +61,7 @@ export default function FeeStructureTab() {
     setLoading(true)
     try {
       const [structRes, classList, settingsRes] = await Promise.all([
-        api.getFeeStructures(),
+        api.getFeeStructures({ limit: 100 }),
         api.getClasses(),
         api.getSettings().catch(() => null),
       ])
@@ -287,8 +287,56 @@ export default function FeeStructureTab() {
     },
   ]
 
+  const totalConfigured = structures.length
+  const activeConfigured = structures.filter((s) => s.status === 'ACTIVE').length
+  const totalStandardAmount = structures.reduce((sum, s) => sum + (Number(s.totalFee) || 0), 0)
+  const coveredClassesCount = new Set(structures.map((s) => s.classId).filter(Boolean)).size
+
   return (
     <div className="space-y-6">
+      {/* Dynamic Summary KPI Cards from Database */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+        <Card bodyClassName="flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+            <Layers size={22} />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 font-medium">Fee Structures</p>
+            <p className="text-base sm:text-lg font-bold text-slate-900">{totalConfigured}</p>
+          </div>
+        </Card>
+
+        <Card bodyClassName="flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+            <CheckCircle2 size={22} />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 font-medium">Active Schedules</p>
+            <p className="text-base sm:text-lg font-bold text-emerald-600">{activeConfigured}</p>
+          </div>
+        </Card>
+
+        <Card bodyClassName="flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+            <Building2 size={22} />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 font-medium">Classes Configured</p>
+            <p className="text-base sm:text-lg font-bold text-slate-900">{coveredClassesCount || 'School-wide'}</p>
+          </div>
+        </Card>
+
+        <Card bodyClassName="flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+            <DollarSign size={22} />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 font-medium">Total Standard Rates</p>
+            <p className="text-base sm:text-lg font-bold text-violet-700">{formatCurrency(totalStandardAmount)}</p>
+          </div>
+        </Card>
+      </div>
+
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

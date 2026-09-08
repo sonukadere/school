@@ -15,25 +15,7 @@ if (env.nodeEnv === 'production') {
   prisma = globalThis.__prisma;
 }
 
-if (!globalThis.__prismaMiddlewareAttached) {
-  prisma.$use(async (params, next) => {
-    if (params.action === 'create' && params.args?.data) {
-      if (params.args.data.deletedAt === undefined) {
-        params.args.data.deletedAt = null;
-      }
-    } else if (params.action === 'createMany' && Array.isArray(params.args?.data)) {
-      params.args.data.forEach((item) => {
-        if (item && item.deletedAt === undefined) {
-          item.deletedAt = null;
-        }
-      });
-    }
-    return next(params);
-  });
-  globalThis.__prismaMiddlewareAttached = true;
-}
-
-const SOFT_DELETE_MODELS = [
+const SOFT_DELETE_MODELS = new Set([
   'student',
   'teacher',
   'class',
@@ -42,14 +24,41 @@ const SOFT_DELETE_MODELS = [
   'user',
   'staff',
   'fee',
+  'feeinvoice',
+  'feestructure',
+  'payment',
+  'paymentreceipt',
+  'payroll',
+  'teachersalarystructure',
   'exam',
   'attendance',
-  'teacherAttendance',
+  'teacherattendance',
   'timetable',
   'notice',
   'event',
   'holiday',
-];
+]);
+
+if (!globalThis.__prismaMiddlewareAttached) {
+  prisma.$use(async (params, next) => {
+    const modelKey = params.model ? params.model.toLowerCase() : null;
+    if (modelKey && SOFT_DELETE_MODELS.has(modelKey)) {
+      if (params.action === 'create' && params.args?.data) {
+        if (params.args.data.deletedAt === undefined) {
+          params.args.data.deletedAt = null;
+        }
+      } else if (params.action === 'createMany' && Array.isArray(params.args?.data)) {
+        params.args.data.forEach((item) => {
+          if (item && item.deletedAt === undefined) {
+            item.deletedAt = null;
+          }
+        });
+      }
+    }
+    return next(params);
+  });
+  globalThis.__prismaMiddlewareAttached = true;
+}
 
 export async function syncSoftDeleteFields() {
   for (const model of SOFT_DELETE_MODELS) {

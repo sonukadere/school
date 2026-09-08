@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   Printer,
@@ -50,6 +50,23 @@ export default function ExamPaperView() {
     window.print()
   }
 
+  const sections = useMemo(() => {
+    if (!exam?.sections) return []
+    if (Array.isArray(exam.sections)) {
+      return exam.sections.map((sec) => ({
+        sectionName: sec.sectionName || 'General Section',
+        questions: Array.isArray(sec.questions) ? sec.questions : [],
+      }))
+    }
+    if (typeof exam.sections === 'object') {
+      return Object.entries(exam.sections).map(([sectionName, questions]) => ({
+        sectionName,
+        questions: Array.isArray(questions) ? questions : [],
+      }))
+    }
+    return []
+  }, [exam?.sections])
+
   if (loading) {
     return <Loader />
   }
@@ -65,7 +82,6 @@ export default function ExamPaperView() {
     )
   }
 
-  const sections = exam.sections || []
   const canViewAnswerKey = (user?.role || '').toUpperCase() !== 'STUDENT'
 
   return (

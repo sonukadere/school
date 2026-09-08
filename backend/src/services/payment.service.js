@@ -242,6 +242,7 @@ export async function recordPayment(data, actor) {
         lateFee: feeStructure?.lateFee || 0,
         finalAmount: totalFee + (feeStructure?.lateFee || 0),
         status: 'PENDING',
+        deletedAt: null,
       },
     });
   }
@@ -1287,6 +1288,7 @@ export async function assignFeeStructureToClass(data, actor) {
         finalAmount,
         dueDate: targetDueDate,
         status: 'PENDING',
+        deletedAt: null,
       },
     });
 
@@ -1355,6 +1357,7 @@ export async function assignFeeToStudent(data, actor) {
       finalAmount,
       dueDate,
       status: 'PENDING',
+      deletedAt: null,
     },
   });
 
