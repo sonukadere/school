@@ -27,11 +27,12 @@ function PageHeader({ title, description, breadcrumb, actions, badge, onBack, ba
             <button
               type="button"
               onClick={handleBack}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 hover:text-indigo-600 hover:border-indigo-200 shadow-2xs shrink-0"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-indigo-600 hover:border-indigo-200 shadow-2xs shrink-0"
               title="Go back"
               aria-label="Go back"
             >
-              <ArrowLeft size={16} />
+              <ArrowLeft size={15} />
+              <span>Back</span>
             </button>
           )}
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">{title}</h1>

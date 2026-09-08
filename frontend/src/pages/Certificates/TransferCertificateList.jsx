@@ -85,10 +85,8 @@ export default function TransferCertificateList() {
   }, [certificates, search, statusFilter])
 
   const handleOpenGenerate = () => {
-    if (students.length > 0) {
-      setSelectedStudentForTc(students[0])
-      setGenerateModalOpen(true)
-    }
+    setSelectedStudentForTc(students[0] || null)
+    setGenerateModalOpen(true)
   }
 
   const handleViewTc = (tc) => {

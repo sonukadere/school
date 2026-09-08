@@ -2,6 +2,11 @@ import { Link } from 'react-router-dom'
 import { ChevronRight, Home } from 'lucide-react'
 
 function Breadcrumb({ items = [] }) {
+  // If the first breadcrumb is Dashboard, avoid redundant "Home > Dashboard"
+  const filteredItems = items.filter(
+    (item, index) => !(index === 0 && (item.href === '/dashboard' || item.label?.toLowerCase() === 'dashboard'))
+  )
+
   return (
     <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
       <Link
@@ -11,8 +16,8 @@ function Breadcrumb({ items = [] }) {
         <Home size={13} className="text-slate-400" />
         <span className="hidden sm:inline">Home</span>
       </Link>
-      {items.map((item, index) => {
-        const isLast = index === items.length - 1
+      {filteredItems.map((item, index) => {
+        const isLast = index === filteredItems.length - 1
         return (
           <span key={item.label} className="flex items-center gap-1.5">
             <ChevronRight size={12} className="text-slate-300" />
