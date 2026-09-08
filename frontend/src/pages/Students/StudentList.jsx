@@ -23,18 +23,36 @@ function StudentList() {
   const [loading, setLoading] = useState(true)
   const [classFilter, setClassFilter] = useState('')
   const [sectionFilter, setSectionFilter] = useState('')
+  const [classOptions, setClassOptions] = useState(CLASS_OPTIONS)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
   const loadStudents = async () => {
-    setLoading(true)
-    const data = await api.getStudents()
-    setStudents(data)
-    setLoading(false)
+    try {
+      setLoading(true)
+      const data = await api.getStudents()
+      setStudents(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error('Failed to load students:', err)
+      showToast(err.message || 'Failed to fetch student data from database.', 'error')
+      setStudents([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
     loadStudents()
+    api.getClasses().then((classes) => {
+      if (Array.isArray(classes) && classes.length > 0) {
+        const uniqueNames = [...new Set(classes.map((c) => c.name).filter(Boolean))]
+        if (uniqueNames.length > 0) {
+          setClassOptions(uniqueNames)
+        }
+      }
+    }).catch((err) => {
+      console.warn('Could not load dynamic class options:', err)
+    })
   }, [])
 
   const filteredStudents = useMemo(() => {
@@ -47,11 +65,16 @@ function StudentList() {
 
   const handleDelete = async () => {
     setDeleting(true)
-    await api.deleteStudent(deleteTarget.id)
-    setDeleting(false)
-    setDeleteTarget(null)
-    showToast(`Student ${deleteTarget.fullName} deleted`, 'success')
-    loadStudents()
+    try {
+      await api.deleteStudent(deleteTarget.id)
+      showToast(`Student ${deleteTarget.fullName} deleted`, 'success')
+      loadStudents()
+    } catch (err) {
+      showToast(err.message || 'Failed to delete student', 'error')
+    } finally {
+      setDeleting(false)
+      setDeleteTarget(null)
+    }
   }
 
   const columns = [
@@ -180,7 +203,7 @@ function StudentList() {
                 name="classFilter"
                 value={classFilter}
                 onChange={(event) => setClassFilter(event.target.value)}
-                options={CLASS_OPTIONS}
+                options={classOptions}
                 placeholder="All Classes"
               />
             </div>

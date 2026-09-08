@@ -49,12 +49,19 @@ export async function listStudents(query = {}, actor = null) {
   }
 
   const where = {
-    ...notDeleted(),
-    ...(classId ? { classId } : {}),
-    ...(section ? { section } : {}),
-    ...(status ? { status } : {}),
-    ...(visibleIds ? { id: { in: visibleIds } } : {}),
-    ...searchFilter(['firstName', 'lastName', 'studentId', 'email', 'phone'], search),
+    AND: [
+      {
+        OR: [
+          { deletedAt: null },
+          { deletedAt: { isSet: false } },
+        ],
+      },
+      ...(classId ? [{ classId }] : []),
+      ...(section ? [{ section }] : []),
+      ...(status ? [{ status }] : []),
+      ...(visibleIds ? [{ id: { in: visibleIds } }] : []),
+      ...(search ? [searchFilter(['firstName', 'lastName', 'studentId', 'email', 'phone'], search)] : []),
+    ],
   };
 
   const [data, total] = await Promise.all([
@@ -210,6 +217,7 @@ export async function createStudent(data) {
         admissionDate: studentFields.admissionDate ? toDateOnly(studentFields.admissionDate) : toDateOnly(new Date()),
         studentId,
         userId,
+        deletedAt: null,
       },
       include: {
         ...DEFAULT_INCLUDE,

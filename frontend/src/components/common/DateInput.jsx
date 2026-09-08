@@ -50,14 +50,23 @@ export default function DateInput({
   disabled = false,
   ...props
 }) {
-  const inputId = id || name || `date-input-${(label || 'date').toLowerCase().replace(/\s+/g, '-')}`
+  const inputId =
+    id ||
+    name ||
+    (typeof label === 'string'
+      ? `date-input-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+      : 'date-input')
   const containerRef = useRef(null)
   const nativeInputRef = useRef(null)
   const isBackspaceRef = useRef(false)
 
   // Internal validation error state for typed input
   const [internalError, setInternalError] = useState('')
-  const activeError = error || internalError
+  const rawError = error || internalError
+  const activeError =
+    typeof rawError === 'string'
+      ? rawError
+      : rawError?.message || (typeof rawError === 'object' && rawError !== null ? JSON.stringify(rawError) : '')
 
   // Internal display string formatted as DD/MM/YYYY
   const [displayValue, setDisplayValue] = useState(() => {

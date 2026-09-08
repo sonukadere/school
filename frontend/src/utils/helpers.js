@@ -354,4 +354,6 @@ export const STATUS_STYLES = {
   Low: 'bg-sky-100 text-sky-700',
   Male: 'bg-sky-100 text-sky-700',
   Female: 'bg-rose-100 text-rose-700',
+  Other: 'bg-purple-100 text-purple-700',
+  OTHER: 'bg-purple-100 text-purple-700',
 }

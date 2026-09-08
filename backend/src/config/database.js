@@ -15,6 +15,57 @@ if (env.nodeEnv === 'production') {
   prisma = globalThis.__prisma;
 }
 
+if (!globalThis.__prismaMiddlewareAttached) {
+  prisma.$use(async (params, next) => {
+    if (params.action === 'create' && params.args?.data) {
+      if (params.args.data.deletedAt === undefined) {
+        params.args.data.deletedAt = null;
+      }
+    } else if (params.action === 'createMany' && Array.isArray(params.args?.data)) {
+      params.args.data.forEach((item) => {
+        if (item && item.deletedAt === undefined) {
+          item.deletedAt = null;
+        }
+      });
+    }
+    return next(params);
+  });
+  globalThis.__prismaMiddlewareAttached = true;
+}
+
+const SOFT_DELETE_MODELS = [
+  'student',
+  'teacher',
+  'class',
+  'subject',
+  'parent',
+  'user',
+  'staff',
+  'fee',
+  'exam',
+  'attendance',
+  'teacherAttendance',
+  'timetable',
+  'notice',
+  'event',
+  'holiday',
+];
+
+export async function syncSoftDeleteFields() {
+  for (const model of SOFT_DELETE_MODELS) {
+    if (prisma[model]?.updateMany) {
+      try {
+        await prisma[model].updateMany({
+          where: { deletedAt: { isSet: false } },
+          data: { deletedAt: null },
+        });
+      } catch {
+        // Model might not have deletedAt in schema or updateMany
+      }
+    }
+  }
+}
+
 async function testConnection() {
   try {
     const isProduction = env.nodeEnv === 'production';
@@ -29,6 +80,7 @@ async function testConnection() {
     }
 
     await prisma.setting.findFirst();
+    await syncSoftDeleteFields();
     return true;
   } catch (err) {
     console.error('[database] Connection test failed:', err.message || err);

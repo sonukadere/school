@@ -15,15 +15,15 @@ const startOfMonth = () => {
   return toDateOnly(new Date(now.getFullYear(), now.getMonth(), 1));
 };
 
-/**
- * Aggregate attendance records by date into { date, Present, Absent, Leave }.
- */
 function aggregateAttendance(records) {
   const map = new Map();
   for (const record of records) {
     const key = toDateOnly(record.date).toISOString().slice(0, 10);
     const entry = map.get(key) || { date: key.slice(5).replace('-', '/'), Present: 0, Absent: 0, Leave: 0 };
-    entry[record.status] += 1;
+    const status = String(record.status || '').toUpperCase();
+    if (status === 'PRESENT') entry.Present += 1;
+    else if (status === 'ABSENT') entry.Absent += 1;
+    else if (status === 'LEAVE') entry.Leave += 1;
     map.set(key, entry);
   }
   return [...map.values()];

@@ -20,7 +20,7 @@ function normalizeStudent(s) {
     className: s.class?.name || s.className || '',
     section: s.class?.section || s.section || '',
     rollNumber: s.rollNumber ?? '',
-    gender: s.gender === 'MALE' ? 'Male' : s.gender === 'FEMALE' ? 'Female' : s.gender || '',
+    gender: s.gender === 'MALE' ? 'Male' : s.gender === 'FEMALE' ? 'Female' : s.gender === 'OTHER' ? 'Other' : s.gender || '',
     dob: s.dob ? s.dob.slice(0, 10) : '',
     admissionDate: s.admissionDate ? s.admissionDate.slice(0, 10) : '',
     email: s.email || '',

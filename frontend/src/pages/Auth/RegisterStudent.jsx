@@ -58,6 +58,14 @@ function RegisterStudent() {
 
   const handleChange = (e) => {
     const { name, value } = e.target
+    if (name === 'phone') {
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 10)
+      setFormData((prev) => ({ ...prev, [name]: digitsOnly }))
+      if (errors[name]) {
+        setErrors((prev) => ({ ...prev, [name]: '' }))
+      }
+      return
+    }
     setFormData((prev) => ({ ...prev, [name]: value }))
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }))
@@ -82,7 +90,11 @@ function RegisterStudent() {
     const nextErrors = {}
     if (!formData.fullName.trim()) nextErrors.fullName = 'Full name is required'
     if (!formData.dob) nextErrors.dob = 'Date of birth is required'
-    if (!formData.phone.trim()) nextErrors.phone = 'Contact number is required'
+    if (!formData.phone.trim()) {
+      nextErrors.phone = 'Contact number is required'
+    } else if (!/^\d{10}$/.test(formData.phone.trim())) {
+      nextErrors.phone = 'Phone number must be exactly 10 digits'
+    }
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       nextErrors.email = 'Enter a valid email address'
     }
@@ -228,11 +240,15 @@ Portal URL: ${window.location.origin}/login`
                 <Input
                   label="Contact Phone"
                   name="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
                   value={formData.phone}
                   onChange={handleChange}
                   error={errors.phone}
                   required
                   placeholder="e.g. 9876543210"
+                  helper="10 digits only"
                   icon={Phone}
                 />
                 <Input

@@ -14,15 +14,15 @@ const EMPTY_VALUES = {
   fullName: '',
   fatherName: '',
   motherName: '',
-  gender: '',
+  gender: 'Male',
   dob: '',
   email: '',
   phone: '',
   address: '',
   className: '',
-  section: '',
+  section: 'A',
   rollNumber: '',
-  admissionDate: '',
+  admissionDate: new Date().toISOString().slice(0, 10),
   createLoginAccount: true,
   username: '',
   password: 'student123',
@@ -83,6 +83,14 @@ function StudentForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
 
   const handleChange = (event) => {
     const { name, value } = event.target
+    if (name === 'phone') {
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 10)
+      setValues((prev) => ({ ...prev, [name]: digitsOnly }))
+      if (errors[name]) {
+        setErrors((prev) => ({ ...prev, [name]: '' }))
+      }
+      return
+    }
     setValues((prev) => ({ ...prev, [name]: value }))
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }))
@@ -91,25 +99,28 @@ function StudentForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
 
   const validate = () => {
     const nextErrors = {}
-    const required = [
-      'fullName',
-      'gender',
-      'dob',
-      'email',
-      'phone',
-      'className',
-      'section',
-      'rollNumber',
-      'admissionDate',
-    ]
-    required.forEach((field) => {
-      if (!values[field]) nextErrors[field] = 'This field is required'
-    })
-    if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-      nextErrors.email = 'Enter a valid email'
+    if (!values.fullName?.trim()) {
+      nextErrors.fullName = 'Full name is required'
     }
-    if (values.phone && !/^[+\d][\d\s-]{7,14}$/.test(values.phone)) {
-      nextErrors.phone = 'Enter a valid phone number'
+    if (!values.gender) {
+      nextErrors.gender = 'Gender is required'
+    }
+    if (!values.dob) {
+      nextErrors.dob = 'Date of birth is required'
+    }
+    if (!values.className) {
+      nextErrors.className = 'Class is required'
+    }
+    if (!values.section) {
+      nextErrors.section = 'Section is required'
+    }
+    if (!values.phone) {
+      nextErrors.phone = 'Phone number is required'
+    } else if (values.phone.length !== 10) {
+      nextErrors.phone = 'Phone number must be exactly 10 digits'
+    }
+    if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
+      nextErrors.email = 'Enter a valid email address'
     }
     return nextErrors
   }
@@ -159,8 +170,20 @@ function StudentForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
             <span className="h-2 w-2 rounded-full bg-indigo-600"></span> 2. Contact & Address
           </h4>
           <div className="grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <Input label="Email Address" type="email" name="email" value={values.email} onChange={handleChange} error={errors.email} required placeholder="student@example.test" />
-            <Input label="Phone Number" name="phone" value={values.phone} onChange={handleChange} error={errors.phone} required placeholder="9000000001" />
+            <Input label="Email Address" type="email" name="email" value={values.email} onChange={handleChange} error={errors.email} placeholder="student@example.test (optional)" />
+            <Input
+              label="Phone Number"
+              id="phone"
+              name="phone"
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              value={values.phone}
+              onChange={handleChange}
+              error={errors.phone}
+              required
+              placeholder="9000000001"
+            />
             <Input label="Residential Address" name="address" value={values.address} onChange={handleChange} placeholder="City, State" />
           </div>
         </div>
