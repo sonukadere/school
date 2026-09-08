@@ -19,6 +19,7 @@ import {
   ClipboardList,
   Zap,
   ArrowRight,
+  ArrowLeft,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
@@ -147,6 +148,14 @@ function Navbar({ collapsed, onToggleSidebar }) {
     setNotificationsOpen(false)
   }
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/dashboard')
+    }
+  }
+
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/95 px-3 backdrop-blur-md sm:px-6 shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -166,6 +175,20 @@ function Navbar({ collapsed, onToggleSidebar }) {
         >
           <Menu size={20} />
         </button>
+
+        {location.pathname !== '/dashboard' && location.pathname !== '/' && (
+          <button
+            type="button"
+            onClick={handleBack}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-slate-50/90 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-indigo-600 hover:border-indigo-200 shadow-2xs shrink-0"
+            title="Go back"
+            aria-label="Go back"
+          >
+            <ArrowLeft size={15} />
+            <span className="hidden sm:inline">Back</span>
+          </button>
+        )}
+
         <div className="min-w-0">
           <p className="text-sm font-semibold tracking-tight text-slate-800 truncate max-w-[125px] xs:max-w-[190px] sm:max-w-xs md:max-w-md">
             {currentTitle}
