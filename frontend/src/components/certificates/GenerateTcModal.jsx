@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FileText, CheckCircle2, X } from 'lucide-react'
 import Button from '../common/Button'
 import Input from '../common/Input'
@@ -6,8 +6,9 @@ import Select from '../common/Select'
 import { api } from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 
-export default function GenerateTcModal({ open, onClose, student, onGenerated }) {
+export default function GenerateTcModal({ open, onClose, student: initialStudent, students = [], onGenerated }) {
   const { showToast } = useToast()
+  const [selectedStudentId, setSelectedStudentId] = useState(initialStudent?.id || '')
   const [leavingDate, setLeavingDate] = useState(new Date().toISOString().split('T')[0])
   const [reason, setReason] = useState('Parent Transfer / Higher Studies')
   const [conduct, setConduct] = useState('Good')
@@ -16,10 +17,28 @@ export default function GenerateTcModal({ open, onClose, student, onGenerated })
   const [status, setStatus] = useState('GENERATED')
   const [loading, setLoading] = useState(false)
 
-  if (!open || !student) return null
+  useEffect(() => {
+    if (initialStudent?.id) {
+      setSelectedStudentId(initialStudent.id)
+    } else if (students.length > 0 && !selectedStudentId) {
+      setSelectedStudentId(students[0].id)
+    }
+  }, [initialStudent, students])
+
+  const student = students.find((s) => s.id === selectedStudentId) || initialStudent
+
+  if (!open || (!student && students.length === 0)) return null
+
+  const studentDisplayName = student
+    ? student.fullName || `${student.firstName} ${student.lastName || ''}`.trim()
+    : 'Select Student'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!student?.id) {
+      showToast('Please select a student.', 'warning')
+      return
+    }
     setLoading(true)
 
     try {
@@ -54,7 +73,7 @@ export default function GenerateTcModal({ open, onClose, student, onGenerated })
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">Generate Transfer Certificate</h3>
-              <p className="text-xs text-slate-500">For {student.fullName} ({student.id || student.studentId})</p>
+              <p className="text-xs text-slate-500">For {studentDisplayName} ({student?.id || student?.studentId || ''})</p>
             </div>
           </div>
           <button
@@ -66,20 +85,53 @@ export default function GenerateTcModal({ open, onClose, student, onGenerated })
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs flex justify-between">
-            <div>
-              <span className="text-slate-400 block">Class & Section</span>
-              <span className="font-semibold text-slate-800">{student.className || 'Class 10 - A'}</span>
+          {students.length > 0 && (
+            <Select
+              label="Select Student by Name"
+              value={student?.id || ''}
+              onChange={(e) => setSelectedStudentId(e.target.value)}
+              options={students.map((s) => ({
+                value: s.id,
+                label: `${s.fullName || `${s.firstName} ${s.lastName || ''}`.trim()} (${s.studentId || s.id})`,
+              }))}
+              required
+            />
+          )}
+
+          {student && (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-2">
+              <div className="flex justify-between">
+                <div>
+                  <span className="text-slate-400 block">Student Name</span>
+                  <span className="font-bold text-slate-900">{studentDisplayName}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Student ID</span>
+                  <span className="font-semibold text-slate-800">{student.studentId || student.id}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Class</span>
+                  <span className="font-semibold text-slate-800">
+                    {student.className || (student.class ? `${student.class.name} - ${student.class.section}` : 'Class 10')}
+                  </span>
+                </div>
+              </div>
+              <div className="flex justify-between border-t border-slate-200/60 pt-2">
+                <div>
+                  <span className="text-slate-400 block">Father's Name</span>
+                  <span className="font-semibold text-slate-800">{student.fatherName || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Mother's Name</span>
+                  <span className="font-semibold text-slate-800">{student.motherName || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block">Roll Number</span>
+                  <span className="font-semibold text-slate-800">#{student.rollNumber || '—'}</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <span className="text-slate-400 block">Roll Number</span>
-              <span className="font-semibold text-slate-800">#{student.rollNumber || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 block">Student ID</span>
-              <span className="font-semibold text-slate-800">{student.id || student.studentId}</span>
-            </div>
-          </div>
+          )}
 
           <Input
             label="Date of Leaving"

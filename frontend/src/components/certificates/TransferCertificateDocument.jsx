@@ -20,8 +20,8 @@ export default function TransferCertificateDocument({ certificate }) {
     school,
   } = certificate
 
-  const fullName = student ? `${student.firstName} ${student.lastName || ''}`.trim() : 'Student'
-  const className = student?.class ? `${student.class.name} - Section ${student.class.section}` : lastClass || 'Class 10'
+  const fullName = student?.fullName || (student ? `${student.firstName} ${student.lastName || ''}`.trim() : certificate.studentName || 'Student')
+  const className = student?.className || (student?.class ? `${student.class.name} - Section ${student.class.section}` : lastClass || 'Class 10')
 
   return (
     <div className="tc-printable bg-white text-slate-900 font-serif p-8 border-2 border-double border-slate-400 rounded-xl shadow-lg max-w-4xl mx-auto my-4 print:p-6 print:border-none print:shadow-none print:m-0 print:w-full">
@@ -83,7 +83,7 @@ export default function TransferCertificateDocument({ certificate }) {
         {/* Formal Numbered Clauses */}
         <div className="space-y-3 text-xs sm:text-sm font-sans my-5 leading-relaxed">
           <div className="flex items-baseline justify-between border-b border-dotted border-slate-300 pb-1.5">
-            <span className="w-1/2 text-slate-600 font-medium">1. Name of Pupil:</span>
+            <span className="w-1/2 text-slate-600 font-medium">1. Name of Student:</span>
             <span className="w-1/2 font-bold text-slate-900 uppercase">{fullName}</span>
           </div>
 
@@ -113,7 +113,7 @@ export default function TransferCertificateDocument({ certificate }) {
           </div>
 
           <div className="flex items-baseline justify-between border-b border-dotted border-slate-300 pb-1.5">
-            <span className="w-1/2 text-slate-600 font-medium">7. Class in which the pupil last studied:</span>
+            <span className="w-1/2 text-slate-600 font-medium">7. Class in which the student last studied:</span>
             <span className="w-1/2 font-bold text-slate-900">{className}</span>
           </div>
 
@@ -133,7 +133,7 @@ export default function TransferCertificateDocument({ certificate }) {
           </div>
 
           <div className="flex items-baseline justify-between border-b border-dotted border-slate-300 pb-1.5">
-            <span className="w-1/2 text-slate-600 font-medium">11. Date of pupil's last attendance at school:</span>
+            <span className="w-1/2 text-slate-600 font-medium">11. Date of student's last attendance at school:</span>
             <span className="w-1/2 font-semibold text-slate-800">{formatDate(leavingDate || new Date())}</span>
           </div>
 

@@ -216,17 +216,16 @@ export default function TransferCertificateList() {
       />
 
       {/* Generate TC Modal */}
-      {selectedStudentForTc && (
-        <GenerateTcModal
-          open={generateModalOpen}
-          onClose={() => setGenerateModalOpen(false)}
-          student={selectedStudentForTc}
-          onGenerated={(newTc) => {
-            loadData()
-            handleViewTc(newTc)
-          }}
-        />
-      )}
+      <GenerateTcModal
+        open={generateModalOpen}
+        onClose={() => setGenerateModalOpen(false)}
+        student={selectedStudentForTc}
+        students={students}
+        onGenerated={(newTc) => {
+          loadData()
+          handleViewTc(newTc)
+        }}
+      />
     </div>
   )
 }
