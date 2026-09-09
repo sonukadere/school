@@ -295,19 +295,7 @@ function SubjectForm({
                 </div>
               )}
 
-              {/* Assignment Notice */}
-              <div className="rounded-xl border border-indigo-100/90 bg-indigo-50/40 p-4 flex items-start gap-3.5 text-xs text-slate-600">
-                <div className="h-7 w-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 mt-0.5">
-                  <UserCheck size={16} />
-                </div>
-                <div>
-                  <p className="font-bold text-indigo-950">Subject Teacher Privilege</p>
-                  <p className="mt-0.5 text-slate-600 leading-relaxed">
-                    The assigned teacher will be authorized under Role-Based Access Control
-                    to view enrolled students and enter examination marks for this subject.
-                  </p>
-                </div>
-              </div>
+
             </div>
 
             {/* Action Footer seamlessly attached to the card */}

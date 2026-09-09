@@ -11,7 +11,7 @@ import Avatar from '../../components/common/Avatar'
 import { api } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { CLASS_OPTIONS, SECTION_OPTIONS } from '../../utils/constants'
+import { SECTION_OPTIONS } from '../../utils/constants'
 import { STATUS_STYLES, formatDate } from '../../utils/helpers'
 
 function StudentList() {
@@ -23,19 +23,48 @@ function StudentList() {
   const [loading, setLoading] = useState(true)
   const [classFilter, setClassFilter] = useState('')
   const [sectionFilter, setSectionFilter] = useState('')
-  const [classOptions, setClassOptions] = useState(CLASS_OPTIONS)
+  const [classOptions, setClassOptions] = useState([])
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
   const loadStudents = async () => {
     try {
       setLoading(true)
-      const data = await api.getStudents()
-      setStudents(Array.isArray(data) ? data : [])
+      const [studentsData, classesData] = await Promise.allSettled([
+        api.getStudents(),
+        api.getClasses(),
+      ])
+
+      const studentList =
+        studentsData.status === 'fulfilled' && Array.isArray(studentsData.value)
+          ? studentsData.value
+          : []
+      setStudents(studentList)
+
+      const classList =
+        classesData.status === 'fulfilled' && Array.isArray(classesData.value)
+          ? classesData.value
+          : []
+
+      // Extract only dynamic classes from active classes and loaded students
+      const dynamicClasses = Array.from(
+        new Set([
+          ...classList.map((c) => c.name),
+          ...studentList.map((s) => s.className),
+        ].filter(Boolean))
+      ).sort((a, b) => {
+        const numA = parseInt(a.replace(/\D/g, ''), 10)
+        const numB = parseInt(b.replace(/\D/g, ''), 10)
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB
+        return a.localeCompare(b)
+      })
+
+      setClassOptions(dynamicClasses)
     } catch (err) {
       console.error('Failed to load students:', err)
       showToast(err.message || 'Failed to fetch student data from database.', 'error')
       setStudents([])
+      setClassOptions([])
     } finally {
       setLoading(false)
     }
@@ -43,16 +72,6 @@ function StudentList() {
 
   useEffect(() => {
     loadStudents()
-    api.getClasses().then((classes) => {
-      if (Array.isArray(classes) && classes.length > 0) {
-        const uniqueNames = [...new Set(classes.map((c) => c.name).filter(Boolean))]
-        if (uniqueNames.length > 0) {
-          setClassOptions(uniqueNames)
-        }
-      }
-    }).catch((err) => {
-      console.warn('Could not load dynamic class options:', err)
-    })
   }, [])
 
   const filteredStudents = useMemo(() => {

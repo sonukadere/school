@@ -24,16 +24,16 @@ export const getRoleOptions = asyncHandler(async (req, res) => {
 });
 
 export const createUser = asyncHandler(async (req, res) => {
-  const user = await userService.createUser(req.body);
+  const user = await userService.createUser(req.body, req.user);
   res.status(201).json(new ApiResponse(201, 'User account created successfully.', user));
 });
 
 export const updateUser = asyncHandler(async (req, res) => {
-  const user = await userService.updateUser(req.params.id, req.body);
+  const user = await userService.updateUser(req.params.id, req.body, req.user);
   res.status(200).json(new ApiResponse(200, 'User account updated successfully.', user));
 });
 
 export const deleteUser = asyncHandler(async (req, res) => {
-  await userService.deleteUser(req.params.id);
+  await userService.deleteUser(req.params.id, req.user);
   res.status(200).json(new ApiResponse(200, 'User account deleted successfully.', null));
 });

@@ -41,6 +41,22 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           ]
           return !forbidden.some((path) => item.path.startsWith(path))
         }
+        if (roleUpper === 'STAFF' || user?.isStaff) {
+          const forbidden = [
+            '/students',
+            '/teachers',
+            '/classes',
+            '/subjects',
+            '/attendance',
+            '/exams',
+            '/questions',
+            '/marks',
+            '/certificates',
+            '/fees',
+            '/settings',
+          ]
+          return !forbidden.some((path) => item.path.startsWith(path))
+        }
         return true
       })
       .map((item) => {
@@ -64,6 +80,8 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
     ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold shadow-md shadow-blue-900/50 ring-1 ring-blue-400/30'
     : user?.isParent || roleUpper === 'PARENT'
     ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold shadow-md shadow-amber-900/50 ring-1 ring-amber-400/30'
+    : user?.isStaff || roleUpper === 'STAFF'
+    ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white font-semibold shadow-md shadow-sky-900/50 ring-1 ring-sky-400/30'
     : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-md shadow-indigo-900/50 ring-1 ring-indigo-400/30'
 
   const indicatorColor = user?.isSuperAdmin || roleUpper === 'SUPER_ADMIN' || roleUpper === 'SUPER ADMIN'
@@ -74,6 +92,8 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
     ? 'bg-blue-300'
     : user?.isParent || roleUpper === 'PARENT'
     ? 'bg-amber-300'
+    : user?.isStaff || roleUpper === 'STAFF'
+    ? 'bg-sky-300'
     : 'bg-indigo-300'
 
   const renderLink = (item) => {

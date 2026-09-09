@@ -33,10 +33,8 @@ const EXAM_TYPES = [
 ]
 
 const BOARD_OPTIONS = [
+  { value: 'MP_BOARD', label: 'MP Board' },
   { value: 'CBSE', label: 'CBSE' },
-  { value: 'ICSE', label: 'ICSE' },
-  { value: 'STATE_BOARD', label: 'State Board' },
-  { value: 'OTHER', label: 'Other' },
 ]
 
 export default function CreateExam() {
@@ -142,7 +140,7 @@ export default function CreateExam() {
         ...manualDraft,
         order: prev.length + 1,
         marks: Number(manualDraft.marks) || 1,
-        source: 'SCHOOL_BANK',
+        source: 'TEACHER_UPLOADED',
         sourceName: 'Teacher Created',
       },
     ])
@@ -223,7 +221,7 @@ export default function CreateExam() {
           correctAnswer: q.correctAnswer || '',
           explanation: q.explanation || '',
           rubric: q.rubric || '',
-          source: q.source || 'SCHOOL_BANK',
+          source: q.source === 'SCHOOL_BANK' ? 'SCHOOL_QUESTION_BANK' : (q.source || 'TEACHER_UPLOADED'),
           sourceName: q.sourceName || 'Teacher Created',
           sourceUrl: q.sourceUrl || '',
           license: q.license || 'Educational Use',

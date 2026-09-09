@@ -152,6 +152,28 @@ function ProtectedRoute({ children }) {
     }
   }
 
+  if (roleUpper === 'STAFF' || user?.isStaff) {
+    const forbiddenPrefixes = [
+      '/students',
+      '/teachers',
+      '/classes',
+      '/subjects',
+      '/attendance',
+      '/settings',
+      '/questions',
+      '/exams',
+      '/marks',
+      '/certificates',
+      '/fees',
+    ]
+    const isForbidden = forbiddenPrefixes.some((prefix) =>
+      location.pathname.startsWith(prefix)
+    )
+    if (isForbidden) {
+      return <ForbiddenRedirect />
+    }
+  }
+
   return children
 }
 

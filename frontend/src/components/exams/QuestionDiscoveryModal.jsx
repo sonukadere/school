@@ -46,10 +46,8 @@ const DIFFICULTY_OPTIONS = [
 ]
 
 const BOARD_OPTIONS = [
+  { value: 'MP_BOARD', label: 'MP Board' },
   { value: 'CBSE', label: 'CBSE' },
-  { value: 'ICSE', label: 'ICSE' },
-  { value: 'STATE_BOARD', label: 'State Board' },
-  { value: 'OTHER', label: 'Other' },
 ]
 
 export default function QuestionDiscoveryModal({

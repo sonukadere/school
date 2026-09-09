@@ -118,7 +118,17 @@ function TeacherAttendance() {
                         <Avatar name={teacher.name} size="sm" />
                         <div className="min-w-0">
                           <p className="font-semibold text-slate-900">{teacher.name}</p>
-                          <p className="text-xs text-slate-500">{teacher.id}</p>
+                          <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                            <span className="font-mono font-medium text-slate-500">
+                              {teacher.teacherId || (teacher.id ? `TCH-${teacher.id.slice(-4).toUpperCase()}` : 'TCH-001')}
+                            </span>
+                            {teacher.email && (
+                              <>
+                                <span>&bull;</span>
+                                <span className="truncate">{teacher.email}</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </td>

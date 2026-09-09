@@ -43,18 +43,19 @@ export default function TeacherDashboardView({ data, user }) {
 
   const today = formatDate(new Date())
 
-  const todaySchedule = [
-    { time: '08:30 AM - 09:15 AM', subject: 'Mathematics', class: 'Class 8-A', room: 'Room 401', status: 'Completed' },
-    { time: '09:30 AM - 10:15 AM', subject: 'Advanced Algebra', class: 'Class 9-A', room: 'Room 501', status: 'In Progress' },
-    { time: '11:00 AM - 11:45 AM', subject: 'Geometry & Theorems', class: 'Class 10-A', room: 'Room 601', status: 'Upcoming' },
-    { time: '01:30 PM - 02:15 PM', subject: 'Problem Solving Lab', class: 'Class 7-A', room: 'Math Lab', status: 'Upcoming' },
-  ]
+  const todayTimetableRaw = data?.data?.todayTimetable || data?.todayTimetable || data?.widgets?.timetable || []
+  const todaySchedule = Array.isArray(todayTimetableRaw)
+    ? todayTimetableRaw.map((entry) => ({
+        time: entry.startTime && entry.endTime ? `${entry.startTime} - ${entry.endTime}` : (entry.time || 'Period'),
+        subject: entry.subject?.name || entry.subject || 'Academic Session',
+        class: entry.class ? `${entry.class.name || ''} ${entry.class.section || ''}`.trim() : (entry.className || 'Class'),
+        room: entry.roomNumber || entry.class?.roomNumber || 'Classroom',
+        status: entry.status || 'Upcoming',
+      }))
+    : []
 
-  const assignments = [
-    { title: 'Quadratic Equations Exercise 4.2', class: 'Class 10-A', dueDate: 'Tomorrow, 5:00 PM', submissions: '28/32' },
-    { title: 'Triangle Congruence Theorems Proofs', class: 'Class 9-A', dueDate: '08/09/2026', submissions: '19/30' },
-    { title: 'Linear Equations in One Variable Worksheet', class: 'Class 8-A', dueDate: '10/09/2026', submissions: '12/28' },
-  ]
+  const upcomingExams = data?.data?.exams || []
+  const pendingMarksCount = data?.widgets?.pendingMarksEntry ?? (data?.data?.pendingMarks?.length ?? 0)
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -70,7 +71,7 @@ export default function TeacherDashboardView({ data, user }) {
               Hello, {user?.name || 'Professor'}!
             </h1>
             <p className="text-sm text-violet-200 max-w-xl">
-              Welcome to your faculty dashboard. Access your class rosters, record daily attendance, enter examination grades, and publish assignments.
+              Welcome to your faculty dashboard. Access your class rosters, record daily attendance, enter examination grades, and review notices.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -96,7 +97,7 @@ export default function TeacherDashboardView({ data, user }) {
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">My Classes</p>
-            <p className="text-2xl font-bold text-slate-900">{classes.length || 4}</p>
+            <p className="text-2xl font-bold text-slate-900">{classes.length || (data?.widgets?.myClasses ?? 0)}</p>
             <p className="text-[11px] text-violet-600 font-medium mt-0.5">Assigned Batches</p>
           </div>
         </Card>
@@ -107,7 +108,7 @@ export default function TeacherDashboardView({ data, user }) {
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Students Taught</p>
-            <p className="text-2xl font-bold text-slate-900">{data?.totalStudents || 120}</p>
+            <p className="text-2xl font-bold text-slate-900">{data?.widgets?.myStudents ?? data?.totalStudents ?? 0}</p>
             <p className="text-[11px] text-emerald-600 font-medium mt-0.5">Active Enrollment</p>
           </div>
         </Card>
@@ -118,8 +119,8 @@ export default function TeacherDashboardView({ data, user }) {
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Today's Lectures</p>
-            <p className="text-2xl font-bold text-slate-900">4 Classes</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">1 Completed • 1 In Progress</p>
+            <p className="text-2xl font-bold text-slate-900">{todaySchedule.length} Period{todaySchedule.length === 1 ? '' : 's'}</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Scheduled for {today}</p>
           </div>
         </Card>
 
@@ -129,8 +130,8 @@ export default function TeacherDashboardView({ data, user }) {
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Pending Marks</p>
-            <p className="text-2xl font-bold text-slate-900">1 Exam</p>
-            <p className="text-[11px] text-amber-600 font-medium mt-0.5">Mid-Term Assessment</p>
+            <p className="text-2xl font-bold text-slate-900">{pendingMarksCount} Assessment{pendingMarksCount === 1 ? '' : 's'}</p>
+            <p className="text-[11px] text-amber-600 font-medium mt-0.5">Requires Grade Entry</p>
           </div>
         </Card>
       </div>
@@ -140,84 +141,106 @@ export default function TeacherDashboardView({ data, user }) {
         {/* Today's Timetable */}
         <Card title="Today's Teaching Schedule" className="lg:col-span-2">
           <div className="space-y-3">
-            {todaySchedule.map((slot, index) => (
-              <div
-                key={index}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-slate-200 transition gap-3"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-700 font-bold shrink-0">
-                    <Clock size={18} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{slot.subject}</p>
-                    <p className="text-xs text-slate-500">
-                      {slot.class} • <span className="font-semibold text-slate-700">{slot.room}</span>
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono font-medium text-slate-600">{slot.time}</span>
-                  <Badge
-                    className={
-                      slot.status === 'Completed'
-                        ? 'bg-slate-200 text-slate-700'
-                        : slot.status === 'In Progress'
-                        ? 'bg-emerald-100 text-emerald-700 animate-pulse'
-                        : 'bg-indigo-100 text-indigo-700'
-                    }
-                  >
-                    {slot.status}
-                  </Badge>
-                </div>
+            {todaySchedule.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50">
+                <Clock className="h-10 w-10 text-slate-300 mb-2" />
+                <p className="font-semibold text-slate-700 text-sm">No Teaching Periods Today</p>
+                <p className="text-xs text-slate-500 mt-1">There are no scheduled lecture periods assigned for your timetable today.</p>
               </div>
-            ))}
+            ) : (
+              todaySchedule.map((slot, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-slate-200 transition gap-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-700 font-bold shrink-0">
+                      <Clock size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{slot.subject}</p>
+                      <p className="text-xs text-slate-500">
+                        {slot.class} • <span className="font-semibold text-slate-700">{slot.room}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-mono font-medium text-slate-600">{slot.time}</span>
+                    <Badge
+                      className={
+                        slot.status === 'Completed'
+                          ? 'bg-slate-200 text-slate-700'
+                          : slot.status === 'In Progress'
+                          ? 'bg-emerald-100 text-emerald-700 animate-pulse'
+                          : 'bg-indigo-100 text-indigo-700'
+                      }
+                    >
+                      {slot.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Card>
 
         {/* Assigned Classes */}
         <Card title="My Allocated Classes">
           <div className="space-y-2.5">
-            {classes.slice(0, 5).map((cls) => (
-              <div
-                key={cls.id}
-                className="p-3 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between text-xs"
-              >
-                <div>
-                  <p className="font-bold text-slate-900">{cls.name} - {cls.section || 'A'}</p>
-                  <p className="text-slate-500">Room: {cls.roomNumber || 'TBD'}</p>
+            {classes.length === 0 ? (
+              <p className="text-xs text-slate-400 py-4 text-center">No assigned classes found</p>
+            ) : (
+              classes.slice(0, 5).map((cls) => (
+                <div
+                  key={cls.id}
+                  className="p-3 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between text-xs"
+                >
+                  <div>
+                    <p className="font-bold text-slate-900">{cls.name} - {cls.section || 'A'}</p>
+                    <p className="text-slate-500">Room: {cls.roomNumber || 'TBD'}</p>
+                  </div>
+                  <Link to="/attendance/students">
+                    <Button size="xs" variant="outline" className="text-violet-600 border-violet-200 hover:bg-violet-50">
+                      Attendance
+                    </Button>
+                  </Link>
                 </div>
-                <Link to="/attendance/students">
-                  <Button size="xs" variant="outline" className="text-violet-600 border-violet-200 hover:bg-violet-50">
-                    Attendance
-                  </Button>
-                </Link>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
       </div>
 
       {/* Assignments & Announcements */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Homework & Assignments */}
-        <Card title="Active Assignments & Homework">
+        {/* Exams & Assessments */}
+        <Card title="Upcoming Exams & Assessments">
           <div className="space-y-3">
-            {assignments.map((item, idx) => (
-              <div key={idx} className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <p className="text-sm font-bold text-slate-800">{item.title}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {item.class} • Due: <span className="font-semibold text-rose-600">{item.dueDate}</span>
-                  </p>
+            {upcomingExams.length > 0 ? (
+              upcomingExams.slice(0, 5).map((exam) => (
+                <div key={exam.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">{exam.name || exam.title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {exam.class?.name || 'Class Exam'} • Date: <span className="font-semibold text-indigo-600">{exam.startDate ? formatDate(exam.startDate) : 'Scheduled'}</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link to="/marks/entry">
+                      <Button size="xs" variant="outline" className="text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+                        Enter Marks
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">
-                    Submissions: {item.submissions}
-                  </span>
-                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center p-8 text-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50">
+                <CheckCircle2 className="h-10 w-10 text-emerald-400 mb-2" />
+                <p className="font-semibold text-slate-700 text-sm">All Assessments Up to Date</p>
+                <p className="text-xs text-slate-500 mt-1">No upcoming examinations or pending grade submissions require attention.</p>
               </div>
-            ))}
+            )}
           </div>
         </Card>
 

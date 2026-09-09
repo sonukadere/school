@@ -217,19 +217,56 @@ export async function addQuestionsToExam(examId, questions = [], actor = null) {
   for (const item of questions) {
     let questionId = item.id || item.questionId;
 
-    // If item does not yet exist in Question Bank (e.g. from OER or AI generation), save it to Question Bank first
+    // If item does not yet exist in Question Bank (e.g. from OER, AI generation, or manual entry), save it to Question Bank first
     if (!questionId || questionId.startsWith('oer-') || questionId.startsWith('ai-gen-')) {
+      let sourceEnum = 'TEACHER_UPLOADED';
+      const sRaw = (item.source || '').toUpperCase().trim();
+      if (sRaw === 'SCHOOL_BANK' || sRaw === 'SCHOOL_QUESTION_BANK') {
+        sourceEnum = 'SCHOOL_QUESTION_BANK';
+      } else if (sRaw.includes('OER') || sRaw.includes('OPEN_EDUCATIONAL')) {
+        sourceEnum = 'OPEN_EDUCATIONAL_RESOURCE';
+      } else if (sRaw.includes('AI')) {
+        sourceEnum = 'AI_GENERATED';
+      } else if (sRaw.includes('LICENSED')) {
+        sourceEnum = 'LICENSED_QUESTION_BANK';
+      } else if (sRaw === 'TEACHER_UPLOADED' || sRaw === 'TEACHER_CREATED') {
+        sourceEnum = 'TEACHER_UPLOADED';
+      }
+
+      let typeEnum = 'SHORT_ANSWER';
+      const tRaw = (item.type || '').toUpperCase().trim().replace(/\s+/g, '_');
+      const VALID_TYPES = new Set([
+        'MCQ',
+        'TRUE_FALSE',
+        'SHORT_ANSWER',
+        'LONG_ANSWER',
+        'NUMERICAL',
+        'MATCH_FOLLOWING',
+        'CASE_STUDY',
+        'ASSERTION_REASON',
+        'DIAGRAM',
+      ]);
+      if (VALID_TYPES.has(tRaw)) {
+        typeEnum = tRaw;
+      }
+
+      let diffEnum = 'MEDIUM';
+      const dRaw = (item.difficulty || '').toUpperCase().trim();
+      if (['EASY', 'MEDIUM', 'HARD'].includes(dRaw)) {
+        diffEnum = dRaw;
+      }
+
       const createdQ = await prisma.question.create({
         data: {
           text: item.text,
-          type: item.type || 'SHORT_ANSWER',
+          type: typeEnum,
           classId: exam.classId,
           className: exam.class?.name || null,
           board: item.board || exam.board || 'CBSE',
           subjectName: item.subjectName || exam.subjectName || 'General',
           chapter: item.chapter || null,
           topic: item.topic || null,
-          difficulty: item.difficulty || 'MEDIUM',
+          difficulty: diffEnum,
           marks: item.marks ? Number(item.marks) : 1,
           negativeMarks: item.negativeMarks ? Number(item.negativeMarks) : 0,
           language: item.language || 'English',
@@ -237,10 +274,10 @@ export async function addQuestionsToExam(examId, questions = [], actor = null) {
           correctAnswer: item.correctAnswer || null,
           explanation: item.explanation || null,
           rubric: item.rubric || null,
-          source: item.source || 'SCHOOL_QUESTION_BANK',
-          sourceName: item.sourceName || 'Imported to Exam',
+          source: sourceEnum,
+          sourceName: item.sourceName || 'Teacher Created',
           sourceUrl: item.sourceUrl || null,
-          licenseInfo: item.licenseInfo || 'Educational Use',
+          licenseInfo: item.licenseInfo || item.license || 'Educational Use',
           retrievalDate: item.retrievalDate ? new Date(item.retrievalDate) : new Date(),
           aiModel: item.aiModel || null,
           createdById: actor?.id || null,

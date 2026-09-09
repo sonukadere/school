@@ -15,10 +15,9 @@ async function start() {
   console.log('[server] MongoDB Atlas connection established successfully.');
 
   const PORT = process.env.PORT || 5000;
-  const HOST = '0.0.0.0';
 
-  server = app.listen(PORT, HOST, () => {
-    console.log(`[server] School Management API listening on http://${HOST}:${PORT} (${env.nodeEnv})`);
+  server = app.listen(PORT, () => {
+    console.log(`[server] School Management API listening on port ${PORT} (${env.nodeEnv})`);
   });
 
   server.on('error', (err) => {

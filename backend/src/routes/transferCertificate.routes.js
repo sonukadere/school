@@ -15,7 +15,7 @@ const router = Router();
 router.use(authenticate);
 
 const canManage = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN);
-const canViewList = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER);
+const canViewList = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT, ROLES.PARENT);
 const canViewSingle = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT, ROLES.PARENT);
 
 router.get('/', canViewList, validate({ query: tcQuerySchema }), tcController.listTransferCertificates);

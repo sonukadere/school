@@ -37,7 +37,7 @@ function Select({
           )}
           {...props}
         >
-          <option value="" disabled>
+          <option value="" disabled={required}>
             {placeholder}
           </option>
           {options.map((option) => {

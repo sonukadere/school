@@ -3,11 +3,15 @@ const isLocalhost =
   isBrowser &&
   (window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === '[::1]' ||
     window.location.hostname === '0.0.0.0');
 
 // Centralized Production and Development API URLs
 const PROD_API_URL = 'https://school-backend-h4he.onrender.com/api';
-const DEV_API_URL = 'http://localhost:5000/api';
+const DEV_API_URL =
+  isBrowser && window.location.hostname === '127.0.0.1'
+    ? 'http://127.0.0.1:5000/api'
+    : 'http://localhost:5000/api';
 
 // Smart API URL resolution:
 // 1. Explicit import.meta.env.VITE_API_URL if configured

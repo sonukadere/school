@@ -147,3 +147,11 @@ export const STUDENT_USER = {
   name: 'Student User',
   role: 'Student',
 }
+
+export const PARENT_USER = {
+  email: 'parent@school.com',
+  password: 'parent123',
+  name: 'Tariq Khan (Parent)',
+  role: 'Parent',
+}
+

@@ -6,7 +6,7 @@ import Button from '../../components/common/Button'
 import { useAuth } from '../../context/AuthContext'
 import { useSettings } from '../../context/SettingsContext'
 import { useToast } from '../../context/ToastContext'
-import { ADMIN_USER, TEACHER_USER, STUDENT_USER } from '../../utils/constants'
+import { PARENT_USER } from '../../utils/constants'
 
 function Login() {
   const { login, isAuthenticated } = useAuth()
@@ -147,24 +147,13 @@ function Login() {
               <button
                 type="button"
                 onClick={() => {
-                  setEmail('teacher@school.com')
-                  setPassword('teacher123')
+                  setEmail(PARENT_USER.email)
+                  setPassword(PARENT_USER.password)
                   setErrors({})
                 }}
-                className="rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-emerald-500 hover:text-emerald-600 transition shadow-xs text-center"
+                className="col-span-2 rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-amber-500 hover:text-amber-600 transition shadow-xs text-center"
               >
-                👩‍🏫 Teacher
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('student@school.com')
-                  setPassword('student123')
-                  setErrors({})
-                }}
-                className="rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-sky-500 hover:text-sky-600 transition shadow-xs text-center"
-              >
-                🎓 Student
+                👨‍👩‍👧 Parent
               </button>
             </div>
           </div>

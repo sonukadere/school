@@ -7,6 +7,7 @@ import routes from './routes/index.js';
 import logger from './middleware/logger.js';
 import errorHandler from './middleware/errorHandler.js';
 import notFound from './middleware/notFound.js';
+import ApiError from './utils/ApiError.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,7 +50,7 @@ app.use(
 
       // Allow all localhost origins in non-production
       if (env.nodeEnv !== 'production') {
-        if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+        if (/^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(origin)) {
           return callback(null, true);
         }
       }
@@ -62,7 +63,12 @@ app.use(
         return callback(null, true);
       }
 
-      // Default: allow origin to avoid blocking legitimate deployed web clients
+      // In production, reject unlisted origins to prevent credentialed cross-origin access
+      if (env.nodeEnv === 'production') {
+        return callback(ApiError.forbidden(`CORS origin '${origin}' is not allowed.`));
+      }
+
+      // Default non-production fallback
       return callback(null, true);
     },
     credentials: true,

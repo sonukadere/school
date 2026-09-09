@@ -27,8 +27,27 @@ const USER_SELECT = {
   createdAt: true,
   updatedAt: true,
   teacher: { select: { id: true, teacherId: true, name: true } },
-  student: { select: { id: true, studentId: true, firstName: true, lastName: true, classId: true } },
-  parent: { select: { id: true, parentId: true, firstName: true, lastName: true } },
+  student: { select: { id: true, studentId: true, firstName: true, lastName: true, classId: true, rollNumber: true } },
+  parent: {
+    select: {
+      id: true,
+      parentId: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      relation: true,
+      children: {
+        select: {
+          id: true,
+          studentId: true,
+          firstName: true,
+          lastName: true,
+          rollNumber: true,
+          classId: true,
+        },
+      },
+    },
+  },
   staff: { select: { id: true, staffId: true, name: true, position: true } },
 };
 
@@ -105,7 +124,11 @@ export async function getUser(id) {
 /**
  * Create a user account (admin only) and optionally link it to a domain record.
  */
-export async function createUser(data) {
+export async function createUser(data, actor = null) {
+  if (data.role === ROLES.SUPER_ADMIN && actor?.role !== ROLES.SUPER_ADMIN) {
+    throw ApiError.forbidden('Only Super Admin can assign the Super Admin role.');
+  }
+
   const existing = await prisma.user.findFirst({
     where: {
       ...notDeleted(),
@@ -139,10 +162,18 @@ export async function createUser(data) {
 /**
  * Update a user account: profile fields, role, status, password and links.
  */
-export async function updateUser(id, data) {
+export async function updateUser(id, data, actor = null) {
   const user = await prisma.user.findFirst({ where: { id, ...notDeleted() } });
   if (!user) {
     throw ApiError.notFound('User not found.');
+  }
+
+  if (user.role === ROLES.SUPER_ADMIN && actor?.role !== ROLES.SUPER_ADMIN) {
+    throw ApiError.forbidden('Only Super Admin can modify a Super Admin account.');
+  }
+
+  if (data.role === ROLES.SUPER_ADMIN && actor?.role !== ROLES.SUPER_ADMIN) {
+    throw ApiError.forbidden('Only Super Admin can assign the Super Admin role.');
   }
 
   const updateData = { ...data };
@@ -183,11 +214,16 @@ export async function updateUser(id, data) {
   });
 }
 
-export async function deleteUser(id) {
+export async function deleteUser(id, actor = null) {
   const user = await prisma.user.findFirst({ where: { id, ...notDeleted() } });
   if (!user) {
     throw ApiError.notFound('User not found.');
   }
+
+  if (user.role === ROLES.SUPER_ADMIN && actor?.role !== ROLES.SUPER_ADMIN) {
+    throw ApiError.forbidden('Only Super Admin can delete a Super Admin account.');
+  }
+
   if (user.role === ROLES.ADMIN) {
     const adminCount = await prisma.user.count({ where: { role: ROLES.ADMIN, ...notDeleted(), isActive: true } });
     if (adminCount <= 1) {

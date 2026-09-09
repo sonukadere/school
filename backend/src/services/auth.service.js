@@ -24,7 +24,7 @@ const USER_SELECT = {
   updatedAt: true,
   teacher: { select: { id: true, teacherId: true, name: true } },
   student: {
-    select: { id: true, studentId: true, firstName: true, lastName: true, classId: true, parentId: true },
+    select: { id: true, studentId: true, firstName: true, lastName: true, classId: true, rollNumber: true, parentId: true },
   },
   parent: {
     select: {
@@ -32,12 +32,16 @@ const USER_SELECT = {
       parentId: true,
       firstName: true,
       lastName: true,
+      phone: true,
+      relation: true,
       children: {
         select: {
           id: true,
           studentId: true,
           firstName: true,
           lastName: true,
+          rollNumber: true,
+          classId: true,
         },
       },
     },

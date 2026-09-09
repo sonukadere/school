@@ -43,6 +43,13 @@ const STUDENT_QUICK_ACTIONS = [
   { label: 'My Profile', to: '/profile', icon: UserCircle, color: 'text-indigo-600 bg-indigo-50' },
 ]
 
+const PARENT_QUICK_ACTIONS = [
+  { label: 'Child Results', to: '/marks/results', icon: ClipboardList, color: 'text-emerald-600 bg-emerald-50' },
+  { label: 'Pay / View Fees', to: '/fees', icon: Wallet, color: 'text-rose-600 bg-rose-50' },
+  { label: 'School Notices', to: '/notices', icon: Bell, color: 'text-sky-600 bg-sky-50' },
+  { label: 'My Profile', to: '/profile', icon: UserCircle, color: 'text-indigo-600 bg-indigo-50' },
+]
+
 function Navbar({ collapsed, onToggleSidebar }) {
   const { user, login, logout } = useAuth()
   const {
@@ -71,6 +78,8 @@ function Navbar({ collapsed, onToggleSidebar }) {
       credentials = { email: 'teacher@school.com', password: 'teacher123' }
     } else if (role === 'Student') {
       credentials = { email: 'student@school.com', password: 'student123' }
+    } else if (role === 'Parent') {
+      credentials = { email: 'parent@school.com', password: 'parent123' }
     }
 
     if (credentials) {
@@ -119,10 +128,12 @@ function Navbar({ collapsed, onToggleSidebar }) {
 
   const currentTitle = resolveTitle(location.pathname)
 
-  const filteredQuickActions = user?.role === 'Student'
+  const filteredQuickActions = (user?.role === 'Student' || user?.isStudent)
     ? STUDENT_QUICK_ACTIONS
+    : (user?.role === 'Parent' || user?.isParent)
+    ? PARENT_QUICK_ACTIONS
     : QUICK_ACTIONS.filter((action) => {
-        if (user?.role === 'Teacher') {
+        if (user?.role === 'Teacher' || user?.isTeacher) {
           const forbidden = ['/students/add', '/classes/add', '/teachers/add', '/fees']
           return !forbidden.some((prefix) => action.to.startsWith(prefix))
         }
@@ -428,6 +439,16 @@ function Navbar({ collapsed, onToggleSidebar }) {
                     )}
                   >
                     🎓 Student Portal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchRole('Parent')}
+                    className={cn(
+                      "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-amber-50",
+                      user?.role === 'Parent' ? "text-amber-600 font-bold bg-amber-50/50" : "text-slate-600"
+                    )}
+                  >
+                    👨‍👩‍👧 Parent Portal
                   </button>
                 </div>
               )}

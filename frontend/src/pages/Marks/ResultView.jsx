@@ -11,8 +11,11 @@ import EmptyState from '../../components/common/EmptyState'
 import MarksheetModal from '../../components/marksheets/MarksheetModal'
 import { api } from '../../services/api'
 import { gradeFromPercentage, percentage } from '../../utils/helpers'
+import { useAuth } from '../../context/AuthContext'
 
 function ResultView() {
+  const { user } = useAuth()
+  const isParent = Boolean(user?.role === 'Parent' || user?.isParent)
   const navigate = useNavigate()
   const [exams, setExams] = useState([])
   const [students, setStudents] = useState([])
@@ -87,7 +90,10 @@ function ResultView() {
   if (loading) {
     return (
       <div>
-        <PageHeader title="Result View" breadcrumb={[{ label: 'Marks', href: '/marks' }, { label: 'Result View' }]} />
+        <PageHeader
+          title={isParent ? "Child's Result View" : "Result View"}
+          breadcrumb={[{ label: isParent ? 'Child Results' : 'Marks', href: isParent ? '/marks/results' : '/marks' }, { label: 'Result View' }]}
+        />
         <Card>
           <EmptyState title="Loading..." description="Fetching results" />
         </Card>
@@ -181,22 +187,40 @@ function ResultView() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {results.map((result, index) => (
-                    <tr key={result.student.id} className="transition-colors hover:bg-slate-50/60">
-                      <td className="px-5 py-3.5">
-                        <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${index < 3 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-                          {index + 1}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <Avatar name={result.student.fullName} size="sm" />
-                          <div>
-                            <p className="font-semibold text-slate-900">{result.student.fullName}</p>
-                            <p className="text-xs text-slate-500">{result.student.id}</p>
-                          </div>
-                        </div>
-                      </td>
+                    {results.map((result, index) => {
+                      const isChild = isParent && (
+                        user?.children?.some((c) => c.id === result.student.id || c.studentId === result.student.studentId) ||
+                        result.student.parentId === user?.parentId
+                      )
+                      return (
+                        <tr
+                          key={result.student.id}
+                          className={`transition-colors ${isChild ? 'bg-amber-50/60 font-medium' : 'hover:bg-slate-50/60'}`}
+                        >
+                          <td className="px-5 py-3.5">
+                            <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${index < 3 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                              {index + 1}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5">
+                            <div className="flex items-center gap-3">
+                              <Avatar name={result.student.fullName} size="sm" />
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-semibold text-slate-900">{result.student.fullName}</p>
+                                  {isChild && (
+                                    <span className="inline-flex items-center rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                                      Your Child
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-slate-500 font-mono">
+                                  {result.student.studentId || result.student.id}
+                                  {result.student.rollNumber !== undefined && result.student.rollNumber !== '' ? ` • Roll No: ${result.student.rollNumber}` : ''}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
                       <td className="px-5 py-3.5 text-sm text-slate-700">
                         {result.marks.map((mark) => (
                           <span key={mark.subject} className="mr-2 inline-block">
@@ -232,7 +256,8 @@ function ResultView() {
                         </Button>
                       </td>
                     </tr>
-                  ))}
+                      )
+                    })}
                 </tbody>
               </table>
             </div>

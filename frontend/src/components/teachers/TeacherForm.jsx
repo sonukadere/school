@@ -76,6 +76,18 @@ function TeacherForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
 
   const handleChange = (event) => {
     const { name, value } = event.target
+    if (name === 'phone') {
+      let digitsOnly = value.replace(/\D/g, '')
+      if (digitsOnly.length > 10 && digitsOnly.startsWith('91')) {
+        digitsOnly = digitsOnly.slice(2)
+      }
+      digitsOnly = digitsOnly.slice(0, 10)
+      setValues((prev) => ({ ...prev, [name]: digitsOnly }))
+      if (errors[name]) {
+        setErrors((prev) => ({ ...prev, [name]: '' }))
+      }
+      return
+    }
     setValues((prev) => ({ ...prev, [name]: value }))
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }))
@@ -91,8 +103,10 @@ function TeacherForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
     if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
       nextErrors.email = 'Enter a valid email'
     }
-    if (values.phone && !/^[+\d][\d\s-]{7,14}$/.test(values.phone)) {
-      nextErrors.phone = 'Enter a valid phone number'
+    if (!values.phone) {
+      nextErrors.phone = 'Phone number is required'
+    } else if (values.phone.length !== 10) {
+      nextErrors.phone = 'Phone number must be exactly 10 digits'
     }
     return nextErrors
   }
@@ -141,7 +155,19 @@ function TeacherForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
           </h4>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <Input label="Email Address" type="email" name="email" value={values.email} onChange={handleChange} error={errors.email} required placeholder="teacher@school.com" />
-            <Input label="Phone Number" name="phone" value={values.phone} onChange={handleChange} error={errors.phone} required placeholder="+91 98765 43210" />
+            <Input
+              label="Phone Number"
+              name="phone"
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              value={values.phone}
+              onChange={handleChange}
+              error={errors.phone}
+              required
+              placeholder="e.g. 9876543210"
+              helper="10 digits only"
+            />
             <Input label="Primary Subject" name="subject" value={values.subject} onChange={handleChange} error={errors.subject} required placeholder="e.g. Mathematics" />
             <div className="sm:col-span-2 lg:col-span-3">
               <Input label="Residential Address" name="address" value={values.address} onChange={handleChange} placeholder="Address, City, State" />

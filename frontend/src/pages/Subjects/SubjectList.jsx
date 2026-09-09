@@ -53,7 +53,9 @@ function SubjectList() {
           </span>
           <div>
             <p className="font-semibold text-slate-900">{item.name}</p>
-            <p className="text-xs text-slate-500">{item.id}</p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {item.code ? `Code: ${item.code}` : (item.className ? `${item.className} Curriculum` : 'Academic Subject')}
+            </p>
           </div>
         </div>
       ),

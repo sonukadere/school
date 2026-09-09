@@ -32,6 +32,7 @@ export function normalizeUser(rawUser) {
     isTeacher: role === 'Teacher' || rawUser.role === 'TEACHER',
     isStudent: role === 'Student' || rawUser.role === 'STUDENT',
     isParent: role === 'Parent' || rawUser.role === 'PARENT',
+    isStaff: role === 'Staff' || rawUser.role === 'STAFF',
     avatar: rawUser.avatar || null,
     teacherId: rawUser.teacher?.id || rawUser.teacherId || null,
     teacherNumber: rawUser.teacher?.teacherId || null,
