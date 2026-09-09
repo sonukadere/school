@@ -44,27 +44,49 @@ const TOKEN_KEY = 'sms_token';
 export const tokenStorage = {
   get: () => {
     try {
-      return localStorage.getItem(TOKEN_KEY);
+      if (typeof window === 'undefined') return null;
+
+      // 1. Check tab-isolated sessionStorage first
+      const sessionToken = window.sessionStorage?.getItem(TOKEN_KEY);
+      if (sessionToken) {
+        return sessionToken;
+      }
+
+      // 2. Migration fallback from localStorage if present
+      const localToken = window.localStorage?.getItem(TOKEN_KEY);
+      if (localToken) {
+        window.sessionStorage?.setItem(TOKEN_KEY, localToken);
+        window.localStorage?.removeItem(TOKEN_KEY);
+        return localToken;
+      }
+
+      return null;
     } catch {
       return null;
     }
   },
   set: (token) => {
     try {
+      if (typeof window === 'undefined') return;
+
       if (token) {
-        localStorage.setItem(TOKEN_KEY, token);
+        window.sessionStorage?.setItem(TOKEN_KEY, token);
       } else {
-        localStorage.removeItem(TOKEN_KEY);
+        window.sessionStorage?.removeItem(TOKEN_KEY);
       }
+      // Always remove from localStorage so tabs don't overwrite each other
+      window.localStorage?.removeItem(TOKEN_KEY);
     } catch (e) {
-      console.error('Failed to access localStorage:', e);
+      console.error('Failed to access sessionStorage:', e);
     }
   },
   clear: () => {
     try {
-      localStorage.removeItem(TOKEN_KEY);
+      if (typeof window === 'undefined') return;
+      window.sessionStorage?.removeItem(TOKEN_KEY);
+      window.localStorage?.removeItem(TOKEN_KEY);
     } catch (e) {
-      console.error('Failed to clear token from localStorage:', e);
+      console.error('Failed to clear token from sessionStorage:', e);
     }
   },
 };

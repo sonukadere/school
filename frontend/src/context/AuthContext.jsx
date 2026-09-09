@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useSessionStorage } from '../hooks/useSessionStorage'
 import { apiClient, tokenStorage } from '../services/apiClient'
 
 const AuthContext = createContext(null)
@@ -49,7 +49,7 @@ export function normalizeUser(rawUser) {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUserState] = useLocalStorage('sms_user', null)
+  const [user, setUserState] = useSessionStorage('sms_user', null)
   const [loading, setLoading] = useState(false)
   const [initializing, setInitializing] = useState(true)
 
