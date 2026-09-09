@@ -59,13 +59,27 @@ export default function FeeList() {
   const [tabSearch, setTabSearch] = useState('')
   const [tabCategory, setTabCategory] = useState('all')
 
-  // Sync tab with URL search parameter if it changes
+  // Sync tab with URL search parameter if it changes and auto-open record payment
   useEffect(() => {
     const tab = searchParams.get('tab')
     if (tab && tab !== activeTab) {
       setActiveTab(tab)
     }
+    if (searchParams.get('record') === 'true' || searchParams.get('pay') === 'true') {
+      setRecordPaymentOpen(true)
+    }
   }, [searchParams])
+
+  // Real-time dynamic sync: auto reload fee data when payment is recorded anywhere
+  useEffect(() => {
+    const handlePaymentRecorded = () => {
+      loadFeeData()
+    }
+    window.addEventListener('sms:payment-recorded', handlePaymentRecorded)
+    return () => {
+      window.removeEventListener('sms:payment-recorded', handlePaymentRecorded)
+    }
+  }, [])
 
   const handleTabChange = (newTab) => {
     setActiveTab(newTab)
@@ -806,6 +820,14 @@ export default function FeeList() {
         onClose={() => {
           setRecordPaymentOpen(false)
           setSelectedStudentForPay(null)
+          if (searchParams.get('record') || searchParams.get('pay')) {
+            setSearchParams((prev) => {
+              const next = new URLSearchParams(prev)
+              next.delete('record')
+              next.delete('pay')
+              return next
+            })
+          }
         }}
         preselectedStudent={selectedStudentForPay}
         onPaymentSuccess={handlePaymentSuccess}

@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Pencil, Trash2, School, Users, UserCheck, BookOpen } from 'lucide-react'
+import { Plus, Pencil, Trash2, School, Users, UserCheck, UserX, Eye, BookOpen } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import DataTable from '../../components/common/DataTable'
 import Button from '../../components/common/Button'
 import Badge from '../../components/common/Badge'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
+import ClassDetailsModal from '../../components/classes/ClassDetailsModal'
 import { api } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -16,27 +17,24 @@ function ClassList() {
   const { showToast } = useToast()
   const [classes, setClasses] = useState([])
   const [totalStudentsCount, setTotalStudentsCount] = useState(null)
-  const [totalTeachersCount, setTotalTeachersCount] = useState(null)
   const [loading, setLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [selectedClassForModal, setSelectedClassForModal] = useState(null)
 
   const loadClasses = async () => {
     setLoading(true)
     try {
-      const [classRes, studentRes, teacherRes] = await Promise.allSettled([
+      const [classRes, studentRes] = await Promise.allSettled([
         api.getClasses(),
         api.getStudents(),
-        api.getTeachers(),
       ])
 
       const classData = classRes.status === 'fulfilled' && Array.isArray(classRes.value) ? classRes.value : []
       const studentData = studentRes.status === 'fulfilled' && Array.isArray(studentRes.value) ? studentRes.value : []
-      const teacherData = teacherRes.status === 'fulfilled' && Array.isArray(teacherRes.value) ? teacherRes.value : []
 
       setClasses(classData)
       setTotalStudentsCount(studentData.length)
-      setTotalTeachersCount(teacherData.length)
     } catch {
       showToast('Failed to load classes', 'error')
       setClasses([])
@@ -51,20 +49,26 @@ function ClassList() {
 
   const stats = useMemo(() => {
     const total = classes.length
-    // Sum students from classes in DB, or use total active enrolled students from DB
-    const studentsFromClasses = classes.reduce(
+    const totalStudents = classes.reduce(
       (sum, c) => sum + (c.studentCount ?? (c._count?.students ?? 0)),
       0
     )
-    const totalStudents = totalStudentsCount !== null ? totalStudentsCount : studentsFromClasses
+    const activeStudents = classes.reduce(
+      (sum, c) => sum + (c.activeStudentCount ?? c.studentCount ?? 0),
+      0
+    )
+    const inactiveStudents = classes.reduce(
+      (sum, c) => sum + (c.inactiveStudentCount ?? 0),
+      0
+    )
     const withTeacher = classes.filter(
       (c) =>
         Boolean(c.classTeacherId) ||
         (c.classTeacher && c.classTeacher !== 'Not Assigned' && c.classTeacherName !== 'Not Assigned')
     ).length
-    const avgStudents = total > 0 ? (totalStudents / total).toFixed(1) : '0.0'
-    return { total, totalStudents, withTeacher, avgStudents }
-  }, [classes, totalStudentsCount])
+
+    return { total, totalStudents, activeStudents, inactiveStudents, withTeacher }
+  }, [classes])
 
   const handleDelete = async () => {
     if (!deleteTarget) return
@@ -141,61 +145,105 @@ function ClassList() {
     },
     {
       key: 'studentCount',
-      header: 'Students',
+      header: 'Total Students',
       render: (item) => {
         const count = item.studentCount ?? (item._count?.students ?? 0)
         return (
-          <Badge variant="info" className="gap-1.5">
-            <Users size={12} className="opacity-70" />
+          <button
+            type="button"
+            onClick={() => setSelectedClassForModal(item)}
+            title="Click to view enrolled students"
+            className="group inline-flex items-center gap-1.5 rounded-lg border border-indigo-100 bg-indigo-50/70 px-2.5 py-1 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100 hover:border-indigo-300 shadow-2xs cursor-pointer"
+          >
+            <Users size={12} className="text-indigo-600 transition-transform group-hover:scale-110" />
             <span>{count} {count === 1 ? 'Student' : 'Students'}</span>
-          </Badge>
+          </button>
         )
       },
     },
     {
-      key: 'roomNumber',
-      header: 'Room',
+      key: 'activeStudentCount',
+      header: 'Active',
+      render: (item) => {
+        const count = item.activeStudentCount ?? item.studentCount ?? 0
+        return (
+          <button
+            type="button"
+            onClick={() => setSelectedClassForModal(item)}
+            title="Click to view active students"
+            className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50/70 px-2 py-0.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 cursor-pointer"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span>{count} Active</span>
+          </button>
+        )
+      },
+    },
+    {
+      key: 'inactiveStudentCount',
+      header: 'Inactive',
+      render: (item) => {
+        const count = item.inactiveStudentCount ?? 0
+        return (
+          <button
+            type="button"
+            onClick={() => setSelectedClassForModal(item)}
+            title="Click to view inactive students"
+            className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold transition cursor-pointer ${
+              count > 0
+                ? 'border-amber-200 bg-amber-50/70 text-amber-700 hover:bg-amber-100'
+                : 'border-slate-200 bg-slate-50 text-slate-400 hover:bg-slate-100'
+            }`}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${count > 0 ? 'bg-amber-500' : 'bg-slate-300'}`} />
+            <span>{count} Inactive</span>
+          </button>
+        )
+      },
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      className: 'text-right',
       render: (item) => (
-        <span className="inline-flex items-center font-mono text-xs font-medium text-slate-600 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded">
-          {item.roomNumber ? `Room ${item.roomNumber}` : 'N/A'}
-        </span>
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={() => setSelectedClassForModal(item)}
+            title="View Class Students Roster"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all duration-150 hover:border-sky-300 hover:bg-sky-50/60 hover:text-sky-600 cursor-pointer"
+          >
+            <Eye size={14} />
+          </button>
+          {canManage && (
+            <>
+              <Link
+                to={`/classes/edit/${item.id}`}
+                title="Edit Class"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all duration-150 hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-600"
+              >
+                <Pencil size={14} />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(item)}
+                title="Delete Class"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all duration-150 hover:border-rose-300 hover:bg-rose-50/60 hover:text-rose-600 cursor-pointer"
+              >
+                <Trash2 size={14} />
+              </button>
+            </>
+          )}
+        </div>
       ),
     },
-    ...(canManage
-      ? [
-          {
-            key: 'actions',
-            header: 'Actions',
-            className: 'text-right',
-            render: (item) => (
-              <div className="flex items-center justify-end gap-1.5">
-                <Link
-                  to={`/classes/edit/${item.id}`}
-                  title="Edit Class"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all duration-150 hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-600"
-                >
-                  <Pencil size={14} />
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setDeleteTarget(item)}
-                  title="Delete Class"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all duration-150 hover:border-rose-300 hover:bg-rose-50/60 hover:text-rose-600"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ),
-          },
-        ]
-      : []),
   ]
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Classes"
-        description="Manage classes, sections, and assigned class teachers"
+        description="Manage classes, sections, student distributions and assigned class teachers"
         breadcrumb={[{ label: 'Classes' }]}
         actions={
           canManage ? (
@@ -216,13 +264,9 @@ function ClassList() {
             </div>
           </div>
           <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-            {loading ? (
-              <div className="h-8 w-14 animate-pulse rounded bg-slate-100" />
-            ) : (
-              stats.total
-            )}
+            {loading ? <div className="h-8 w-14 animate-pulse rounded bg-slate-100" /> : stats.total}
           </div>
-          <p className="mt-0.5 text-xs text-slate-400">Active class groups</p>
+          <p className="mt-0.5 text-xs text-slate-400">Active class sections</p>
         </div>
 
         <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition hover:shadow-sm">
@@ -233,50 +277,35 @@ function ClassList() {
             </div>
           </div>
           <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-            {loading ? (
-              <div className="h-8 w-14 animate-pulse rounded bg-slate-100" />
-            ) : (
-              stats.totalStudents
-            )}
+            {loading ? <div className="h-8 w-14 animate-pulse rounded bg-slate-100" /> : stats.totalStudents}
           </div>
-          <p className="mt-0.5 text-xs text-slate-400">Enrolled across classes</p>
+          <p className="mt-0.5 text-xs text-slate-400">Enrolled across all classes</p>
         </div>
 
         <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition hover:shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-slate-500">Assigned Teachers</p>
+            <p className="text-xs font-medium text-slate-500">Active Students</p>
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
               <UserCheck size={16} />
             </div>
           </div>
-          <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-            {loading ? (
-              <div className="h-8 w-16 animate-pulse rounded bg-slate-100" />
-            ) : (
-              <>
-                {stats.withTeacher}{' '}
-                <span className="text-xs font-normal text-slate-400">/ {stats.total}</span>
-              </>
-            )}
+          <div className="mt-2 text-2xl font-bold tracking-tight text-emerald-600">
+            {loading ? <div className="h-8 w-16 animate-pulse rounded bg-slate-100" /> : stats.activeStudents}
           </div>
-          <p className="mt-0.5 text-xs text-slate-400">Classes with lead teachers</p>
+          <p className="mt-0.5 text-xs text-slate-400">Regular attendees</p>
         </div>
 
         <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs transition hover:shadow-sm">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-slate-500">Avg. Class Size</p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
-              <BookOpen size={16} />
+            <p className="text-xs font-medium text-slate-500">Inactive Students</p>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+              <UserX size={16} />
             </div>
           </div>
-          <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-            {loading ? (
-              <div className="h-8 w-14 animate-pulse rounded bg-slate-100" />
-            ) : (
-              stats.avgStudents
-            )}
+          <div className="mt-2 text-2xl font-bold tracking-tight text-amber-600">
+            {loading ? <div className="h-8 w-14 animate-pulse rounded bg-slate-100" /> : stats.inactiveStudents}
           </div>
-          <p className="mt-0.5 text-xs text-slate-400">Students per section</p>
+          <p className="mt-0.5 text-xs text-slate-400">Inactive or suspended</p>
         </div>
       </div>
 
@@ -298,6 +327,12 @@ function ClassList() {
         loading={deleting}
         title="Delete Class"
         message={`Are you sure you want to delete ${deleteTarget?.name} - Section ${deleteTarget?.section}? This action cannot be undone.`}
+      />
+
+      <ClassDetailsModal
+        open={Boolean(selectedClassForModal)}
+        onClose={() => setSelectedClassForModal(null)}
+        classData={selectedClassForModal}
       />
     </div>
   )

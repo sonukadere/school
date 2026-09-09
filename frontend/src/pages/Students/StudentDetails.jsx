@@ -119,6 +119,17 @@ function StudentDetails() {
     loadStudentData()
   }, [id, navigate, showToast])
 
+  // Real-time dynamic sync: auto-reload when payment is recorded
+  useEffect(() => {
+    const handlePayment = () => {
+      loadStudentData()
+    }
+    window.addEventListener('sms:payment-recorded', handlePayment)
+    return () => {
+      window.removeEventListener('sms:payment-recorded', handlePayment)
+    }
+  }, [id])
+
   const handleOpenMarksheet = () => {
     if (!exams.length) {
       showToast('No examination records found for marksheet generation.', 'info')

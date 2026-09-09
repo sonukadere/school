@@ -50,7 +50,52 @@ export async function listClasses(query = {}, actor = null) {
     prisma.class.count({ where }),
   ]);
 
-  return { data, pagination: getPaginationMeta(page, limit, total) };
+  const classIds = data.map((c) => c.id);
+  const statusCountsByClass = new Map();
+
+  if (classIds.length > 0) {
+    const studentStatusGroups = await prisma.student
+      .groupBy({
+        by: ['classId', 'status'],
+        where: {
+          ...notDeleted(),
+          classId: { in: classIds },
+        },
+        _count: { _all: true },
+      })
+      .catch(() => []);
+
+    for (const group of studentStatusGroups) {
+      if (!group.classId) continue;
+      if (!statusCountsByClass.has(group.classId)) {
+        statusCountsByClass.set(group.classId, { total: 0, active: 0, inactive: 0 });
+      }
+      const counts = statusCountsByClass.get(group.classId);
+      const countNum = group._count?._all || 0;
+      counts.total += countNum;
+      if (group.status === 'ACTIVE') {
+        counts.active += countNum;
+      } else {
+        counts.inactive += countNum;
+      }
+    }
+  }
+
+  const enrichedData = data.map((cls) => {
+    const counts = statusCountsByClass.get(cls.id) || {
+      total: cls._count?.students ?? 0,
+      active: cls._count?.students ?? 0,
+      inactive: 0,
+    };
+    return {
+      ...cls,
+      studentCount: counts.total,
+      activeStudentCount: counts.active,
+      inactiveStudentCount: counts.inactive,
+    };
+  });
+
+  return { data: enrichedData, pagination: getPaginationMeta(page, limit, total) };
 }
 
 export async function getClass(id, actor = null) {
@@ -71,8 +116,11 @@ export async function getClass(id, actor = null) {
           lastName: true,
           rollNumber: true,
           status: true,
+          gender: true,
+          phone: true,
+          email: true,
         },
-        orderBy: { rollNumber: 'asc' },
+        orderBy: [{ rollNumber: 'asc' }, { firstName: 'asc' }],
       },
       subjects: {
         where: notDeleted(),
@@ -83,7 +131,17 @@ export async function getClass(id, actor = null) {
   if (!cls) {
     throw ApiError.notFound('Class not found.');
   }
-  return cls;
+
+  const students = cls.students || [];
+  const activeCount = students.filter((s) => s.status === 'ACTIVE').length;
+  const inactiveCount = students.length - activeCount;
+
+  return {
+    ...cls,
+    studentCount: students.length,
+    activeStudentCount: activeCount,
+    inactiveStudentCount: inactiveCount,
+  };
 }
 
 export async function createClass(data) {

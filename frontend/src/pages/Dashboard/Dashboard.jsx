@@ -35,6 +35,17 @@ function Dashboard() {
     fetchDashboard()
   }, [fetchDashboard])
 
+  // Real-time dynamic sync: auto-update dashboard stats whenever a payment is recorded
+  useEffect(() => {
+    const handlePayment = () => {
+      fetchDashboard()
+    }
+    window.addEventListener('sms:payment-recorded', handlePayment)
+    return () => {
+      window.removeEventListener('sms:payment-recorded', handlePayment)
+    }
+  }, [fetchDashboard])
+
   if (loading) return <Loader fullScreen label="Loading dashboard..." />
 
   if (error && !data) {

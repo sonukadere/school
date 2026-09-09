@@ -179,16 +179,45 @@ async function getAdminDashboard(user) {
     ? Math.round((totalPresent / todayRecords.length) * 100)
     : 0;
 
-  const classIds = (classStats || []).map((c) => c.classId).filter(Boolean);
-  const classNames = classIds.length && prisma.class?.findMany
+  const allClasses = prisma.class?.findMany
     ? await prisma.class
         .findMany({
-          where: { id: { in: classIds } },
-          select: { id: true, name: true, section: true },
+          where: notDeleted(),
+          select: {
+            id: true,
+            name: true,
+            section: true,
+            _count: {
+              select: {
+                students: { where: notDeleted() },
+              },
+            },
+          },
+          orderBy: [{ name: 'asc' }, { section: 'asc' }],
         })
         .catch(() => [])
     : [];
-  const nameById = new Map((classNames || []).map((c) => [c.id, `${c.name} ${c.section}`]));
+
+  const studentStats = (allClasses || []).map((c) => ({
+    id: c.id,
+    name: `${c.name} - ${c.section}`,
+    className: c.name,
+    section: c.section,
+    students: c._count?.students ?? 0,
+    count: c._count?.students ?? 0,
+  }));
+
+  // Grade-level aggregation (e.g. Class 1: 47, Class 2: 55)
+  const gradeMap = new Map();
+  for (const c of allClasses) {
+    const current = gradeMap.get(c.name) || 0;
+    gradeMap.set(c.name, current + (c._count?.students ?? 0));
+  }
+  const gradeStats = Array.from(gradeMap.entries()).map(([name, count]) => ({
+    name,
+    students: count,
+    count,
+  }));
 
   const activities = [
     ...recentStudents.map((s) => ({
@@ -241,10 +270,8 @@ async function getAdminDashboard(user) {
     },
     charts: {
       attendanceChart: aggregateAttendance(chartRecords),
-      studentStats: classStats.map((c) => ({
-        name: nameById.get(c.classId) || 'Unassigned',
-        count: c._count._all,
-      })),
+      studentStats,
+      gradeStats,
     },
     upcomingExams,
   };

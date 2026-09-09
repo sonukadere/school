@@ -57,6 +57,11 @@ function normalizeClass(c) {
     typeof c.classTeacher === 'string'
       ? c.classTeacher
       : c.classTeacher?.name || 'Not Assigned'
+
+  const totalStudents = c.studentCount ?? (c._count?.students ?? (Array.isArray(c.students) ? c.students.length : 0))
+  const activeStudents = c.activeStudentCount ?? (Array.isArray(c.students) ? c.students.filter((s) => s.status === 'ACTIVE' || s.status === 'Active').length : totalStudents)
+  const inactiveStudents = c.inactiveStudentCount ?? (Array.isArray(c.students) ? c.students.filter((s) => s.status !== 'ACTIVE' && s.status !== 'Active').length : 0)
+
   return {
     ...c,
     id: c.id,
@@ -66,8 +71,11 @@ function normalizeClass(c) {
     classTeacherId: c.classTeacherId || c.classTeacher?.id || null,
     classTeacher: teacherName,
     classTeacherName: teacherName,
-    studentCount: c._count?.students ?? c.students?.length ?? 0,
+    studentCount: totalStudents,
+    activeStudentCount: activeStudents,
+    inactiveStudentCount: inactiveStudents,
     subjectCount: c._count?.subjects ?? c.subjects?.length ?? 0,
+    students: Array.isArray(c.students) ? c.students.map(normalizeStudent) : [],
   }
 }
 
@@ -184,7 +192,15 @@ export async function getDashboardData() {
       feesCollected: data.widgets?.monthlyFeeCollection ?? 0,
       upcomingExams: Array.isArray(data.widgets?.upcomingExams) ? data.widgets.upcomingExams.length : (data.widgets?.upcomingExams ?? 0),
       activities: data.widgets?.recentActivities ?? [],
-      studentStats: data.charts?.studentStats?.map((s) => ({ name: s.name, students: s.count })) ?? [],
+      studentStats: data.charts?.studentStats?.map((s) => ({
+        id: s.id,
+        name: s.name,
+        className: s.className,
+        section: s.section,
+        students: s.students ?? s.count ?? 0,
+        count: s.students ?? s.count ?? 0,
+      })) ?? [],
+      gradeStats: data.charts?.gradeStats ?? [],
       attendanceChart: data.charts?.attendanceChart ?? [],
       role: data.role,
       roleLabel: data.roleLabel,

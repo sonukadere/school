@@ -196,7 +196,11 @@ export default function SchoolAdminDashboardView({ data, user }) {
           icon={Layers}
           className="self-start"
         >
-          <StudentStatistics data={data?.studentStats || []} />
+          <StudentStatistics
+            data={data?.studentStats || []}
+            gradeData={data?.gradeStats || []}
+            totalStudents={data?.totalStudents}
+          />
         </Card>
       </div>
 

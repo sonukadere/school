@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Plus, Eye, Pencil, Trash2, GraduationCap } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import DataTable from '../../components/common/DataTable'
@@ -14,15 +14,24 @@ import { useToast } from '../../context/ToastContext'
 import { SECTION_OPTIONS } from '../../utils/constants'
 import { STATUS_STYLES, formatDate } from '../../utils/helpers'
 
+const STATUS_FILTER_OPTIONS = [
+  { value: '', label: 'All Statuses' },
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'INACTIVE', label: 'Inactive' },
+]
+
 function StudentList() {
   const { user } = useAuth()
   const canManage = ['Admin', 'Super Admin'].includes(user?.role) || Boolean(user?.isAdmin)
   const { showToast } = useToast()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
-  const [classFilter, setClassFilter] = useState('')
-  const [sectionFilter, setSectionFilter] = useState('')
+  const [classFilter, setClassFilter] = useState(searchParams.get('class') || '')
+  const [sectionFilter, setSectionFilter] = useState(searchParams.get('section') || '')
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '')
   const [classOptions, setClassOptions] = useState([])
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
@@ -75,12 +84,20 @@ function StudentList() {
   }, [])
 
   const filteredStudents = useMemo(() => {
-    return students.filter(
-      (student) =>
-        (!classFilter || student.className === classFilter) &&
-        (!sectionFilter || student.section === sectionFilter),
-    )
-  }, [students, classFilter, sectionFilter])
+    return students.filter((student) => {
+      const matchesClass = !classFilter || student.className === classFilter
+      const matchesSection = !sectionFilter || student.section === sectionFilter
+      const isStudentActive = student.status === 'Active' || student.status === 'ACTIVE'
+      const matchesStatus =
+        !statusFilter ||
+        statusFilter === 'ALL' ||
+        (statusFilter === 'ACTIVE' && isStudentActive) ||
+        (statusFilter === 'INACTIVE' && !isStudentActive) ||
+        student.status === statusFilter
+
+      return matchesClass && matchesSection && matchesStatus
+    })
+  }, [students, classFilter, sectionFilter, statusFilter])
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -235,13 +252,23 @@ function StudentList() {
                 placeholder="All Sections"
               />
             </div>
-            {(classFilter || sectionFilter) && (
+            <div className="w-full sm:w-36 md:w-40">
+              <Select
+                name="statusFilter"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                options={STATUS_FILTER_OPTIONS}
+                placeholder="All Statuses"
+              />
+            </div>
+            {(classFilter || sectionFilter || statusFilter) && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
                   setClassFilter('')
                   setSectionFilter('')
+                  setStatusFilter('')
                 }}
               >
                 Clear
