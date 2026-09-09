@@ -1,13 +1,13 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import { Camera, Upload, User, KeyRound, Sparkles, Eye, EyeOff } from 'lucide-react'
 import Input from '../common/Input'
 import Select from '../common/Select'
 import Button from '../common/Button'
 import {
-  CLASS_OPTIONS,
   SECTION_OPTIONS,
   GENDER_OPTIONS,
 } from '../../utils/constants'
+import { api } from '../../services/api'
 
 const EMPTY_VALUES = {
   photo: '',
@@ -76,10 +76,75 @@ function PhotoUploader({ value, onChange }) {
   )
 }
 
-function StudentForm({ initialValues = {}, onSubmit, submitting, submitLabel = 'Save Student' }) {
+function StudentForm({ initialValues = {}, onSubmit, submitting, submitLabel = 'Save Student', classes: propClasses }) {
   const [values, setValues] = useState({ ...EMPTY_VALUES, ...initialValues })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
+  const [classes, setClasses] = useState(propClasses || [])
+  const [loadingClasses, setLoadingClasses] = useState(!propClasses)
+
+  useEffect(() => {
+    if (propClasses && propClasses.length > 0) {
+      setClasses(propClasses)
+      setLoadingClasses(false)
+      return
+    }
+
+    let isMounted = true
+    setLoadingClasses(true)
+    api.getClasses()
+      .then((data) => {
+        if (isMounted) {
+          setClasses(Array.isArray(data) ? data : [])
+          setLoadingClasses(false)
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load classes in StudentForm:', err)
+        if (isMounted) {
+          setClasses([])
+          setLoadingClasses(false)
+        }
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [propClasses])
+
+  useEffect(() => {
+    if (initialValues && Object.keys(initialValues).length > 0) {
+      setValues((prev) => ({
+        ...prev,
+        ...initialValues,
+      }))
+    }
+  }, [initialValues])
+
+  // Only show dynamic classes that exist in the system (jo class bani ho)
+  const classOptions = useMemo(() => {
+    const dbClassNames = classes.map((c) => c.name).filter(Boolean)
+    const existingName = initialValues?.className
+    const allNames = Array.from(new Set([...dbClassNames, ...(existingName ? [existingName] : [])]))
+
+    allNames.sort((a, b) => {
+      const numA = parseInt(a.replace(/\D/g, ''), 10)
+      const numB = parseInt(b.replace(/\D/g, ''), 10)
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB
+      return a.localeCompare(b)
+    })
+
+    return allNames.map((name) => ({ value: name, label: name }))
+  }, [classes, initialValues?.className])
+
+  const sectionOptions = useMemo(() => {
+    if (!values.className) return SECTION_OPTIONS
+    const matching = classes.filter((c) => c.name === values.className && c.section)
+    const uniqueSecs = Array.from(new Set(matching.map((c) => c.section).filter(Boolean)))
+    if (uniqueSecs.length > 0) {
+      return uniqueSecs.map((sec) => ({ value: sec, label: `Section ${sec}` }))
+    }
+    return SECTION_OPTIONS
+  }, [classes, values.className])
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -88,6 +153,19 @@ function StudentForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
       setValues((prev) => ({ ...prev, [name]: digitsOnly }))
       if (errors[name]) {
         setErrors((prev) => ({ ...prev, [name]: '' }))
+      }
+      return
+    }
+    if (name === 'className') {
+      const matching = classes.filter((c) => c.name === value && c.section)
+      const uniqueSecs = Array.from(new Set(matching.map((c) => c.section).filter(Boolean)))
+      const nextSection =
+        uniqueSecs.length > 0 && !uniqueSecs.includes(values.section)
+          ? uniqueSecs[0]
+          : values.section || (uniqueSecs[0] || 'A')
+      setValues((prev) => ({ ...prev, className: value, section: nextSection }))
+      if (errors.className) {
+        setErrors((prev) => ({ ...prev, className: '' }))
       }
       return
     }
@@ -194,9 +272,40 @@ function StudentForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
             <span className="h-2 w-2 rounded-full bg-indigo-600"></span> 3. Academic Allocation
           </h4>
           <div className="grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <Select label="Class" name="className" value={values.className} onChange={handleChange} error={errors.className} required options={CLASS_OPTIONS} placeholder="Select class" />
-            <Select label="Section" name="section" value={values.section} onChange={handleChange} error={errors.section} required options={SECTION_OPTIONS} placeholder="Select section" />
+            <Select
+              label="Class"
+              id="className"
+              name="className"
+              value={values.className}
+              onChange={handleChange}
+              error={errors.className}
+              required
+              options={classOptions}
+              placeholder={
+                loadingClasses
+                  ? 'Loading classes...'
+                  : classOptions.length === 0
+                    ? 'No classes found (Create class first)'
+                    : 'Select class'
+              }
+            />
+            <Select
+              label="Section"
+              id="section"
+              name="section"
+              value={values.section}
+              onChange={handleChange}
+              error={errors.section}
+              required
+              options={sectionOptions}
+              placeholder="Select section"
+            />
           </div>
+          {classOptions.length === 0 && !loadingClasses && (
+            <p className="text-xs text-amber-600 bg-amber-50 p-2.5 rounded-lg border border-amber-200">
+              ⚠️ No classes have been created yet. Please go to <span className="font-semibold">Classes → Add Class</span> to create a class before admitting students.
+            </p>
+          )}
         </div>
 
         {/* Section 4: Student Portal Login Account */}

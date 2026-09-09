@@ -169,7 +169,19 @@ export async function assertPaymentVisible(user, record) {
   }
 
   if (user.role === 'STUDENT') {
-    if (!user.student?.id || record.studentId !== user.student.id) {
+    let studentId = user.student?.id;
+    if (!studentId) {
+      const student = await prisma.student.findFirst({
+        where: { userId: user.id, ...notDeleted() },
+        select: { id: true },
+      });
+      studentId = student?.id;
+    }
+    const matchesRecordStudent =
+      (studentId && record.studentId === studentId) ||
+      (record.student && (record.student.userId === user.id || record.student.id === studentId));
+
+    if (!matchesRecordStudent) {
       throw ApiError.forbidden('You can only access your own payment records.');
     }
     return;

@@ -14,7 +14,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
       .filter((item) => {
         const roleUpper = (user?.role || '').toUpperCase()
         if (roleUpper === 'TEACHER') {
-          const forbidden = ['/teachers', '/fees', '/settings']
+          const forbidden = ['/teachers', '/fees', '/payroll', '/settings']
           return !forbidden.some((path) => item.path.startsWith(path))
         }
         if (user?.role === 'Student' || user?.isStudent) {
@@ -22,10 +22,10 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
             '/students',
             '/teachers',
             '/classes',
-            '/subjects',
             '/attendance',
             '/settings',
             '/questions',
+            '/payroll',
           ]
           return !forbidden.some((path) => item.path.startsWith(path))
         }
@@ -34,10 +34,10 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
             '/students',
             '/teachers',
             '/classes',
-            '/subjects',
             '/attendance',
             '/settings',
             '/questions',
+            '/payroll',
           ]
           return !forbidden.some((path) => item.path.startsWith(path))
         }
@@ -53,6 +53,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
             '/marks',
             '/certificates',
             '/fees',
+            '/payroll',
             '/settings',
           ]
           return !forbidden.some((path) => item.path.startsWith(path))
@@ -65,6 +66,9 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
         }
         if ((user?.role === 'Parent' || user?.isParent) && item.path === '/marks') {
           return { ...item, label: 'Child Results', path: '/marks/results' }
+        }
+        if ((user?.role === 'Student' || user?.isStudent) && item.path === '/subjects') {
+          return { ...item, label: 'My Subjects' }
         }
         return item
       })
@@ -188,25 +192,6 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
             <X size={18} />
           </button>
         </div>
-
-        {(!collapsed || mobileOpen) && (
-          <div className="mx-3 mt-3 px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between">
-            <div className="min-w-0 pr-2">
-              <span className="text-[10px] text-slate-400 block uppercase font-medium">Active Role</span>
-              <span className="text-xs font-bold text-white truncate block">{user?.name}</span>
-            </div>
-            <span className={cn(
-              'px-2 py-0.5 text-[10px] font-bold rounded-md shrink-0 uppercase tracking-wide',
-              user?.isSuperAdmin ? 'bg-purple-900/60 text-purple-300 border border-purple-500/40' :
-                user?.isTeacher ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-500/40' :
-                  user?.isStudent ? 'bg-blue-900/60 text-blue-300 border border-blue-500/40' :
-                    user?.isParent ? 'bg-amber-900/60 text-amber-300 border border-amber-500/40' :
-                      'bg-indigo-900/60 text-indigo-300 border border-indigo-500/40'
-            )}>
-              {user?.role || 'Admin'}
-            </span>
-          </div>
-        )}
 
         <nav className={cn('flex-1 overflow-y-auto py-4', collapsed && !mobileOpen ? 'px-2' : 'px-3')}>
           {filteredMenuItems.map((group) => (

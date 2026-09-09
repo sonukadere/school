@@ -3,7 +3,7 @@ import { School, UserCheck, DoorOpen, Sparkles, CheckCircle2, ArrowLeft, Eye, Sh
 import Input from '../common/Input'
 import Select from '../common/Select'
 import Button from '../common/Button'
-import { CLASS_OPTIONS, SECTION_OPTIONS } from '../../utils/constants'
+import { SECTION_OPTIONS } from '../../utils/constants'
 import { api } from '../../services/api'
 
 function ClassForm({ initialValues = {}, onSubmit, submitting, submitLabel = 'Save Class', onBack }) {
@@ -112,15 +112,16 @@ function ClassForm({ initialValues = {}, onSubmit, submitting, submitLabel = 'Sa
             {/* Form Fields */}
             <div className="p-6 sm:p-7 space-y-6">
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <Select
+                <Input
                   label="Class Name"
+                  id="name"
                   name="name"
                   value={values.name}
                   onChange={handleChange}
                   error={errors.name}
                   required
-                  options={CLASS_OPTIONS}
-                  placeholder="Select class"
+                  placeholder="e.g. Class 10 or 10th"
+                  icon={School}
                 />
                 <Select
                   label="Section"

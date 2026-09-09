@@ -561,8 +561,8 @@ export const api = {
   },
 
   getPaymentReceipt: async (idOrNumber) => {
-    const pathParam = encodeURIComponent(idOrNumber)
-    return apiClient.get(`/payments/receipt/${pathParam}`)
+    const clean = typeof idOrNumber === 'string' ? idOrNumber.trim() : String(idOrNumber || '')
+    return apiClient.get('/payments/receipt', { receiptNumber: clean, id: clean })
   },
 
   getPendingFees: async (params = {}) => {

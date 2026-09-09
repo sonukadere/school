@@ -12,13 +12,8 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
   const [error, setError] = useState(null)
   const printRef = useRef(null)
 
-  useEffect(() => {
-    if (!open || !receiptNumberOrId) {
-      setReceiptData(null)
-      setError(null)
-      return
-    }
-
+  const fetchReceipt = () => {
+    if (!receiptNumberOrId) return
     setLoading(true)
     setError(null)
     api
@@ -33,6 +28,16 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
         setError(err.message || 'Failed to fetch payment receipt')
         setLoading(false)
       })
+  }
+
+  useEffect(() => {
+    if (!open || !receiptNumberOrId) {
+      setReceiptData(null)
+      setError(null)
+      return
+    }
+
+    fetchReceipt()
   }, [open, receiptNumberOrId])
 
   if (!open) return null
@@ -48,10 +53,10 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto print:p-0 print:bg-white animate-fade-in">
-      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-6 print:m-0 print:border-none print:shadow-none print:w-full print:max-w-none">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6 print:p-0 print:bg-white animate-fade-in flex justify-center items-start">
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-auto sm:my-8 flex flex-col print:m-0 print:border-none print:shadow-none print:w-full print:max-w-none">
         {/* Modal Toolbar - Hidden during print */}
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-6 py-4 print:hidden">
+        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-100 bg-white/95 backdrop-blur-md px-6 py-4 print:hidden shrink-0">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
               <ShieldCheck size={18} />
@@ -82,7 +87,7 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
         </div>
 
         {/* Modal Body / Printable Receipt Area */}
-        <div className="p-6 sm:p-8" ref={printRef}>
+        <div className="p-4 sm:p-6 md:p-8 overflow-y-auto max-h-[calc(88vh-120px)] print:max-h-none print:overflow-visible print:p-0" ref={printRef}>
           {loading ? (
             <div className="py-16 flex flex-col items-center justify-center">
               <Loader label="Loading official receipt details..." />
@@ -90,7 +95,15 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
           ) : error ? (
             <div className="py-12 text-center text-rose-600">
               <p className="font-semibold text-base">Unable to load receipt</p>
-              <p className="text-xs text-slate-500 mt-1">{error}</p>
+              <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">{error}</p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-4"
+                onClick={fetchReceipt}
+              >
+                Try Again
+              </Button>
             </div>
           ) : receiptData ? (
             <div className="receipt-container border-2 border-slate-200 rounded-xl p-6 sm:p-7 bg-white relative">
@@ -255,7 +268,7 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
         </div>
 
         {/* Modal Footer - Hidden during print */}
-        <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 print:hidden">
+        <div className="sticky bottom-0 z-20 flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/95 backdrop-blur-md px-6 py-4 print:hidden shrink-0">
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>

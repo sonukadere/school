@@ -152,6 +152,46 @@ export async function getSchoolInfo(schoolId = 'SCH001') {
 }
 
 /**
+ * Helper to determine if a given due date has passed.
+ * Due date day is valid until the end of that day (23:59:59.999).
+ */
+export function isInvoicePastDue(dueDate) {
+  if (!dueDate) return false;
+  const now = new Date();
+  const due = new Date(dueDate);
+  due.setHours(23, 59, 59, 999);
+  return now.getTime() > due.getTime();
+}
+
+/**
+ * Calculates late fee, final payable, and pending balances dynamically based on due date.
+ * Late fee is ONLY added if the due date has passed AND the invoice is not fully cleared.
+ */
+export function resolveInvoiceAmounts(invoice, feeStructure = null) {
+  const isPastDue = isInvoicePastDue(invoice.dueDate);
+  const structLateFee = Number(feeStructure?.lateFee ?? invoice.feeStructure?.lateFee ?? invoice.lateFee ?? 0);
+  const totalFee = Number(invoice.totalFee) || 0;
+  const discount = Number(invoice.discount) || 0;
+  const paidAmount = Number(invoice.paidAmount) || 0;
+
+  const isFullyPaid = invoice.status === 'PAID' || (paidAmount >= (totalFee - discount) && totalFee > 0);
+  const applicableLateFee = (!isFullyPaid && isPastDue) ? Math.max(structLateFee, 0) : 0;
+
+  const finalAmount = Math.max(totalFee - discount + applicableLateFee, 0);
+  const pendingAmount = Math.max(finalAmount - paidAmount, 0);
+  const status = pendingAmount === 0 && finalAmount > 0 ? 'PAID' : paidAmount > 0 ? 'PARTIAL' : 'PENDING';
+
+  return {
+    ...invoice,
+    lateFee: applicableLateFee,
+    finalAmount,
+    pendingAmount,
+    status,
+    isPastDue,
+  };
+}
+
+/**
  * RECORD PAYMENT
  * Creates a real payment record, checks payable constraints, updates invoices,
  * generates unique receipt number, and prepares receipt snapshot.
@@ -226,6 +266,10 @@ export async function recordPayment(data, actor) {
 
     const totalFee = feeStructure?.totalFee || 5000;
     const invNumber = await generateInvoiceNumber(school.code || 'SCH001');
+    const targetDueDate = feeStructure?.dueDate || null;
+    const isPastDue = isInvoicePastDue(targetDueDate);
+    const applicableLateFee = isPastDue ? (feeStructure?.lateFee || 0) : 0;
+    const finalAmount = Math.max(totalFee + applicableLateFee, 0);
 
     invoice = await prisma.feeInvoice.create({
       data: {
@@ -237,10 +281,11 @@ export async function recordPayment(data, actor) {
         feeType: data.feeType || feeStructure?.feeType || 'Tuition Fee',
         totalFee,
         paidAmount: 0,
-        pendingAmount: totalFee,
+        pendingAmount: finalAmount,
         discount: 0,
-        lateFee: feeStructure?.lateFee || 0,
-        finalAmount: totalFee + (feeStructure?.lateFee || 0),
+        lateFee: applicableLateFee,
+        finalAmount,
+        dueDate: targetDueDate,
         status: 'PENDING',
         deletedAt: null,
       },
@@ -250,11 +295,30 @@ export async function recordPayment(data, actor) {
   // Calculate current remaining payable amount
   const remainingPayable = Number(invoice.pendingAmount);
 
+  // VALIDATION: check if invoice is already fully cleared
+  if (remainingPayable <= 0 && invoice.status === 'PAID') {
+    throw ApiError.badRequest('This fee invoice has already been fully cleared.');
+  }
+
   // VALIDATION: payment amount cannot exceed remaining payable amount
   if (payAmount > remainingPayable && remainingPayable > 0) {
     throw ApiError.badRequest(
       `Payment amount (${payAmount}) cannot exceed the remaining payable amount (${remainingPayable}).`
     );
+  }
+
+  // DUPLICATE PAYMENT GUARD: prevent duplicate charge if identical payment was recorded in the last 15 seconds
+  const recentDuplicate = await prisma.payment.findFirst({
+    where: {
+      studentId: student.id,
+      amount: payAmount,
+      invoiceId: invoice.id,
+      paymentDate: { gte: new Date(Date.now() - 15 * 1000) },
+      ...notDeleted(),
+    },
+  });
+  if (recentDuplicate) {
+    throw ApiError.badRequest('A payment with the same amount for this student was just recorded. Please wait a moment before submitting again.');
   }
 
   const previousDue = remainingPayable;
@@ -565,9 +629,27 @@ export async function getPayment(id, actor) {
  * GET PAYMENT RECEIPT
  */
 export async function getPaymentReceipt(receiptNumberOrId, actor) {
+  if (!receiptNumberOrId) {
+    throw ApiError.badRequest('Receipt number or identifier is required.');
+  }
+
+  const rawKey = String(receiptNumberOrId).trim();
+  let decodedKey = rawKey;
+  try {
+    decodedKey = decodeURIComponent(rawKey).trim();
+  } catch {
+    decodedKey = rawKey;
+  }
+
+  const searchKeys = Array.from(new Set([rawKey, decodedKey])).filter(Boolean);
+
   const receipt = await prisma.paymentReceipt.findFirst({
     where: {
-      OR: [{ id: receiptNumberOrId }, { receiptNumber: receiptNumberOrId }, { paymentId: receiptNumberOrId }],
+      OR: searchKeys.flatMap((key) => [
+        { id: key },
+        { receiptNumber: key },
+        { paymentId: key },
+      ]),
     },
     include: {
       payment: true,
@@ -636,6 +718,17 @@ export async function getPaymentReceipt(receiptNumberOrId, actor) {
         signatureLabel: 'Authorized School Cashier / Bursar',
       },
     };
+  }
+
+  if (metadata && metadata.payment) {
+    if (receipt.invoice && !isInvoicePastDue(receipt.invoice.dueDate)) {
+      const baseTotal = (receipt.invoice.totalFee || 0) - (receipt.invoice.discount || 0);
+      if (metadata.payment.previousDue > baseTotal && baseTotal > 0) {
+        const diff = metadata.payment.previousDue - baseTotal;
+        metadata.payment.previousDue = baseTotal;
+        metadata.payment.remainingDue = Math.max(metadata.payment.remainingDue - diff, 0);
+      }
+    }
   }
 
   return {
@@ -782,6 +875,7 @@ export async function listPendingFees(query = {}, actor) {
     prisma.feeInvoice.findMany({
       where,
       include: {
+        feeStructure: true,
         student: {
           select: {
             id: true,
@@ -802,13 +896,14 @@ export async function listPendingFees(query = {}, actor) {
 
   const currentDate = new Date();
 
-  const data = invoices.map((inv) => {
+  const data = invoices.map((rawInv) => {
+    const inv = resolveInvoiceAmounts(rawInv, rawInv.feeStructure);
     const student = inv.student;
     const dueDate = inv.dueDate ? new Date(inv.dueDate) : null;
     let daysOverdue = 0;
     let status = inv.status;
 
-    if (dueDate && dueDate < currentDate && inv.pendingAmount > 0) {
+    if (inv.isPastDue && inv.pendingAmount > 0 && dueDate) {
       const diffMs = currentDate.getTime() - dueDate.getTime();
       daysOverdue = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       status = 'OVERDUE';
@@ -1004,7 +1099,14 @@ export async function getPaymentReports(query = {}, actor) {
  */
 export async function getStudentFeeLedger(studentId, actor) {
   const student = await prisma.student.findFirst({
-    where: { id: studentId, ...notDeleted() },
+    where: {
+      OR: [
+        { id: studentId },
+        { studentId: studentId },
+        { userId: studentId },
+      ],
+      ...notDeleted(),
+    },
     include: {
       class: { select: { id: true, name: true, section: true } },
       parent: { select: { firstName: true, lastName: true, phone: true } },
@@ -1016,12 +1118,12 @@ export async function getStudentFeeLedger(studentId, actor) {
   }
 
   // Access validation: student/parent can only see their own
-  if (actor.role === 'STUDENT' && actor.student?.id !== studentId) {
+  if (actor.role === 'STUDENT' && actor.student?.id !== student.id && actor.id !== student.userId) {
     throw ApiError.forbidden('You can only view your own fee records.');
   }
   if (actor.role === 'PARENT') {
     const childIds = await getVisibleStudentIds(actor);
-    if (!childIds.includes(studentId)) {
+    if (!childIds.includes(student.id)) {
       throw ApiError.forbidden('You can only view your child’s fee records.');
     }
   }
@@ -1031,26 +1133,136 @@ export async function getStudentFeeLedger(studentId, actor) {
 
   assertSchoolAccess(actor, student.schoolId);
 
-  const [invoices, payments, receipts] = await Promise.all([
+  // REAL-TIME DYNAMIC SYNC:
+  // Automatically generate active fee structure invoices for student's class if not already issued
+  if (student.classId) {
+    const activeStructures = await prisma.feeStructure.findMany({
+      where: {
+        OR: [
+          { classId: student.classId },
+          { classId: null },
+        ],
+        status: 'ACTIVE',
+        ...notDeleted(),
+      },
+    });
+
+    for (const struct of activeStructures) {
+      const targetYear = struct.academicYear || '2026-2027';
+      const existing = await prisma.feeInvoice.findFirst({
+        where: {
+          studentId: student.id,
+          OR: [
+            { feeStructureId: struct.id },
+            { feeType: struct.feeType, academicYear: targetYear },
+          ],
+          ...notDeleted(),
+        },
+      });
+
+      if (!existing) {
+        const school = await getSchoolInfo(struct.schoolId || student.schoolId || 'SCH001');
+        const invoiceNumber = await generateInvoiceNumber(school?.code || 'SCH001');
+        const totalFee = struct.totalFee;
+        const targetDueDate = struct.dueDate;
+        const isPastDue = isInvoicePastDue(targetDueDate);
+        const applicableLateFee = isPastDue ? (struct.lateFee || 0) : 0;
+        const finalAmount = Math.max(totalFee + applicableLateFee, 0);
+
+        await prisma.feeInvoice.create({
+          data: {
+            invoiceNumber,
+            schoolId: school?.code || student.schoolId || 'SCH001',
+            studentId: student.id,
+            feeStructureId: struct.id,
+            feeType: struct.feeType,
+            academicYear: targetYear,
+            totalFee,
+            lateFee: applicableLateFee,
+            discount: 0,
+            finalAmount,
+            paidAmount: 0,
+            pendingAmount: finalAmount,
+            dueDate: targetDueDate,
+            status: 'PENDING',
+          },
+        });
+      }
+    }
+  }
+
+  const [rawInvoices, payments, receipts, legacyFees] = await Promise.all([
     prisma.feeInvoice.findMany({
-      where: { studentId, ...notDeleted() },
+      where: { studentId: student.id, ...notDeleted() },
+      include: { feeStructure: true },
       orderBy: { createdAt: 'desc' },
     }),
     prisma.payment.findMany({
-      where: { studentId, ...notDeleted() },
+      where: { studentId: student.id, ...notDeleted() },
       include: { createdBy: { select: { name: true } } },
       orderBy: { paymentDate: 'desc' },
     }),
     prisma.paymentReceipt.findMany({
-      where: { studentId, ...notDeleted() },
+      where: { studentId: student.id, ...notDeleted() },
       orderBy: { receiptDate: 'desc' },
+    }),
+    prisma.fee.findMany({
+      where: { studentId: student.id, ...notDeleted() },
+      orderBy: { createdAt: 'desc' },
     }),
   ]);
 
-  const totalFee = invoices.reduce((sum, inv) => sum + inv.finalAmount, 0);
+  // Dynamically resolve late fees based on whether dueDate has passed
+  const invoices = await Promise.all(
+    rawInvoices.map(async (rawInv) => {
+      const resolved = resolveInvoiceAmounts(rawInv, rawInv.feeStructure);
+      if (
+        rawInv.lateFee !== resolved.lateFee ||
+        rawInv.finalAmount !== resolved.finalAmount ||
+        rawInv.pendingAmount !== resolved.pendingAmount
+      ) {
+        await prisma.feeInvoice
+          .update({
+            where: { id: rawInv.id },
+            data: {
+              lateFee: resolved.lateFee,
+              finalAmount: resolved.finalAmount,
+              pendingAmount: resolved.pendingAmount,
+              status: resolved.status,
+            },
+          })
+          .catch((err) => console.warn('[Payment] Invoice late fee sync warning:', err.message));
+      }
+      return resolved;
+    })
+  );
+
+  // Combine invoices with any legacy unmigrated fee records
+  const allInvoices = [...invoices];
+  legacyFees.forEach((lf) => {
+    if (!allInvoices.some((inv) => inv.id === lf.id || inv.totalFee === lf.totalFee)) {
+      allInvoices.push({
+        id: lf.id,
+        invoiceNumber: 'INV-LEGACY',
+        feeType: 'Tuition Fee',
+        totalFee: lf.totalFee,
+        discount: 0,
+        lateFee: 0,
+        finalAmount: lf.totalFee,
+        paidAmount: lf.paidAmount || lf.paidFee || 0,
+        pendingAmount: lf.dueAmount ?? Math.max(lf.totalFee - (lf.paidAmount || 0), 0),
+        dueDate: lf.paymentDate,
+        status: lf.paymentStatus || 'PENDING',
+        createdAt: lf.createdAt,
+      });
+    }
+  });
+
+  const totalFee = allInvoices.reduce((sum, inv) => sum + (inv.finalAmount || inv.totalFee || 0), 0);
   const paidAmount = payments
     .filter((p) => p.paymentStatus !== 'CANCELLED')
-    .reduce((sum, p) => sum + p.amount, 0);
+    .reduce((sum, p) => sum + p.amount, 0)
+    + (allInvoices.filter((i) => i.invoiceNumber === 'INV-LEGACY').reduce((sum, i) => sum + (i.paidAmount || 0), 0));
   const pendingAmount = Math.max(totalFee - paidAmount, 0);
   const paymentStatus = pendingAmount === 0 && totalFee > 0 ? 'PAID' : paidAmount > 0 ? 'PARTIAL' : 'PENDING';
 
@@ -1078,9 +1290,8 @@ export async function getStudentFeeLedger(studentId, actor) {
       pendingAmount,
       paymentStatus,
     },
-    invoices,
+    invoices: allInvoices,
     payments,
-    paymentHistory: payments,
     receipts,
   };
 }
@@ -1108,7 +1319,7 @@ export async function listFeeStructures(query = {}, actor) {
       include: {
         class: { select: { id: true, name: true, section: true } },
       },
-      orderBy: [{ classId: 'asc' }, { feeType: 'asc' }],
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
       skip,
       take: limit,
     }),
@@ -1248,7 +1459,8 @@ export async function assignFeeStructureToClass(data, actor) {
   const targetDueDate = dueDate ? toDateOnly(dueDate) : structure.dueDate;
   const discountAmount = Math.max(Number(discount) || 0, 0);
   const totalFee = structure.totalFee;
-  const lateFee = structure.lateFee || 0;
+  const isPastDue = isInvoicePastDue(targetDueDate);
+  const lateFee = isPastDue ? (structure.lateFee || 0) : 0;
   const finalAmount = Math.max(totalFee + lateFee - discountAmount, 0);
 
   let assignedCount = 0;
@@ -1335,11 +1547,12 @@ export async function assignFeeToStudent(data, actor) {
     throw ApiError.badRequest('Total fee must be greater than zero.');
   }
 
+  const dueDate = data.dueDate ? toDateOnly(data.dueDate) : null;
+  const isPastDue = isInvoicePastDue(dueDate);
   const discount = Math.max(Number(data.discount ?? data.discountAmount) || 0, 0);
-  const lateFee = Math.max(Number(data.lateFee ?? data.lateFeeAmount) || 0, 0);
+  const lateFee = isPastDue ? Math.max(Number(data.lateFee ?? data.lateFeeAmount) || 0, 0) : 0;
   const finalAmount = Math.max(totalFee + lateFee - discount, 0);
   const invoiceNumber = await generateInvoiceNumber(school.code || 'SCH001');
-  const dueDate = data.dueDate ? toDateOnly(data.dueDate) : null;
 
   const invoice = await prisma.feeInvoice.create({
     data: {

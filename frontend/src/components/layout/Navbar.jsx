@@ -74,10 +74,6 @@ function Navbar({ collapsed, onToggleSidebar }) {
       credentials = { email: 'superadmin@school.com', password: 'superadmin123' }
     } else if (role === 'Admin' || role === 'Administrator') {
       credentials = { email: 'admin@school.com', password: 'admin123' }
-    } else if (role === 'Teacher') {
-      credentials = { email: 'teacher@school.com', password: 'teacher123' }
-    } else if (role === 'Student') {
-      credentials = { email: 'student@school.com', password: 'student123' }
     } else if (role === 'Parent') {
       credentials = { email: 'parent@school.com', password: 'parent123' }
     }
@@ -387,70 +383,54 @@ function Navbar({ collapsed, onToggleSidebar }) {
               >
                 <UserCircle size={16} className="text-slate-400" /> My Profile
               </Link>
-              <button
-                type="button"
-                onClick={() => setSwitcherOpen(!switcherOpen)}
-                className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-slate-700 transition hover:bg-slate-50 border-y border-slate-100"
-              >
-                <span className="flex items-center gap-3">
-                  <GraduationCap size={16} className="text-slate-400" /> Portal Switcher (Demo)
-                </span>
-                <ChevronDown size={14} className={cn("text-slate-400 transition-transform duration-200", switcherOpen && "rotate-180")} />
-              </button>
-              
-              {switcherOpen && (
-                <div className="bg-slate-50 border-b border-slate-100 py-1">
+              {['Super Admin', 'Admin', 'Administrator'].includes(user?.role) && (
+                <>
                   <button
                     type="button"
-                    onClick={() => handleSwitchRole('Super Admin')}
-                    className={cn(
-                      "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-purple-50",
-                      user?.role === 'Super Admin' ? "text-purple-600 font-bold bg-purple-50/50" : "text-slate-600"
-                    )}
+                    onClick={() => setSwitcherOpen(!switcherOpen)}
+                    className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-slate-700 transition hover:bg-slate-50 border-y border-slate-100"
                   >
-                    🌟 Super Admin Portal
+                    <span className="flex items-center gap-3">
+                      <GraduationCap size={16} className="text-slate-400" /> Portal Switcher (Demo)
+                    </span>
+                    <ChevronDown size={14} className={cn("text-slate-400 transition-transform duration-200", switcherOpen && "rotate-180")} />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSwitchRole('Admin')}
-                    className={cn(
-                      "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-indigo-50",
-                      (user?.role === 'Admin' || user?.role === 'Administrator') ? "text-indigo-600 font-bold bg-indigo-50/50" : "text-slate-600"
-                    )}
-                  >
-                    👑 Admin Portal
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSwitchRole('Teacher')}
-                    className={cn(
-                      "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-emerald-50",
-                      user?.role === 'Teacher' ? "text-emerald-600 font-bold bg-emerald-50/50" : "text-slate-600"
-                    )}
-                  >
-                    👩‍🏫 Teacher Portal
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSwitchRole('Student')}
-                    className={cn(
-                      "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-sky-50",
-                      user?.role === 'Student' ? "text-sky-600 font-bold bg-sky-50/50" : "text-slate-600"
-                    )}
-                  >
-                    🎓 Student Portal
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSwitchRole('Parent')}
-                    className={cn(
-                      "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-amber-50",
-                      user?.role === 'Parent' ? "text-amber-600 font-bold bg-amber-50/50" : "text-slate-600"
-                    )}
-                  >
-                    👨‍👩‍👧 Parent Portal
-                  </button>
-                </div>
+                  
+                  {switcherOpen && (
+                    <div className="bg-slate-50 border-b border-slate-100 py-1">
+                      <button
+                        type="button"
+                        onClick={() => handleSwitchRole('Super Admin')}
+                        className={cn(
+                          "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-purple-50",
+                          user?.role === 'Super Admin' ? "text-purple-600 font-bold bg-purple-50/50" : "text-slate-600"
+                        )}
+                      >
+                        🌟 Super Admin Portal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSwitchRole('Admin')}
+                        className={cn(
+                          "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-indigo-50",
+                          (user?.role === 'Admin' || user?.role === 'Administrator') ? "text-indigo-600 font-bold bg-indigo-50/50" : "text-slate-600"
+                        )}
+                      >
+                        👑 Admin Portal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSwitchRole('Parent')}
+                        className={cn(
+                          "flex w-full items-center gap-3 px-8 py-2 text-xs font-semibold transition hover:bg-amber-50",
+                          user?.role === 'Parent' ? "text-amber-600 font-bold bg-amber-50/50" : "text-slate-600"
+                        )}
+                      >
+                        👨‍👩‍👧 Parent Portal
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
 
               {['Super Admin', 'Admin', 'Administrator'].includes(user?.role) && (

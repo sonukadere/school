@@ -11,6 +11,7 @@ import Loader from '../../components/common/Loader'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
 import { api } from '../../services/api'
 import { useToast } from '../../context/ToastContext'
+import { useAuth } from '../../context/AuthContext'
 import { STATUS_STYLES, formatDate, formatCurrency } from '../../utils/helpers'
 
 function InfoItem({ label, value }) {
@@ -25,7 +26,9 @@ function InfoItem({ label, value }) {
 function TeacherDetails() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { showToast } = useToast()
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || user?.isSuperAdmin
   const [teacher, setTeacher] = useState(null)
   const [loading, setLoading] = useState(true)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -134,7 +137,7 @@ function TeacherDetails() {
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className={`grid grid-cols-1 gap-4 ${isAdmin ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
           <Card className="flex items-center gap-4 p-5">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600"><BookOpen size={22} /></div>
             <div>
@@ -149,13 +152,15 @@ function TeacherDetails() {
               <p className="text-lg font-bold text-slate-900">{formatDate(teacher.joiningDate)}</p>
             </div>
           </Card>
-          <Card className="flex items-center gap-4 p-5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><Mail size={22} /></div>
-            <div>
-              <p className="text-xs text-slate-500">Monthly Salary</p>
-              <p className="text-lg font-bold text-amber-600">{formatCurrency(teacher.salary)}</p>
-            </div>
-          </Card>
+          {isAdmin && (
+            <Card className="flex items-center gap-4 p-5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><Mail size={22} /></div>
+              <div>
+                <p className="text-xs text-slate-500">Monthly Salary</p>
+                <p className="text-lg font-bold text-amber-600">{formatCurrency(teacher.salary)}</p>
+              </div>
+            </Card>
+          )}
         </div>
 
         <Card title="Teacher Information" className="h-fit">
@@ -166,7 +171,7 @@ function TeacherDetails() {
             <InfoItem label="Subject" value={teacher.subject} />
             <InfoItem label="Qualification" value={teacher.qualification} />
             <InfoItem label="Joining Date" value={formatDate(teacher.joiningDate)} />
-            <InfoItem label="Monthly Salary" value={formatCurrency(teacher.salary)} />
+            {isAdmin && <InfoItem label="Monthly Salary" value={formatCurrency(teacher.salary)} />}
             <InfoItem label="Email Address" value={teacher.email} />
             <InfoItem label="Phone Number" value={teacher.phone} />
             <div className="sm:col-span-2 lg:col-span-3">

@@ -15,8 +15,8 @@ const router = Router();
 
 router.use(authenticate);
 
-const canRead = authorize(ROLES.ADMIN, ROLES.TEACHER);
-const canWrite = authorize(ROLES.ADMIN);
+const canRead = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT, ROLES.PARENT);
+const canWrite = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN);
 
 router.get('/', canRead, validate({ query: subjectQuerySchema }), subjectController.listSubjects);
 router.get('/:id', canRead, validate({ params: idParamSchema }), subjectController.getSubject);

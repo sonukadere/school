@@ -90,12 +90,21 @@ function SubjectList() {
       ]
     : baseColumns
 
+  const isStudent = user?.role === 'Student' || user?.isStudent || roleUpper === 'STUDENT'
+  const isParent = user?.role === 'Parent' || user?.isParent || roleUpper === 'PARENT'
+
   return (
     <div>
       <PageHeader
-        title="Subjects"
-        description="Manage subjects offered and their assigned teachers"
-        breadcrumb={[{ label: 'Subjects' }]}
+        title={isStudent ? 'My Subjects' : isParent ? 'Class Subjects' : 'Subjects'}
+        description={
+          isStudent
+            ? 'View subjects and assigned teachers for your enrolled curriculum'
+            : isParent
+            ? "View curriculum subjects and assigned teachers for your child's class"
+            : 'Manage subjects offered and their assigned teachers'
+        }
+        breadcrumb={[{ label: isStudent ? 'My Subjects' : 'Subjects' }]}
         actions={
           isAdmin ? (
             <Link to="/subjects/add">
@@ -111,8 +120,12 @@ function SubjectList() {
         loading={loading}
         pageSize={8}
         searchPlaceholder="Search by subject, code or teacher..."
-        emptyTitle="No subjects found"
-        emptyDescription="Add a new subject to get started."
+        emptyTitle={isStudent ? 'No subjects enrolled yet' : 'No subjects found'}
+        emptyDescription={
+          isStudent
+            ? 'Subjects for your class will appear here once assigned by the school administration.'
+            : 'Add a new subject to get started.'
+        }
         emptyIcon={BookOpen}
       />
 

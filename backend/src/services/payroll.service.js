@@ -483,6 +483,10 @@ export async function markSalaryPaid(id, data, actor) {
     throw ApiError.notFound('Payroll record not found.');
   }
 
+  if (payroll.paymentStatus === 'PAID') {
+    throw ApiError.badRequest('This monthly salary has already been marked as PAID.');
+  }
+
   assertSchoolAccess(actor, payroll.schoolId);
 
   const school = await getSchoolInfo(payroll.schoolId);

@@ -32,7 +32,8 @@ export const cancelPayment = asyncHandler(async (req, res) => {
 });
 
 export const getPaymentReceipt = asyncHandler(async (req, res) => {
-  const receipt = await paymentService.getPaymentReceipt(req.params.id, req.user);
+  const receiptId = req.query.id || req.query.receiptNumber || req.params.id;
+  const receipt = await paymentService.getPaymentReceipt(receiptId, req.user);
   res.status(200).json(new ApiResponse(200, 'Payment receipt retrieved successfully.', receipt));
 });
 

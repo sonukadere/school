@@ -45,10 +45,16 @@ function StudentDetails() {
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false)
   const [receiptModalOpen, setReceiptModalOpen] = useState(false)
   const [selectedReceiptId, setSelectedReceiptId] = useState(null)
-  const [activeFeeTab, setActiveFeeTab] = useState('invoices') // 'invoices' | 'payments'
+  const [feeTab, setFeeTab] = useState('invoices') // 'invoices' | 'payments'
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || user?.isSuperAdmin
   const isTeacher = user?.role === 'TEACHER' || user?.isTeacher
+
+  const getInvoiceBadgeVariant = (status) => {
+    if (status === 'PAID') return 'success'
+    if (status === 'PARTIAL') return 'warning'
+    return 'danger'
+  }
 
   // Document modals
   const [marksheetModalOpen, setMarksheetModalOpen] = useState(false)
@@ -140,8 +146,11 @@ function StudentDetails() {
   if (loading) return <Loader fullScreen label="Loading student details..." />
   if (!student) return null
 
-  const totalPaid = fees.reduce((sum, fee) => sum + fee.paidFee, 0)
-  const totalDue = fees.reduce((sum, fee) => sum + (fee.totalFee - fee.paidFee), 0)
+  const totalFee = feeLedger?.ledger?.totalFee ?? fees.reduce((sum, f) => sum + (f.totalFee || 0), 0)
+  const totalPaid = feeLedger?.ledger?.paidAmount ?? fees.reduce((sum, f) => sum + (f.paidFee || 0), 0)
+  const totalDue = feeLedger?.ledger?.pendingAmount ?? Math.max(totalFee - totalPaid, 0)
+  const invoices = feeLedger?.invoices || []
+  const payments = feeLedger?.payments || []
 
   return (
     <div>
@@ -208,20 +217,24 @@ function StudentDetails() {
               <p className="text-base sm:text-lg font-bold text-slate-900">{student.rollNumber}</p>
             </div>
           </Card>
-          <Card bodyClassName="flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Phone size={22} /></div>
-            <div>
-              <p className="text-xs text-slate-500">Total Fees Paid</p>
-              <p className="text-base sm:text-lg font-bold text-emerald-600">{formatCurrency(totalPaid)}</p>
-            </div>
-          </Card>
-          <Card bodyClassName="flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600"><MapPin size={22} /></div>
-            <div>
-              <p className="text-xs text-slate-500">Fees Due</p>
-              <p className="text-base sm:text-lg font-bold text-rose-600">{formatCurrency(totalDue)}</p>
-            </div>
-          </Card>
+          {!isTeacher && isAdmin && (
+            <>
+              <Card bodyClassName="flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-5">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Phone size={22} /></div>
+                <div>
+                  <p className="text-xs text-slate-500">Total Fees Paid</p>
+                  <p className="text-base sm:text-lg font-bold text-emerald-600">{formatCurrency(totalPaid)}</p>
+                </div>
+              </Card>
+              <Card bodyClassName="flex items-center gap-3.5 sm:gap-4 p-3.5 sm:p-5">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600"><MapPin size={22} /></div>
+                <div>
+                  <p className="text-xs text-slate-500">Fees Due</p>
+                  <p className="text-base sm:text-lg font-bold text-rose-600">{formatCurrency(totalDue)}</p>
+                </div>
+              </Card>
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -293,201 +306,177 @@ function StudentDetails() {
         </div>
 
         {/* FEE & PAYMENT MANAGEMENT SECTION */}
-        <Card
-          title="Student Fee & Payment Management"
-          subtitle="Real-time fee ledger, billing invoices, payment history, and official receipts"
-          actions={
-            <div className="flex items-center gap-2">
-              {isAdmin && (
-                <Button
-                  size="sm"
-                  variant="primary"
-                  leftIcon={Wallet}
-                  onClick={() => setRecordPaymentOpen(true)}
-                >
-                  Add Payment
-                </Button>
-              )}
-            </div>
-          }
-        >
-          {/* Dynamic Balance Sequence: Total Fee -> Paid Amount -> Pending Amount */}
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 text-center">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-500 block">Total Fee</span>
-              <p className="mt-1 font-mono text-2xl font-bold text-slate-900">
-                {formatCurrency(feeLedger?.ledger?.totalFee ?? fees.reduce((sum, f) => sum + f.totalFee, 0))}
-              </p>
-              <span className="text-[11px] text-slate-500 mt-0.5 block">Total assessed fee</span>
-            </div>
-
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 text-center">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 block">Paid Amount</span>
-              <p className="mt-1 font-mono text-2xl font-bold text-emerald-600">
-                {formatCurrency(feeLedger?.ledger?.paidAmount ?? fees.reduce((sum, f) => sum + f.paidFee, 0))}
-              </p>
-              <span className="text-[11px] text-emerald-600 mt-0.5 block">Cleared payments</span>
-            </div>
-
-            <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-center">
-              <span className="text-xs font-bold uppercase tracking-wider text-rose-600 block">Pending Amount</span>
-              <p className="mt-1 font-mono text-2xl font-bold text-rose-600">
-                {formatCurrency(
-                  feeLedger?.ledger?.pendingAmount ??
-                  Math.max(
-                    fees.reduce((sum, f) => sum + f.totalFee, 0) - fees.reduce((sum, f) => sum + f.paidFee, 0),
-                    0
-                  )
+        {!isTeacher && isAdmin && (
+          <Card
+            title="Student Fee & Payment Management"
+            subtitle="Real-time fee ledger, billing invoices, payment history, and official receipts"
+            actions={
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    leftIcon={Wallet}
+                    onClick={() => setRecordPaymentOpen(true)}
+                  >
+                    Add Payment
+                  </Button>
                 )}
-              </p>
-              <span className="text-[11px] text-rose-600 mt-0.5 block">Outstanding balance</span>
+              </div>
+            }
+          >
+            {/* Dynamic Balance Sequence: Total Fee -> Paid Amount -> Pending Amount */}
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 text-center">
+                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">Total Assigned Fee</p>
+                <p className="mt-1 text-2xl font-black text-slate-900">{formatCurrency(totalFee)}</p>
+                <p className="mt-0.5 text-xs text-slate-400">Total amount billed</p>
+              </div>
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 text-center">
+                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Total Paid</p>
+                <p className="mt-1 text-2xl font-black text-emerald-700">{formatCurrency(totalPaid)}</p>
+                <p className="mt-0.5 text-xs text-slate-400">Collected amount</p>
+              </div>
+              <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4 text-center">
+                <p className="text-xs font-semibold uppercase tracking-wider text-rose-600">Pending Due</p>
+                <p className="mt-1 text-2xl font-black text-rose-700">{formatCurrency(totalDue)}</p>
+                <p className="mt-0.5 text-xs text-slate-400">Outstanding balance</p>
+              </div>
             </div>
-          </div>
 
-          {/* Sub-tabs: Invoices / Payment History */}
-          <div className="flex border-b border-slate-200 mb-4 gap-4 text-xs font-semibold">
-            <button
-              onClick={() => setActiveFeeTab('invoices')}
-              className={`pb-2 border-b-2 transition ${
-                activeFeeTab === 'invoices'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-slate-400 hover:text-slate-700'
-              }`}
-            >
-              Fee Invoices / Dues ({feeLedger?.invoices?.length || fees.length})
-            </button>
-            <button
-              onClick={() => setActiveFeeTab('payments')}
-              className={`pb-2 border-b-2 transition ${
-                activeFeeTab === 'payments'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-slate-400 hover:text-slate-700'
-              }`}
-            >
-              Payment History & Receipts ({feeLedger?.payments?.length || 0})
-            </button>
-          </div>
+            {/* Fee Tabs */}
+            <div className="mb-4 flex border-b border-slate-200">
+              <button
+                type="button"
+                onClick={() => setFeeTab('invoices')}
+                className={`pb-2.5 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                  feeTab === 'invoices'
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Invoices & Fee Structure ({invoices.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFeeTab('payments')}
+                className={`pb-2.5 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                  feeTab === 'payments'
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Payment History & Receipts ({payments.length})
+              </button>
+            </div>
 
-          {/* Tab 1: Invoices */}
-          {activeFeeTab === 'invoices' && (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
-                <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase">
-                  <tr>
-                    <th className="px-4 py-2.5">Invoice #</th>
-                    <th className="px-4 py-2.5">Fee Head</th>
-                    <th className="px-4 py-2.5">Total Fee</th>
-                    <th className="px-4 py-2.5">Paid</th>
-                    <th className="px-4 py-2.5">Pending Due</th>
-                    <th className="px-4 py-2.5">Due Date</th>
-                    <th className="px-4 py-2.5">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {feeLedger?.invoices?.length > 0 ? (
-                    feeLedger.invoices.map((inv) => (
-                      <tr key={inv.id} className="hover:bg-slate-50/50">
-                        <td className="px-4 py-3 font-mono font-bold text-indigo-600">{inv.invoiceNumber}</td>
-                        <td className="px-4 py-3 font-medium text-slate-900">{inv.feeType}</td>
-                        <td className="px-4 py-3 font-mono">{formatCurrency(inv.totalFee)}</td>
-                        <td className="px-4 py-3 font-mono text-emerald-600">{formatCurrency(inv.paidAmount)}</td>
-                        <td className="px-4 py-3 font-mono font-bold text-rose-600">{formatCurrency(inv.pendingAmount)}</td>
-                        <td className="px-4 py-3 text-slate-500">{inv.dueDate ? formatDate(inv.dueDate) : '—'}</td>
-                        <td className="px-4 py-3">
-                          <Badge
-                            className={
-                              inv.status === 'PAID'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : inv.status === 'PARTIAL'
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-rose-100 text-rose-800'
-                            }
-                          >
-                            {inv.status}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))
-                  ) : fees.length > 0 ? (
-                    fees.map((fee) => (
-                      <tr key={fee.id}>
-                        <td className="px-4 py-3 font-mono font-bold text-indigo-600">INV-LEGACY</td>
-                        <td className="px-4 py-3 font-medium text-slate-900">General Tuition Fee</td>
-                        <td className="px-4 py-3 font-mono">{formatCurrency(fee.totalFee)}</td>
-                        <td className="px-4 py-3 font-mono text-emerald-600">{formatCurrency(fee.paidFee)}</td>
-                        <td className="px-4 py-3 font-mono font-bold text-rose-600">{formatCurrency(fee.dueFee)}</td>
-                        <td className="px-4 py-3 text-slate-500">{formatDate(fee.paymentDate)}</td>
-                        <td className="px-4 py-3"><Badge className={STATUS_STYLES[fee.status]}>{fee.status}</Badge></td>
-                      </tr>
-                    ))
-                  ) : (
+            {feeTab === 'invoices' ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
-                      <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
-                        No billing invoices recorded for this student.
-                      </td>
+                      <th className="px-4 py-3">Invoice #</th>
+                      <th className="px-4 py-3">Fee Title</th>
+                      <th className="px-4 py-3">Due Date</th>
+                      <th className="px-4 py-3">Total</th>
+                      <th className="px-4 py-3">Paid</th>
+                      <th className="px-4 py-3">Balance</th>
+                      <th className="px-4 py-3">Status</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* Tab 2: Payment History & Receipts */}
-          {activeFeeTab === 'payments' && (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
-                <thead className="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase">
-                  <tr>
-                    <th className="px-4 py-2.5">Receipt #</th>
-                    <th className="px-4 py-2.5">Payment Date</th>
-                    <th className="px-4 py-2.5">Fee Head</th>
-                    <th className="px-4 py-2.5">Method</th>
-                    <th className="px-4 py-2.5">Amount Paid</th>
-                    <th className="px-4 py-2.5">Status</th>
-                    <th className="px-4 py-2.5 text-right">Receipt Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {feeLedger?.payments?.length > 0 ? (
-                    feeLedger.payments.map((p) => (
-                      <tr key={p.id} className="hover:bg-slate-50/50">
-                        <td className="px-4 py-3 font-mono font-bold text-indigo-600">{p.receiptNumber}</td>
-                        <td className="px-4 py-3 text-slate-600">{formatDate(p.paymentDate)}</td>
-                        <td className="px-4 py-3 font-medium text-slate-900">{p.feeType}</td>
-                        <td className="px-4 py-3 font-mono text-[11px]">{p.paymentMethod}</td>
-                        <td className="px-4 py-3 font-mono font-bold text-emerald-600">{formatCurrency(p.amount)}</td>
-                        <td className="px-4 py-3">
-                          <Badge className={p.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}>
-                            {p.paymentStatus}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            leftIcon={Receipt}
-                            onClick={() => {
-                              setSelectedReceiptId(p.receiptNumber || p.id)
-                              setReceiptModalOpen(true)
-                            }}
-                          >
-                            View Receipt
-                          </Button>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {invoices.length > 0 ? (
+                      invoices.map((inv) => (
+                        <tr key={inv.id} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="px-4 py-3 font-mono font-medium text-slate-900">
+                            {inv.invoiceNumber || inv.id.slice(-6)}
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-slate-800">
+                            {inv.title || inv.feeStructure?.name || 'Academic Fee'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">{formatDate(inv.dueDate)}</td>
+                          <td className="px-4 py-3 font-medium text-slate-900">{formatCurrency(inv.totalAmount || inv.amount)}</td>
+                          <td className="px-4 py-3 text-emerald-600 font-medium">{formatCurrency(inv.paidAmount)}</td>
+                          <td className="px-4 py-3 font-bold text-rose-600">
+                            {formatCurrency((inv.totalAmount || inv.amount || 0) - (inv.paidAmount || 0))}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge variant={getInvoiceBadgeVariant(inv.status)}>
+                              {inv.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
+                          No fee invoices assigned yet for this student.
                         </td>
                       </tr>
-                    ))
-                  ) : (
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
-                      <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
-                        No payments recorded yet for this student.
-                      </td>
+                      <th className="px-4 py-3">Receipt #</th>
+                      <th className="px-4 py-3">Date</th>
+                      <th className="px-4 py-3">Amount</th>
+                      <th className="px-4 py-3">Method</th>
+                      <th className="px-4 py-3">Ref/Txn</th>
+                      <th className="px-4 py-3">Invoice</th>
+                      <th className="px-4 py-3 text-right">Action</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {payments.length > 0 ? (
+                      payments.map((p) => (
+                        <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="px-4 py-3 font-mono font-semibold text-indigo-600">
+                            {p.receiptNumber || p.paymentNumber || p.id.slice(-6)}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">{formatDate(p.paymentDate || p.createdAt)}</td>
+                          <td className="px-4 py-3 font-bold text-emerald-600">{formatCurrency(p.amount)}</td>
+                          <td className="px-4 py-3">
+                            <Badge variant="outline" className="capitalize">
+                              {p.paymentMethod || 'CASH'}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-slate-500 font-mono text-xs">{p.transactionId || '—'}</td>
+                          <td className="px-4 py-3 text-slate-600 text-xs">
+                            {p.invoice?.invoiceNumber || (p.invoiceId ? p.invoiceId.slice(-6) : '—')}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              leftIcon={Receipt}
+                              onClick={() => {
+                                setSelectedReceiptId(p.receiptNumber || p.id)
+                                setReceiptModalOpen(true)
+                              }}
+                            >
+                              View Receipt
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
+                          No payments recorded yet for this student.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        )}
       </div>
 
       {/* Record Payment Modal for this Student */}

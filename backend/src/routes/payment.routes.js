@@ -26,6 +26,7 @@ const canManagePayments = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN);
 const canViewReports = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN);
 
 // --- Receipts ---
+router.get('/receipt', canViewPayments, paymentController.getPaymentReceipt);
 router.get('/receipt/:id(*)', canViewPayments, paymentController.getPaymentReceipt);
 
 // --- Pending Fees ---

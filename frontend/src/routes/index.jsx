@@ -63,6 +63,7 @@ const NotificationList = lazyRetry(() => import('../pages/Notifications/Notifica
 const QuestionBankList = lazyRetry(() => import('../pages/Questions/QuestionBankList'), 'question_bank')
 const ExamPaperView = lazyRetry(() => import('../pages/Exams/ExamPaperView'), 'exam_paper')
 const DigitalExamAttempt = lazyRetry(() => import('../pages/Exams/DigitalExamAttempt'), 'digital_exam')
+const PayrollPage = lazyRetry(() => import('../pages/Payroll/PayrollPage'), 'payroll')
 
 function ForbiddenRedirect() {
   const { showToast } = useToast()
@@ -99,6 +100,7 @@ function ProtectedRoute({ children }) {
       '/teachers',
       '/attendance/teachers',
       '/fees',
+      '/payroll',
       '/notices/create',
       '/settings',
     ]
@@ -115,13 +117,14 @@ function ProtectedRoute({ children }) {
       '/students',
       '/teachers',
       '/classes',
-      '/subjects',
+      '/subjects/add',
       '/attendance',
       '/settings',
       '/questions',
       '/exams/create',
       '/marks/entry',
       '/notices/create',
+      '/payroll',
     ]
     const isForbidden = forbiddenPrefixes.some((prefix) =>
       location.pathname.startsWith(prefix)
@@ -136,13 +139,14 @@ function ProtectedRoute({ children }) {
       '/students',
       '/teachers',
       '/classes',
-      '/subjects',
+      '/subjects/add',
       '/attendance',
       '/settings',
       '/questions',
       '/exams/create',
       '/marks/entry',
       '/notices/create',
+      '/payroll',
     ]
     const isForbidden = forbiddenPrefixes.some((prefix) =>
       location.pathname.startsWith(prefix)
@@ -165,6 +169,7 @@ function ProtectedRoute({ children }) {
       '/marks',
       '/certificates',
       '/fees',
+      '/payroll',
     ]
     const isForbidden = forbiddenPrefixes.some((prefix) =>
       location.pathname.startsWith(prefix)
@@ -246,6 +251,7 @@ function AppRoutes() {
         <Route path="/attendance/teachers" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><TeacherAttendance /></Suspense>} />
 
         <Route path="/fees" element={<Suspense fallback={<Loader fullScreen label="Loading fees..." />}><FeeList /></Suspense>} />
+        <Route path="/payroll" element={<Suspense fallback={<Loader fullScreen label="Loading payroll..." />}><PayrollPage /></Suspense>} />
 
         <Route path="/exams" element={<Suspense fallback={<Loader fullScreen label="Loading exams..." />}><ExamList /></Suspense>} />
         <Route path="/exams/create" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><CreateExam /></Suspense>} />

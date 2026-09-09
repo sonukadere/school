@@ -1,13 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   BookOpen,
-  Layers,
   UserCheck,
   CheckCircle2,
   ArrowLeft,
   Eye,
   ShieldCheck,
-  Sparkles,
   School,
 } from 'lucide-react'
 import Input from '../common/Input'
@@ -15,7 +13,6 @@ import Select from '../common/Select'
 import Button from '../common/Button'
 import { CLASS_OPTIONS } from '../../utils/constants'
 import { api } from '../../services/api'
-import { cn } from '../../utils/helpers'
 
 function SubjectForm({
   initialValues = {},
@@ -150,16 +147,7 @@ function SubjectForm({
     }
   }
 
-  const handleSelectTeacherChip = (teacher) => {
-    setValues((prev) => ({
-      ...prev,
-      teacherId: teacher.id,
-      assignedTeacher: teacher.name,
-    }))
-    if (errors.assignedTeacher) {
-      setErrors((prev) => ({ ...prev, assignedTeacher: '' }))
-    }
-  }
+
 
   const validate = () => {
     const nextErrors = {}
@@ -249,51 +237,7 @@ function SubjectForm({
                 />
               </div>
 
-              {/* One-click database teacher recommendation chips */}
-              {teachers.length > 0 && (
-                <div className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 space-y-2">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                    <Sparkles size={13} className="text-indigo-600" />
-                    <span>Database Faculty:</span>
-                    <span className="text-2xs text-slate-400 font-normal">
-                      (Click to auto-assign)
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {teachers.map((t) => {
-                      const isSelected =
-                        values.teacherId === t.id || values.assignedTeacher === t.name
-                      return (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => handleSelectTeacherChip(t)}
-                          className={cn(
-                            'inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer',
-                            isSelected
-                              ? 'bg-indigo-600 text-white shadow-xs'
-                              : 'bg-white text-slate-700 border border-slate-200/90 hover:border-indigo-300 hover:bg-indigo-50/40'
-                          )}
-                        >
-                          <UserCheck
-                            size={13}
-                            className={isSelected ? 'text-white' : 'text-emerald-600'}
-                          />
-                          <span>{t.name}</span>
-                          <span
-                            className={cn(
-                              'text-2xs font-normal',
-                              isSelected ? 'text-indigo-100' : 'text-slate-400'
-                            )}
-                          >
-                            {t.teacherId}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
+
 
 
             </div>

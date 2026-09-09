@@ -20,15 +20,15 @@ import Button from '../common/Button'
 import { formatCurrency, formatDate } from '../../utils/helpers'
 
 export default function StudentDashboardView({ data, user }) {
-  const summary = data?.studentSummary || {}
-  const profile = summary.profile || {}
-  const attendancePct = summary.attendancePercentage ?? data?.todayAttendance ?? 0
-  const subjects = summary.subjects || []
-  const timetable = summary.timetable || []
-  const upcomingExams = summary.upcomingExams || []
-  const results = summary.results || []
-  const feeStatus = summary.feeStatus
-  const notices = summary.notices || []
+  const summary = data?.studentSummary || data?.widgets || data || {}
+  const profile = summary.profile || data?.widgets?.profile || {}
+  const attendancePct = summary.attendancePercentage ?? data?.widgets?.attendancePercentage ?? data?.todayAttendance ?? 0
+  const subjects = summary.subjects || data?.widgets?.subjects || []
+  const timetable = summary.timetable || data?.widgets?.timetable || []
+  const upcomingExams = summary.upcomingExams || data?.widgets?.upcomingExams || []
+  const results = summary.results || data?.widgets?.results || []
+  const feeStatus = summary.feeStatus || data?.widgets?.feeStatus
+  const notices = summary.notices || data?.widgets?.notices || []
 
   const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
   const todayTimetable = timetable.filter((slot) => slot.day === todayName)
@@ -123,18 +123,26 @@ export default function StudentDashboardView({ data, user }) {
         </div>
 
         {/* Subjects */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:shadow-md">
+        <Link
+          to="/subjects"
+          className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:border-violet-300 hover:shadow-md block"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Enrolled Subjects</span>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-violet-600 transition">
+              Enrolled Subjects
+            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600 group-hover:scale-110 transition">
               <BookOpen size={20} />
             </div>
           </div>
-          <p className="mt-3 text-2xl font-bold text-slate-900">{subjects.length || 5}</p>
-          <div className="mt-2 text-xs text-slate-500">
-            <span>Current Term Curriculum</span>
+          <p className="mt-3 text-2xl font-bold text-slate-900">{subjects.length}</p>
+          <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+            <span>Class Curriculum</span>
+            <span className="text-violet-600 font-semibold flex items-center gap-0.5 group-hover:underline">
+              View All <ArrowRight size={12} />
+            </span>
           </div>
-        </div>
+        </Link>
 
         {/* Upcoming Exams */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:shadow-md">
@@ -250,6 +258,61 @@ export default function StudentDashboardView({ data, user }) {
           )}
         </Card>
       </div>
+
+      {/* My Enrolled Subjects Section */}
+      <Card
+        title="My Enrolled Subjects"
+        subtitle="Curriculum subjects & assigned teachers for your class"
+        actions={
+          <Link
+            to="/subjects"
+            className="text-xs font-semibold text-violet-600 hover:text-violet-700 flex items-center gap-1"
+          >
+            View Subject Details <ArrowRight size={13} />
+          </Link>
+        }
+      >
+        {subjects.length > 0 ? (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {subjects.map((sub, idx) => (
+              <div
+                key={sub.id || idx}
+                className="flex items-center gap-3.5 rounded-2xl border border-slate-100 bg-slate-50/60 p-4 transition hover:bg-white hover:border-violet-200 hover:shadow-xs"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-violet-700 shrink-0 font-bold">
+                  <BookOpen size={20} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-bold text-slate-900 truncate">
+                      {sub.name}
+                    </p>
+                    {sub.code && (
+                      <span className="font-mono text-[11px] font-semibold bg-violet-50 text-violet-700 px-2 py-0.5 rounded border border-violet-100 shrink-0">
+                        {sub.code}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1 truncate">
+                    <span className="text-slate-400">Teacher:</span>
+                    <span className="font-medium text-slate-700">
+                      {sub.teacher?.name || sub.assignedTeacher || 'Faculty Assigned'}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-slate-400">
+            <BookOpen size={36} className="mx-auto mb-2 text-slate-300" />
+            <p className="text-sm font-medium">No subjects enrolled yet.</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Your class curriculum will appear here once assigned by the school.
+            </p>
+          </div>
+        )}
+      </Card>
 
       {/* Results Snapshot & Quick Services */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

@@ -20,17 +20,48 @@ export async function listSubjects(query = {}, actor = null) {
   const { search, classId, teacherId, sortBy = 'name', sortOrder = 'asc' } = query;
 
   let assignedSubjectIds = null;
+  let targetClassId = classId || null;
+
   if (actor && actor.role === 'TEACHER') {
     const scope = await getTeacherScope(actor);
     assignedSubjectIds = scope.assignedSubjectIds;
     if (assignedSubjectIds.length === 0) {
       return { data: [], pagination: getPaginationMeta(page, limit, 0) };
     }
+  } else if (actor && actor.role === 'STUDENT') {
+    let studentClassId = actor.student?.classId;
+    if (!studentClassId) {
+      const student = await prisma.student.findFirst({
+        where: { userId: actor.id, ...notDeleted() },
+        select: { classId: true },
+      });
+      studentClassId = student?.classId;
+    }
+    if (studentClassId) {
+      targetClassId = studentClassId;
+    }
+  } else if (actor && actor.role === 'PARENT') {
+    if (!targetClassId) {
+      const children = await prisma.student.findMany({
+        where: {
+          OR: [
+            { parentId: actor.parent?.id },
+            { parent: { userId: actor.id } },
+          ],
+          ...notDeleted(),
+        },
+        select: { classId: true },
+      });
+      const classIds = children.map((c) => c.classId).filter(Boolean);
+      if (classIds.length > 0) {
+        targetClassId = { in: classIds };
+      }
+    }
   }
 
   const where = {
     ...notDeleted(),
-    ...(classId ? { classId } : {}),
+    ...(targetClassId ? { classId: targetClassId } : {}),
     ...(teacherId ? { teacherId } : {}),
     ...(assignedSubjectIds ? { id: { in: assignedSubjectIds } } : {}),
     ...searchFilter(['name', 'code'], search),

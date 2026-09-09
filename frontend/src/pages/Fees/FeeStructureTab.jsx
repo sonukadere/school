@@ -178,11 +178,17 @@ export default function FeeStructureTab() {
   }
 
   const filteredStructures = useMemo(() => {
-    return structures.filter((s) => {
-      if (classFilter && s.classId !== classFilter) return false
-      if (statusFilter && s.status !== statusFilter) return false
-      return true
-    })
+    return structures
+      .filter((s) => {
+        if (classFilter && s.classId !== classFilter) return false
+        if (statusFilter && s.status !== statusFilter) return false
+        return true
+      })
+      .sort((a, b) => {
+        const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime()
+        const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime()
+        return timeB - timeA
+      })
   }, [structures, classFilter, statusFilter])
 
   const classOptions = [
@@ -204,6 +210,11 @@ export default function FeeStructureTab() {
         <div>
           <p className="font-semibold text-slate-900">{s.feeType}</p>
           <p className="text-xs text-slate-500 line-clamp-1">{s.description || 'No description provided'}</p>
+          {(s.updatedAt || s.createdAt) && (
+            <p className="text-[10px] text-slate-400 mt-0.5">
+              Updated: {formatDate(s.updatedAt || s.createdAt)}
+            </p>
+          )}
         </div>
       ),
     },
@@ -520,6 +531,8 @@ export default function FeeStructureTab() {
         onClose={() => setAssignModalOpen(false)}
         initialStructure={assigningStructure}
         onAssigned={loadData}
+        structures={structures}
+        classes={classes}
       />
     </div>
   )

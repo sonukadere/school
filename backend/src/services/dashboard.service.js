@@ -345,7 +345,12 @@ async function buildStudentSummary(student) {
     classId
       ? prisma.subject.findMany({
           where: { classId, ...notDeleted() },
-          select: { id: true, name: true, code: true },
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            teacher: { select: { id: true, name: true } },
+          },
           orderBy: { name: 'asc' },
         })
       : Promise.resolve([]),
@@ -472,6 +477,7 @@ async function getStudentDashboard(user) {
   return {
     role: 'STUDENT',
     roleLabel: 'Student',
+    studentSummary: summary,
     widgets: {
       profile: summary.profile,
       attendancePercentage: summary.attendancePercentage,

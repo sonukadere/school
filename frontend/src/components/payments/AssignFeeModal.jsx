@@ -23,6 +23,8 @@ export default function AssignFeeModal({
   onClose,
   initialStructure = null,
   onAssigned,
+  structures: propStructures = [],
+  classes: propClasses = [],
 }) {
   const { user } = useAuth()
   const { showToast } = useToast()
@@ -32,8 +34,8 @@ export default function AssignFeeModal({
   const [schools, setSchools] = useState([])
   const [selectedSchoolId, setSelectedSchoolId] = useState('')
   const [academicYear, setAcademicYear] = useState('2026-2027')
-  const [structures, setStructures] = useState([])
-  const [classes, setClasses] = useState([])
+  const [structures, setStructures] = useState(propStructures || [])
+  const [classes, setClasses] = useState(propClasses || [])
   const [students, setStudents] = useState([])
   const [loadingData, setLoadingData] = useState(false)
 
@@ -47,13 +49,26 @@ export default function AssignFeeModal({
   const [dueDate, setDueDate] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // Sync props if parent updates
+  useEffect(() => {
+    if (propStructures && propStructures.length > 0) {
+      setStructures(propStructures)
+    }
+  }, [propStructures])
+
+  useEffect(() => {
+    if (propClasses && propClasses.length > 0) {
+      setClasses(propClasses)
+    }
+  }, [propClasses])
+
   // Fetch dynamic database records on mount/open
   useEffect(() => {
     if (!open) return
     setLoadingData(true)
 
     const promises = [
-      api.getFeeStructures(),
+      api.getFeeStructures({ limit: 100 }),
       api.getClasses(),
       api.getStudents(),
       api.getSettings().catch(() => null),
@@ -66,8 +81,9 @@ export default function AssignFeeModal({
     Promise.all(promises)
       .then(([structRes, classList, studentList, settingsRes, schoolsRes]) => {
         const sList = structRes?.data || structRes || []
-        setStructures(Array.isArray(sList) ? sList : [])
-        setClasses(classList || [])
+        const validStructures = Array.isArray(sList) && sList.length > 0 ? sList : (propStructures || [])
+        setStructures(validStructures)
+        setClasses(classList || propClasses || [])
         setStudents(studentList || [])
 
         if (settingsRes?.academicYear) {
@@ -86,13 +102,17 @@ export default function AssignFeeModal({
             setStudentFilterClassId(initialStructure.classId)
           }
           if (initialStructure.dueDate) setDueDate(initialStructure.dueDate.slice(0, 10))
-        } else if (sList.length > 0) {
-          setSelectedStructureId(sList[0].id)
-          if (sList[0].classId) {
-            setSelectedClassId(sList[0].classId)
-            setStudentFilterClassId(sList[0].classId)
+        } else if (validStructures.length > 0) {
+          setSelectedStructureId((prev) => {
+            const exists = validStructures.some((s) => s.id === prev)
+            return exists ? prev : validStructures[0].id
+          })
+          const first = validStructures[0]
+          if (first.classId) {
+            setSelectedClassId((prev) => prev || first.classId)
+            setStudentFilterClassId((prev) => prev || first.classId)
           }
-          if (sList[0].dueDate) setDueDate(sList[0].dueDate.slice(0, 10))
+          if (first.dueDate) setDueDate((prev) => prev || first.dueDate.slice(0, 10))
         }
       })
       .catch((err) => {
@@ -103,8 +123,8 @@ export default function AssignFeeModal({
   }, [open, initialStructure, isSuperAdmin])
 
   const currentStructure = structures.find((s) => s.id === selectedStructureId)
-  const baseFee = currentStructure ? currentStructure.totalFee : 0
-  const lateFee = currentStructure ? currentStructure.lateFee || 0 : 0
+  const baseFee = currentStructure ? (currentStructure.totalFee ?? currentStructure.amount ?? 0) : 0
+  const lateFee = currentStructure ? (currentStructure.lateFee || 0) : 0
   const discountVal = Number(discount) || 0
   const finalPayable = Math.max(baseFee + lateFee - discountVal, 0)
 
@@ -169,19 +189,54 @@ export default function AssignFeeModal({
     }
   }
 
-  const structureOptions = structures.map((s) => ({
-    value: s.id,
-    label: `${s.feeType} - ${formatCurrency(s.totalFee)} (${s.class ? s.class.name + ' ' + s.class.section : 'All Classes'} | ${s.academicYear || academicYear})`,
-  }))
+  const handleStructureSelect = (structureId) => {
+    setSelectedStructureId(structureId)
+    const s = structures.find((item) => item.id === structureId)
+    if (s) {
+      if (s.classId) {
+        setSelectedClassId(s.classId)
+        setStudentFilterClassId(s.classId)
+      }
+      if (s.dueDate) setDueDate(s.dueDate.slice(0, 10))
+    }
+  }
+
+  // Dynamic fee structure options: dynamically matching selected class if chosen, or showing all configured
+  const structureOptions = useMemo(() => {
+    const activeClassId = assignMode === 'class' ? selectedClassId : studentFilterClassId
+    let list = structures
+
+    if (activeClassId) {
+      const classSpecific = structures.filter(
+        (s) => s.classId === activeClassId || s.class?.id === activeClassId
+      )
+      const schoolWide = structures.filter(
+        (s) => !s.classId && !s.class
+      )
+      if (classSpecific.length > 0 || schoolWide.length > 0) {
+        list = [...classSpecific, ...schoolWide]
+      }
+    }
+
+    return list.map((s) => {
+      const cls = s.class || classes.find((c) => c.id === s.classId)
+      const classLabel = cls ? `${cls.name} ${cls.section || ''}`.trim() : 'All Classes / School-wide'
+      const feeAmount = s.totalFee ?? s.amount ?? 0
+      return {
+        value: s.id,
+        label: `${s.feeType || s.name || 'Fee'} - ${formatCurrency(feeAmount)} (${classLabel} • ${s.academicYear || academicYear})`,
+      }
+    })
+  }, [structures, assignMode, selectedClassId, studentFilterClassId, classes, academicYear])
 
   const classOptions = [
     { value: '', label: 'Select Target Class from Database...' },
-    ...classes.map((c) => ({ value: c.id, label: `${c.name} ${c.section}`.trim() })),
+    ...classes.map((c) => ({ value: c.id, label: `${c.name} ${c.section || ''}`.trim() })),
   ]
 
   const studentFilterClassOptions = [
     { value: '', label: 'All Classes (All Students)' },
-    ...classes.map((c) => ({ value: c.id, label: `${c.name} ${c.section}`.trim() })),
+    ...classes.map((c) => ({ value: c.id, label: `${c.name} ${c.section || ''}`.trim() })),
   ]
 
   const studentOptions = [
@@ -220,10 +275,12 @@ export default function AssignFeeModal({
         {/* Super Admin School Selector */}
         {isSuperAdmin && schools.length > 0 && (
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label htmlFor="selectedSchoolId" className="block text-xs font-semibold text-slate-700 mb-1.5">
               School Institution <span className="text-rose-500">*</span>
             </label>
             <Select
+              id="selectedSchoolId"
+              name="selectedSchoolId"
               value={selectedSchoolId}
               onChange={(e) => setSelectedSchoolId(e.target.value)}
               options={schools.map((sch) => ({
@@ -274,26 +331,20 @@ export default function AssignFeeModal({
 
         {/* Database Fee Structure Selector */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+          <label htmlFor="feeStructureId" className="block text-xs font-semibold text-slate-700 mb-1.5">
             Select Database Fee Structure <span className="text-rose-500">*</span>
           </label>
           <Select
+            id="feeStructureId"
+            name="feeStructureId"
             value={selectedStructureId}
-            onChange={(e) => {
-              setSelectedStructureId(e.target.value)
-              const s = structures.find((item) => item.id === e.target.value)
-              if (s?.classId) {
-                setSelectedClassId(s.classId)
-                setStudentFilterClassId(s.classId)
-              }
-              if (s?.dueDate) setDueDate(s.dueDate.slice(0, 10))
-            }}
+            onChange={(e) => handleStructureSelect(e.target.value)}
             options={structureOptions}
             placeholder={loadingData ? 'Loading database fee structures...' : 'Choose fee structure...'}
             required
-            disabled={loadingData || structures.length === 0}
+            disabled={loadingData || structureOptions.length === 0}
           />
-          {structures.length === 0 && !loadingData && (
+          {structureOptions.length === 0 && !loadingData && (
             <p className="mt-1 text-xs text-amber-600">
               No fee structures configured yet. Please configure a fee structure first.
             </p>
@@ -303,10 +354,12 @@ export default function AssignFeeModal({
         {/* Target Class or Student Mode */}
         {assignMode === 'class' ? (
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label htmlFor="selectedClassId" className="block text-xs font-semibold text-slate-700 mb-1.5">
               Target Database Class <span className="text-rose-500">*</span>
             </label>
             <Select
+              id="selectedClassId"
+              name="selectedClassId"
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
               options={classOptions}
@@ -317,10 +370,12 @@ export default function AssignFeeModal({
         ) : (
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="studentFilterClassId" className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Filter Students by Class & Section (Optional)
               </label>
               <Select
+                id="studentFilterClassId"
+                name="studentFilterClassId"
                 value={studentFilterClassId}
                 onChange={(e) => {
                   setStudentFilterClassId(e.target.value)
@@ -331,13 +386,15 @@ export default function AssignFeeModal({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="selectedStudentId" className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Target Student <span className="text-rose-500">*</span>
                 <span className="ml-1 text-[11px] font-normal text-slate-500">
                   ({filteredStudents.length} {filteredStudents.length === 1 ? 'student' : 'students'} available)
                 </span>
               </label>
               <Select
+                id="selectedStudentId"
+                name="selectedStudentId"
                 value={selectedStudentId}
                 onChange={(e) => setSelectedStudentId(e.target.value)}
                 options={studentOptions}

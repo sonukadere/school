@@ -20,6 +20,7 @@ import {
   Receipt,
   ChevronDown,
   X,
+  RefreshCw,
 } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import Card from '../../components/common/Card'
@@ -112,8 +113,16 @@ export default function FeeList() {
     setLoading(true)
     try {
       if (isStudentOrParent) {
-        // Resolve student ID
-        const studentId = user?.student?.id || user?.studentId || user?.id
+        let studentId = user?.studentId || user?.student?.id
+        if (!studentId && (user?.isStudent || user?.role === 'Student')) {
+          try {
+            const profile = await api.getMyProfile()
+            studentId = profile?.id || profile?.studentId
+          } catch {}
+        }
+        if (!studentId) {
+          studentId = user?.id
+        }
         if (studentId) {
           const ledgerRes = await api.getStudentFeeLedger(studentId)
           const ledgerData = ledgerRes?.data || ledgerRes
@@ -316,6 +325,17 @@ export default function FeeList() {
           title="My Fee Account & Payment Receipts"
           description="View your active billing invoices, pending due balances, and download official payment receipts"
           breadcrumb={[{ label: 'Fees & Receipts' }]}
+          actions={
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={RefreshCw}
+              loading={loading}
+              onClick={loadFeeData}
+            >
+              Refresh
+            </Button>
+          }
         />
 
         {loading ? (

@@ -6,6 +6,7 @@ import {
   BookOpen,
   CalendarCheck,
   Wallet,
+  CreditCard,
   FileText,
   ClipboardList,
   Bell,
@@ -39,7 +40,10 @@ export const MENU_ITEMS = [
   },
   {
     heading: 'Financials',
-    items: [{ label: 'Fees', path: '/fees', icon: Wallet }],
+    items: [
+      { label: 'Student Fees', path: '/fees', icon: Wallet },
+      { label: 'Teacher Salary', path: '/payroll', icon: CreditCard },
+    ],
   },
   {
     heading: 'Communication',
@@ -67,7 +71,8 @@ export const PAGE_TITLES = {
   '/attendance': 'Attendance',
   '/attendance/students': 'Student Attendance',
   '/attendance/teachers': 'Teacher Attendance',
-  '/fees': 'Fees',
+  '/fees': 'Student Fees',
+  '/payroll': 'Teacher Salary & Payroll',
   '/exams': 'Exams',
   '/exams/create': 'Create Exam',
   '/questions': 'Question Bank',
