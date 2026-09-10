@@ -12,7 +12,14 @@ const DEFAULT_SETTINGS = {
   phone: '+91 98765 43210',
   email: 'info@dailydayacademy.edu',
   academicYear: '2026-2027',
-  currency: '$',
+  currency: '₹',
+  timetableStartTime: '08:00',
+  timetableEndTime: '14:00',
+  periodDuration: 45,
+  totalPeriods: 7,
+  breakStartTime: '10:15',
+  breakEndTime: '10:30',
+  workingDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'],
 }
 
 export function SettingsProvider({ children }) {
@@ -34,6 +41,7 @@ export function SettingsProvider({ children }) {
             ...DEFAULT_SETTINGS,
             ...remote,
             contactNumber: remote.phone || remote.contactNumber || DEFAULT_SETTINGS.contactNumber,
+            workingDays: remote.workingDays?.length ? remote.workingDays : DEFAULT_SETTINGS.workingDays,
           }
           setSettings(merged)
           setLocalSettings(merged)
@@ -62,6 +70,13 @@ export function SettingsProvider({ children }) {
         phone: next.phone || next.contactNumber || null,
         email: next.email || null,
         academicYear: next.academicYear || null,
+        timetableStartTime: next.timetableStartTime,
+        timetableEndTime: next.timetableEndTime,
+        periodDuration: next.periodDuration,
+        totalPeriods: next.totalPeriods,
+        breakStartTime: next.breakStartTime,
+        breakEndTime: next.breakEndTime,
+        workingDays: next.workingDays,
       })
     } catch (err) {
       console.warn('[SettingsContext] Failed to persist settings to backend:', err.message)

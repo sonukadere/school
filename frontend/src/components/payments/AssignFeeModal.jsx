@@ -255,8 +255,8 @@ export default function AssignFeeModal({
       description="Apply standard fee structures to an entire class or configure customized dues for a student from real database records."
       size="md"
       footer={
-        <>
-          <Button variant="outline" onClick={onClose} disabled={submitting}>
+        <div className="flex items-center justify-end gap-2.5 w-full sm:w-auto">
+          <Button variant="outline" className="flex-1 sm:flex-initial justify-center" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
           <Button
@@ -265,10 +265,11 @@ export default function AssignFeeModal({
             onClick={handleSubmit}
             loading={submitting}
             disabled={loadingData}
+            className="flex-1 sm:flex-initial justify-center shadow-sm"
           >
-            {assignMode === 'class' ? 'Generate Invoices for Class' : 'Generate Student Invoice'}
+            {assignMode === 'class' ? 'Generate for Class' : 'Generate Invoice'}
           </Button>
-        </>
+        </div>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">

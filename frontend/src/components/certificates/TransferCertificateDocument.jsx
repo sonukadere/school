@@ -28,24 +28,24 @@ export default function TransferCertificateDocument({ certificate }) {
   const studentId = student?.studentId || student?.id || 'STU-001'
 
   return (
-    <div className="tc-printable w-full max-w-3xl mx-auto bg-white text-slate-900 font-serif p-5 sm:p-8 rounded-xl shadow-md border border-slate-300 print:p-6 print:border-none print:shadow-none print:m-0 print:w-full print:max-w-none">
+    <div className="tc-printable w-full max-w-3xl mx-auto bg-white text-slate-900 font-serif p-3.5 sm:p-8 rounded-xl shadow-md border border-slate-300 print:p-6 print:border-none print:shadow-none print:m-0 print:w-full print:max-w-none">
       {/* Decorative Outer Border */}
-      <div className="border border-slate-400 p-4 sm:p-6 rounded-lg relative">
+      <div className="border border-slate-400 p-3 sm:p-6 rounded-lg relative">
         {/* Watermark */}
         <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] pointer-events-none select-none">
-          <span className="text-6xl sm:text-7xl font-black uppercase rotate-[-30deg] tracking-widest text-slate-900 text-center">
+          <span className="text-5xl sm:text-7xl font-black uppercase rotate-[-30deg] tracking-widest text-slate-900 text-center">
             {school?.name || 'TRANSFER CERTIFICATE'}
           </span>
         </div>
 
         {/* School Header */}
         <div className="text-center border-b-2 border-slate-800 pb-3 mb-3 relative z-10">
-          <div className="flex items-center justify-center gap-3 mb-1.5">
-            <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-slate-900 flex items-center justify-center text-white text-xl sm:text-2xl font-bold shrink-0">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 mb-1.5 text-center sm:text-left">
+            <div className="h-11 w-11 sm:h-14 sm:w-14 rounded-full bg-slate-900 flex items-center justify-center text-white text-lg sm:text-2xl font-bold shrink-0">
               🏫
             </div>
-            <div className="text-left">
-              <h1 className="text-xl sm:text-2xl font-extrabold uppercase tracking-tight text-slate-900 font-serif leading-tight">
+            <div>
+              <h1 className="text-lg sm:text-2xl font-extrabold uppercase tracking-tight text-slate-900 font-serif leading-tight">
                 {school?.name || 'Daily Day Academy'}
               </h1>
               <p className="text-[11px] sm:text-xs text-slate-600 font-sans mt-0.5">

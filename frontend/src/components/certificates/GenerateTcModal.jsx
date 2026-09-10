@@ -64,27 +64,27 @@ export default function GenerateTcModal({ open, onClose, student: initialStudent
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-          <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100dvh-1.5rem)] flex flex-col overflow-hidden border border-slate-200">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 bg-slate-50 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
               <FileText size={18} />
             </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Generate Transfer Certificate</h3>
-              <p className="text-xs text-slate-500">For {studentDisplayName} ({student?.id || student?.studentId || ''})</p>
+            <div className="min-w-0">
+              <h3 className="text-base font-bold text-slate-900 truncate">Generate Transfer Certificate</h3>
+              <p className="text-xs text-slate-500 truncate">For {studentDisplayName} ({student?.id || student?.studentId || ''})</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-700 rounded-lg transition-colors"
+            className="p-1 text-slate-400 hover:text-slate-700 rounded-lg transition-colors shrink-0 ml-2"
           >
             <X size={18} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 flex-1 overflow-y-auto min-h-0">
           {students.length > 0 && (
             <Select
               label="Select Student by Name"
@@ -99,34 +99,34 @@ export default function GenerateTcModal({ open, onClose, student: initialStudent
           )}
 
           {student && (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-2">
-              <div className="flex justify-between">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <div>
-                  <span className="text-slate-400 block">Student Name</span>
-                  <span className="font-bold text-slate-900">{studentDisplayName}</span>
+                  <span className="text-slate-400 block text-[11px]">Student Name</span>
+                  <span className="font-bold text-slate-900 truncate block">{studentDisplayName}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Student ID</span>
+                  <span className="text-slate-400 block text-[11px]">Student ID</span>
                   <span className="font-semibold text-slate-800">{student.studentId || student.id}</span>
                 </div>
-                <div>
-                  <span className="text-slate-400 block">Class</span>
+                <div className="col-span-2 sm:col-span-1">
+                  <span className="text-slate-400 block text-[11px]">Class</span>
                   <span className="font-semibold text-slate-800">
                     {student.className || (student.class ? `${student.class.name} - ${student.class.section}` : 'Class 10')}
                   </span>
                 </div>
               </div>
-              <div className="flex justify-between border-t border-slate-200/60 pt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 border-t border-slate-200/60 pt-2">
                 <div>
-                  <span className="text-slate-400 block">Father's Name</span>
-                  <span className="font-semibold text-slate-800">{student.fatherName || '—'}</span>
+                  <span className="text-slate-400 block text-[11px]">Father's Name</span>
+                  <span className="font-semibold text-slate-800 truncate block">{student.fatherName || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Mother's Name</span>
-                  <span className="font-semibold text-slate-800">{student.motherName || '—'}</span>
+                  <span className="text-slate-400 block text-[11px]">Mother's Name</span>
+                  <span className="font-semibold text-slate-800 truncate block">{student.motherName || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block">Roll Number</span>
+                  <span className="text-slate-400 block text-[11px]">Roll Number</span>
                   <span className="font-semibold text-slate-800">#{student.rollNumber || '—'}</span>
                 </div>
               </div>
@@ -149,7 +149,7 @@ export default function GenerateTcModal({ open, onClose, student: initialStudent
             required
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Select
               label="General Conduct"
               value={conduct}
@@ -194,11 +194,11 @@ export default function GenerateTcModal({ open, onClose, student: initialStudent
             ]}
           />
 
-          <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-            <Button variant="outline" type="button" onClick={onClose} disabled={loading}>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <Button variant="outline" type="button" onClick={onClose} disabled={loading} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button variant="primary" type="submit" leftIcon={CheckCircle2} loading={loading}>
+            <Button variant="primary" type="submit" leftIcon={CheckCircle2} loading={loading} className="w-full sm:w-auto">
               Generate Certificate
             </Button>
           </div>

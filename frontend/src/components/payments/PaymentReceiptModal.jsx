@@ -53,20 +53,20 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6 print:p-0 print:bg-white animate-fade-in flex justify-center items-start">
-      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-auto sm:my-8 flex flex-col print:m-0 print:border-none print:shadow-none print:w-full print:max-w-none">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] print:p-0 print:bg-white animate-fade-in flex justify-center items-center">
+      <div className="relative w-full max-w-2xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[min(90vh,860px)] rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden flex flex-col print:m-0 print:border-none print:shadow-none print:w-full print:max-w-none">
         {/* Modal Toolbar - Hidden during print */}
-        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-100 bg-white/95 backdrop-blur-md px-6 py-4 print:hidden shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-100 bg-white/95 backdrop-blur-md px-3.5 sm:px-6 py-3 sm:py-4 print:hidden shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 shrink-0">
               <ShieldCheck size={18} />
             </span>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Official Payment Receipt</h3>
-              <p className="text-xs text-slate-500">Verified transaction record</p>
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">Official Payment Receipt</h3>
+              <p className="text-[11px] sm:text-xs text-slate-500 truncate">Verified transaction record</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Button
               size="sm"
               variant="outline"
@@ -74,7 +74,8 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
               onClick={handlePrint}
               disabled={loading || !!error}
             >
-              Print Receipt
+              <span className="hidden sm:inline">Print Receipt</span>
+              <span className="sm:hidden">Print</span>
             </Button>
             <button
               onClick={onClose}
@@ -87,7 +88,7 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
         </div>
 
         {/* Modal Body / Printable Receipt Area */}
-        <div className="p-4 sm:p-6 md:p-8 overflow-y-auto max-h-[calc(88vh-120px)] print:max-h-none print:overflow-visible print:p-0" ref={printRef}>
+        <div className="p-3 sm:p-6 md:p-8 overflow-y-auto flex-1 min-h-0 touch-scroll overscroll-contain print:max-h-none print:overflow-visible print:p-0" ref={printRef}>
           {loading ? (
             <div className="py-16 flex flex-col items-center justify-center">
               <Loader label="Loading official receipt details..." />

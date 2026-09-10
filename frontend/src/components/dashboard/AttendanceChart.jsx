@@ -78,9 +78,9 @@ function AttendanceChart({ data = [] }) {
   const avgAttendance = totalStudents > 0 ? Math.round((totalPresent / totalStudents) * 100) : 94
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full min-w-0 overflow-hidden space-y-4">
       {/* Top Header / Filter Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-100">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -95,7 +95,7 @@ function AttendanceChart({ data = [] }) {
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-medium text-slate-500">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-indigo-600" />
             Present
@@ -112,7 +112,7 @@ function AttendanceChart({ data = [] }) {
       </div>
 
       {/* Recharts Container */}
-      <div className="h-72 w-full pt-2">
+      <div className="h-64 sm:h-72 w-full min-w-0 pt-2">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} barGap={4} barCategoryGap="25%">
             <defs>

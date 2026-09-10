@@ -5,6 +5,7 @@ import {
   School,
   BookOpen,
   CalendarCheck,
+  Calendar,
   Wallet,
   CreditCard,
   FileText,
@@ -32,6 +33,7 @@ export const MENU_ITEMS = [
     heading: 'Academics',
     items: [
       { label: 'Attendance', path: '/attendance', icon: CalendarCheck },
+      { label: 'Timetable', path: '/timetable', icon: Calendar },
       { label: 'Exams', path: '/exams', icon: FileText },
       { label: 'Question Bank', path: '/questions', icon: BookOpen },
       { label: 'Marks', path: '/marks', icon: ClipboardList },
@@ -71,6 +73,7 @@ export const PAGE_TITLES = {
   '/attendance': 'Attendance',
   '/attendance/students': 'Student Attendance',
   '/attendance/teachers': 'Teacher Attendance',
+  '/timetable': 'Timetable Management',
   '/fees': 'Student Fees',
   '/payroll': 'Teacher Salary & Payroll',
   '/exams': 'Exams',

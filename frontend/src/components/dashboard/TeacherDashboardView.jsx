@@ -60,7 +60,7 @@ export default function TeacherDashboardView({ data, user }) {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Teacher Profile Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-violet-800 via-indigo-800 to-purple-900 p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="rounded-3xl bg-gradient-to-r from-violet-800 via-indigo-800 to-purple-900 p-4 sm:p-8 text-white shadow-xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md px-3 py-1 text-xs font-semibold text-violet-200 border border-white/10">

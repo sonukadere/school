@@ -23,10 +23,26 @@ export async function getSettings() {
         id: SETTINGS_ID,
         schoolName: 'Daily Day Academy',
         academicYear: String(new Date().getFullYear()),
+        timetableStartTime: '08:00',
+        timetableEndTime: '14:00',
+        periodDuration: 45,
+        totalPeriods: 7,
+        breakStartTime: '10:15',
+        breakEndTime: '10:30',
+        workingDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'],
       },
     });
   }
-  return settings;
+  return {
+    ...settings,
+    timetableStartTime: settings.timetableStartTime || '08:00',
+    timetableEndTime: settings.timetableEndTime || '14:00',
+    periodDuration: settings.periodDuration || 45,
+    totalPeriods: settings.totalPeriods || 7,
+    breakStartTime: settings.breakStartTime || '10:15',
+    breakEndTime: settings.breakEndTime || '10:30',
+    workingDays: settings.workingDays?.length ? settings.workingDays : ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'],
+  };
 }
 
 export async function updateSettings(data) {

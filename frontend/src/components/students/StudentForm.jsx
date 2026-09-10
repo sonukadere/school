@@ -386,11 +386,11 @@ function StudentForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
         </div>
 
         {/* Integrated Action Footer */}
-        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/60 px-4 py-3.5 sm:px-6 sm:py-4 rounded-b-2xl">
-          <Button type="button" variant="outline" onClick={() => window.history.back()} disabled={submitting}>
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-2.5 border-t border-slate-100 bg-slate-50/60 px-4 py-3.5 sm:px-6 sm:py-4 rounded-b-2xl">
+          <Button type="button" variant="outline" onClick={() => window.history.back()} disabled={submitting} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button type="submit" variant="primary" loading={submitting}>
+          <Button type="submit" variant="primary" loading={submitting} className="w-full sm:w-auto">
             {submitLabel}
           </Button>
         </div>

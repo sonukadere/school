@@ -81,12 +81,12 @@ export default function ParentDashboardView({ data, user }) {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Parent Welcome Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-amber-700 via-orange-700 to-indigo-900 p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="rounded-3xl bg-gradient-to-r from-amber-700 via-orange-700 to-indigo-900 p-4 sm:p-8 text-white shadow-xl relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md px-3 py-1 text-xs font-semibold text-amber-200 border border-white/10">
               <Users size={14} className="text-amber-300" />
-              Parent & Guardian Portal • ID: {user?.parentNumber || user?.parentId || 'PAR-001'}
+              Parent &amp; Guardian Portal • ID: {user?.parentNumber || user?.parentId || 'PAR-001'}
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
               Welcome, {user?.name || 'Guardian'}!
@@ -124,7 +124,7 @@ export default function ParentDashboardView({ data, user }) {
 
       {/* Selected Child Identity Card */}
       {selectedStudent && (
-        <Card className="p-6 border-l-4 border-l-amber-500">
+        <Card className="p-4 sm:p-6 border-l-4 border-l-amber-500">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <Avatar name={selectedStudent.fullName || selectedStudent.name} size="lg" className="rounded-2xl shadow-sm" />

@@ -199,22 +199,22 @@ export default function QuestionDiscoveryModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-xs">
-      <div className="relative flex max-h-[92vh] w-full max-w-5xl flex-col rounded-2xl bg-white shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-2 sm:p-4 backdrop-blur-xs">
+      <div className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-5xl flex-col rounded-2xl bg-white shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 shadow-xs">
-              <BookOpen size={22} />
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 shadow-xs shrink-0">
+              <BookOpen size={20} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-slate-900">Find & Match Questions</h2>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
-                  <Sparkles size={12} /> Open Educational & AI Verified
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 truncate">Find &amp; Match Questions</h2>
+                <span className="hidden min-[480px]:inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                  <Sparkles size={12} /> Open Educational &amp; AI Verified
                 </span>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-[11px] sm:text-xs text-slate-500 truncate">
                 Discover syllabus-aligned questions from official OER repositories, School Question Bank, and syllabus AI.
               </p>
             </div>
@@ -222,16 +222,16 @@ export default function QuestionDiscoveryModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-lg p-1.5 sm:p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 shrink-0 ml-2"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Modal Body: Split into Filters Panel and Results */}
-        <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
+        <div className="flex flex-1 flex-col overflow-hidden md:flex-row min-h-0">
           {/* Left: Filter Form */}
-          <div className="w-full border-b border-slate-200 bg-slate-50/70 p-5 md:w-80 md:border-r md:border-b-0 overflow-y-auto">
+          <div className="w-full border-b border-slate-200 bg-slate-50/70 p-3.5 sm:p-5 md:w-80 md:border-r md:border-b-0 overflow-y-auto max-h-[36vh] md:max-h-none shrink-0">
             <form onSubmit={handleSearch} className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold tracking-wider text-slate-500 uppercase flex items-center gap-1.5">
@@ -355,9 +355,9 @@ export default function QuestionDiscoveryModal({
           </div>
 
           {/* Right: Results List */}
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 min-h-0">
             {!hasSearched ? (
-              <div className="flex h-full flex-col items-center justify-center text-center p-8 text-slate-500">
+              <div className="flex h-full flex-col items-center justify-center text-center p-6 sm:p-8 text-slate-500">
                 <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
                   <Search size={28} />
                 </div>
@@ -367,13 +367,13 @@ export default function QuestionDiscoveryModal({
                 </p>
               </div>
             ) : loading ? (
-              <div className="flex h-full flex-col items-center justify-center p-12 text-slate-500">
+              <div className="flex h-full flex-col items-center justify-center p-8 sm:p-12 text-slate-500">
                 <div className="h-8 w-8 animate-spin rounded-full border-3 border-indigo-600 border-t-transparent mb-3" />
                 <p className="text-sm font-medium text-slate-700">Searching open curriculum &amp; verified banks...</p>
                 <p className="text-xs text-slate-400">Calculating relevance match scores and checking duplicates</p>
               </div>
             ) : results.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center text-center p-8 text-slate-500">
+              <div className="flex h-full flex-col items-center justify-center text-center p-6 sm:p-8 text-slate-500">
                 <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-500">
                   <HelpCircle size={28} />
                 </div>
@@ -384,11 +384,11 @@ export default function QuestionDiscoveryModal({
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <p className="text-xs font-semibold text-slate-500">
                     Showing <span className="text-indigo-600">{results.length}</span> verified matching questions
                   </p>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-[11px] sm:text-xs text-slate-400">
                     Mandatory teacher review required before exam inclusion
                   </span>
                 </div>
@@ -426,17 +426,17 @@ export default function QuestionDiscoveryModal({
                   return (
                     <div
                       key={q.id || idx}
-                      className="rounded-xl border border-slate-200 bg-white p-4.5 shadow-xs transition hover:border-indigo-200 hover:shadow-sm"
+                      className="rounded-xl border border-slate-200 bg-white p-3.5 sm:p-4.5 shadow-xs transition hover:border-indigo-200 hover:shadow-sm"
                     >
                       {/* Top Bar: Match Score + Source Info + Badges */}
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${scoreColor}`}
+                            className={`inline-flex items-center gap-1 rounded-full border px-2 sm:px-2.5 py-0.5 text-[11px] sm:text-xs font-bold ${scoreColor}`}
                           >
-                            <Sparkles size={12} /> {matchScore}% Match
+                            <Sparkles size={11} /> {matchScore}% Match
                           </span>
-                          <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${sourceColor}`}>
+                          <span className={`rounded-md px-2 py-0.5 text-[11px] sm:text-xs font-medium ${sourceColor}`}>
                             {sourceLabel}
                           </span>
                           {q.sourceUrl && (
@@ -455,14 +455,14 @@ export default function QuestionDiscoveryModal({
                           )}
                         </div>
 
-                        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                          <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-700">
+                        <div className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500">
+                          <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-700 text-[11px] sm:text-xs">
                             {q.type?.replace(/_/g, ' ') || 'QUESTION'}
                           </span>
-                          <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-700">
+                          <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-700 text-[11px] sm:text-xs">
                             {q.difficulty || 'MEDIUM'}
                           </span>
-                          <span className="rounded bg-indigo-50 px-2 py-0.5 font-bold text-indigo-700">
+                          <span className="rounded bg-indigo-50 px-2 py-0.5 font-bold text-indigo-700 text-[11px] sm:text-xs">
                             {q.marks || 1} Mark{q.marks > 1 ? 's' : ''}
                           </span>
                         </div>
@@ -515,7 +515,7 @@ export default function QuestionDiscoveryModal({
                       </div>
 
                       {/* Metadata row */}
-                      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                      <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] sm:text-xs text-slate-400">
                         {q.chapter && <span>Chapter: <strong className="text-slate-600">{q.chapter}</strong></span>}
                         {q.topic && <span>Topic: <strong className="text-slate-600">{q.topic}</strong></span>}
                         {q.subject && <span>Subject: <strong className="text-slate-600">{q.subject}</strong></span>}
@@ -532,6 +532,7 @@ export default function QuestionDiscoveryModal({
                             leftIcon={Bookmark}
                             disabled={isSaved}
                             onClick={() => handleSaveToBank(q)}
+                            className="flex-1 sm:flex-initial text-xs"
                           >
                             {isSaved ? 'Saved to Bank' : 'Save to Bank'}
                           </Button>
@@ -543,6 +544,7 @@ export default function QuestionDiscoveryModal({
                           variant="outline"
                           leftIcon={Eye}
                           onClick={() => handleOpenReview(q)}
+                          className="flex-1 sm:flex-initial text-xs"
                         >
                           Review &amp; Edit
                         </Button>
@@ -553,6 +555,7 @@ export default function QuestionDiscoveryModal({
                           leftIcon={Plus}
                           disabled={isAlreadyAdded}
                           onClick={() => handleOpenReview(q)}
+                          className="w-full sm:w-auto text-xs"
                         >
                           {isAlreadyAdded ? 'Already in Exam' : 'Approve & Add'}
                         </Button>
@@ -566,11 +569,11 @@ export default function QuestionDiscoveryModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-3">
-          <span className="text-xs text-slate-500">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-4 sm:px-6 py-3 shrink-0">
+          <span className="text-[11px] sm:text-xs text-slate-500 text-center sm:text-left">
             All content strictly attributes source and respects open educational licensing guidelines.
           </span>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
             Done
           </Button>
         </div>
@@ -578,11 +581,11 @@ export default function QuestionDiscoveryModal({
 
       {/* Teacher Review & Edit Sub-Modal (Mandatory Teacher Approval Gate) */}
       {reviewingQuestion && reviewDraft && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-xs">
-          <div className="relative max-h-[92vh] w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+        <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-3 sm:p-4 backdrop-blur-xs">
+          <div className="relative max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl rounded-2xl bg-white shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-200 px-4 sm:px-6 py-3.5 sm:py-4 shrink-0">
               <div className="flex items-center gap-2">
-                <Edit3 size={20} className="text-indigo-600" />
+                <Edit3 size={18} className="text-indigo-600 shrink-0" />
                 <h3 className="text-base font-bold text-slate-900">
                   Teacher Review &amp; Approval
                 </h3>
@@ -593,13 +596,13 @@ export default function QuestionDiscoveryModal({
                   setReviewingQuestion(null)
                   setReviewDraft(null)
                 }}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 shrink-0"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="space-y-4 p-6 text-xs">
+            <div className="space-y-4 p-4 sm:p-6 text-xs flex-1 overflow-y-auto min-h-0">
               <div className="rounded-lg bg-indigo-50/60 p-3 text-indigo-900">
                 <p className="font-semibold">Review Requirement</p>
                 <p className="text-indigo-700">
@@ -617,7 +620,7 @@ export default function QuestionDiscoveryModal({
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Select
                   label="Question Type"
                   value={reviewDraft.type}
@@ -707,19 +710,21 @@ export default function QuestionDiscoveryModal({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-3.5">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 border-t border-slate-200 bg-slate-50 px-4 sm:px-6 py-3.5 shrink-0">
               <Button
                 variant="outline"
                 onClick={() => {
                   setReviewingQuestion(null)
                   setReviewDraft(null)
                 }}
+                className="w-full sm:w-auto"
               >
                 Cancel
               </Button>
               <Button
                 leftIcon={CheckCircle2}
                 onClick={() => handleApproveAndAdd(reviewDraft)}
+                className="w-full sm:w-auto"
               >
                 Approve &amp; Add to Exam
               </Button>

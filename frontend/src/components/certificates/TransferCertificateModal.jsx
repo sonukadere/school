@@ -103,7 +103,7 @@ export default function TransferCertificateModal({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 print:p-0 print:m-0 print:static print:block">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] overflow-hidden print:p-0 print:m-0 print:static print:block">
       {/* Semi-transparent backdrop with click-to-close */}
       <div
         className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity print:hidden"
@@ -115,21 +115,21 @@ export default function TransferCertificateModal({
       <div
         role="dialog"
         aria-modal="true"
-        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden z-10 animate-scale-in print:border-none print:shadow-none print:max-h-none print:w-full print:p-0 print:m-0 print:static print:block print:overflow-visible"
+        className="relative w-full max-w-4xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[min(92vh,900px)] flex flex-col rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden z-10 animate-scale-in print:border-none print:shadow-none print:max-h-none print:w-full print:p-0 print:m-0 print:static print:block print:overflow-visible"
       >
         {/* Fixed Modal Topbar (hidden during print) */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 bg-slate-50 flex-shrink-0 print:hidden">
-          <div className="min-w-0 pr-3">
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 truncate">
+        <div className="flex items-center justify-between px-3.5 sm:px-6 py-3 sm:py-4 border-b border-slate-200 bg-slate-50 shrink-0 print:hidden">
+          <div className="min-w-0 pr-2">
+            <h3 className="text-sm sm:text-lg font-bold text-slate-900 truncate">
               Transfer Certificate
             </h3>
-            <p className="text-xs text-slate-500 truncate">
+            <p className="text-[11px] sm:text-xs text-slate-500 truncate">
               Official School Leaving Certificate
               {certificate?.tcNumber ? ` • ${certificate.tcNumber}` : ''}
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {certificate?.status === 'PENDING' && (
               <Button
                 variant="primary"
@@ -138,7 +138,8 @@ export default function TransferCertificateModal({
                 onClick={handleApprove}
                 loading={approving}
               >
-                Approve TC
+                <span className="hidden sm:inline">Approve TC</span>
+                <span className="sm:hidden">Approve</span>
               </Button>
             )}
 
@@ -149,7 +150,8 @@ export default function TransferCertificateModal({
               onClick={handlePrint}
               disabled={loading || Boolean(error)}
             >
-              Print / Save PDF
+              <span className="hidden sm:inline">Print / Save PDF</span>
+              <span className="sm:hidden">Print</span>
             </Button>
 
             <button
@@ -158,7 +160,7 @@ export default function TransferCertificateModal({
               className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"
               aria-label="Close modal"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
         </div>

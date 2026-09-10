@@ -514,6 +514,65 @@ export const api = {
     return apiClient.delete(`/subjects/${id}`)
   },
 
+  // --- Timetables & Periods ---
+  getTimetables: async (params = {}) => {
+    const res = await apiClient.get('/timetables', { limit: 100, ...params })
+    return Array.isArray(res) ? res : (res?.data || [])
+  },
+
+  getWeeklyClassTimetable: async (classId) => {
+    const res = await apiClient.get(`/timetables/weekly/class/${classId}`)
+    return res?.data || res
+  },
+
+  getWeeklyTeacherTimetable: async (teacherId) => {
+    const res = await apiClient.get(`/timetables/weekly/teacher/${teacherId}`)
+    return res?.data || res
+  },
+
+  getMyTimetable: async () => {
+    const res = await apiClient.get('/timetables/my-timetable')
+    return Array.isArray(res) ? res : (res?.data || [])
+  },
+
+  addTimetableSlot: async (data) => {
+    const res = await apiClient.post('/timetables', data)
+    return res?.data || res
+  },
+
+  updateTimetableSlot: async (id, data) => {
+    const res = await apiClient.put(`/timetables/${id}`, data)
+    return res?.data || res
+  },
+
+  deleteTimetableSlot: async (id) => {
+    return apiClient.delete(`/timetables/${id}`)
+  },
+
+  getPeriods: async () => {
+    const res = await apiClient.get('/timetables/periods')
+    return Array.isArray(res) ? res : (res?.data || [])
+  },
+
+  addPeriod: async (data) => {
+    const res = await apiClient.post('/timetables/periods', data)
+    return res?.data || res
+  },
+
+  updatePeriod: async (id, data) => {
+    const res = await apiClient.put(`/timetables/periods/${id}`, data)
+    return res?.data || res
+  },
+
+  deletePeriod: async (id) => {
+    return apiClient.delete(`/timetables/periods/${id}`)
+  },
+
+  generatePeriods: async (config) => {
+    const res = await apiClient.post('/timetables/periods/generate', config)
+    return Array.isArray(res) ? res : (res?.data || [])
+  },
+
   // --- Fees (Legacy & Invoices) ---
   getFees: async (params = {}) => {
     const res = await apiClient.get('/fees', { limit: 100, ...params })

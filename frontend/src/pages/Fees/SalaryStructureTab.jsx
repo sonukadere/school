@@ -223,10 +223,10 @@ export default function SalaryStructureTab() {
         size="lg"
         footer={
           <>
-            <Button variant="outline" onClick={() => setModalOpen(false)} disabled={saving}>
+            <Button variant="outline" onClick={() => setModalOpen(false)} disabled={saving} className="flex-1 sm:flex-initial">
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleSave} loading={saving}>
+            <Button variant="primary" onClick={handleSave} loading={saving} className="flex-1 sm:flex-initial">
               Save Structure
             </Button>
           </>

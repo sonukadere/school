@@ -197,7 +197,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
         )}
 
         <div className="min-w-0">
-          <p className="text-sm font-semibold tracking-tight text-slate-800 truncate max-w-[125px] xs:max-w-[190px] sm:max-w-xs md:max-w-md">
+          <p className="text-sm font-semibold tracking-tight text-slate-800 truncate max-w-[110px] min-[380px]:max-w-[160px] sm:max-w-xs md:max-w-md">
             {currentTitle}
           </p>
         </div>

@@ -356,11 +356,11 @@ function StudentDetails() {
             </div>
 
             {/* Fee Tabs */}
-            <div className="mb-4 flex border-b border-slate-200">
+            <div className="mb-4 flex flex-wrap sm:flex-nowrap gap-1 border-b border-slate-200">
               <button
                 type="button"
                 onClick={() => setFeeTab('invoices')}
-                className={`pb-2.5 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                className={`pb-2.5 px-3 sm:px-4 text-xs sm:text-sm font-semibold border-b-2 transition-colors ${
                   feeTab === 'invoices'
                     ? 'border-indigo-600 text-indigo-600'
                     : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -371,7 +371,7 @@ function StudentDetails() {
               <button
                 type="button"
                 onClick={() => setFeeTab('payments')}
-                className={`pb-2.5 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                className={`pb-2.5 px-3 sm:px-4 text-xs sm:text-sm font-semibold border-b-2 transition-colors ${
                   feeTab === 'payments'
                     ? 'border-indigo-600 text-indigo-600'
                     : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -382,8 +382,8 @@ function StudentDetails() {
             </div>
 
             {feeTab === 'invoices' ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+              <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                <table className="min-w-[620px] w-full divide-y divide-slate-200 text-left text-sm">
                   <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
                       <th className="px-4 py-3">Invoice #</th>
@@ -429,8 +429,8 @@ function StudentDetails() {
                 </table>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+              <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                <table className="min-w-[620px] w-full divide-y divide-slate-200 text-left text-sm">
                   <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
                       <th className="px-4 py-3">Receipt #</th>
@@ -556,17 +556,17 @@ function StudentDetails() {
 
       {/* Reset Portal Credentials Modal */}
       {resetModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <KeyRound className="text-indigo-600" size={20} />
-              {student.user ? 'Reset Student Credentials' : 'Set Up Student Portal Account'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4 animate-fade-in overflow-y-auto">
+          <div className="w-full max-w-md rounded-2xl bg-white p-4 sm:p-6 shadow-2xl border border-slate-100 max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+              <KeyRound className="text-indigo-600 shrink-0" size={20} />
+              <span className="truncate">{student.user ? 'Reset Student Credentials' : 'Set Up Student Portal Account'}</span>
             </h3>
             <p className="mt-1 text-xs text-slate-500">
               Configure login credentials for <strong>{student.fullName}</strong> ({student.studentId}).
             </p>
 
-            <form onSubmit={handleResetCredentials} className="mt-5 space-y-4">
+            <form onSubmit={handleResetCredentials} className="mt-4 sm:mt-5 space-y-4">
               <Input
                 label="Student Login ID / Username"
                 value={resetUsername}
@@ -583,11 +583,11 @@ function StudentDetails() {
                 placeholder="Enter password (min 6 characters)"
                 required
               />
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" onClick={() => setResetModalOpen(false)}>
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setResetModalOpen(false)} className="w-full sm:w-auto">
                   Cancel
                 </Button>
-                <Button type="submit" variant="primary" loading={resetting}>
+                <Button type="submit" variant="primary" loading={resetting} className="w-full sm:w-auto">
                   Save Credentials
                 </Button>
               </div>

@@ -10,22 +10,22 @@ export default function MarksheetDocument({ marksheet }) {
   const isPassed = summary.resultStatus === 'PASS' || summary.resultStatus === 'PROMOTED'
 
   return (
-    <div className="marksheet-printable bg-white text-slate-900 font-sans p-8 border border-slate-300 rounded-xl shadow-lg max-w-4xl mx-auto my-4 print:p-6 print:border-none print:shadow-none print:m-0 print:w-full">
+    <div className="marksheet-printable bg-white text-slate-900 font-sans p-3.5 sm:p-8 border border-slate-300 rounded-xl shadow-lg max-w-4xl mx-auto my-2 sm:my-4 print:p-6 print:border-none print:shadow-none print:m-0 print:w-full">
       {/* Official Header */}
-      <div className="border-b-2 border-indigo-900 pb-5 mb-5 flex items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="h-20 w-20 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-bold text-3xl shadow-md overflow-hidden flex-shrink-0">
+      <div className="border-b-2 border-indigo-900 pb-4 sm:pb-5 mb-4 sm:mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-bold text-2xl sm:text-3xl shadow-md overflow-hidden flex-shrink-0">
             {school.logo && school.logo.startsWith('http') ? (
               <img src={school.logo} alt="Logo" className="h-full w-full object-cover" />
             ) : (
               <span>🏫</span>
             )}
           </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-indigo-950 uppercase tracking-tight">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-3xl font-extrabold text-indigo-950 uppercase tracking-tight">
               {school.name}
             </h1>
-            <p className="text-xs text-slate-600 mt-1">
+            <p className="text-xs text-slate-600 mt-0.5">
               {school.address} • Phone: {school.phone}
             </p>
             <p className="text-xs text-slate-500">
@@ -33,8 +33,8 @@ export default function MarksheetDocument({ marksheet }) {
             </p>
           </div>
         </div>
-        <div className="text-right flex-shrink-0">
-          <span className="inline-block px-3 py-1 bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-bold rounded-lg uppercase tracking-wider">
+        <div className="text-left sm:text-right flex-shrink-0">
+          <span className="inline-block px-2.5 py-1 bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-bold rounded-lg uppercase tracking-wider">
             Academic Session: {school.academicYear}
           </span>
           <p className="text-[11px] text-slate-400 mt-1 font-mono">
@@ -51,14 +51,14 @@ export default function MarksheetDocument({ marksheet }) {
       </div>
 
       {/* Student Particulars Grid */}
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 my-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 my-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 text-xs">
         <div>
           <span className="text-slate-400 font-medium uppercase tracking-wider block text-[10px]">Student Name</span>
           <span className="font-bold text-slate-900 text-sm">{student.fullName}</span>
         </div>
         <div>
           <span className="text-slate-400 font-medium uppercase tracking-wider block text-[10px]">Student ID / Roll No</span>
-          <span className="font-semibold text-slate-800 text-sm">{student.studentId} / #{student.rollNumber || '—'}</span>
+          <span className="font-mono font-bold text-slate-800 text-xs sm:text-sm">{student.studentId || '—'} {student.rollNumber ? `(#${student.rollNumber})` : ''}</span>
         </div>
         <div>
           <span className="text-slate-400 font-medium uppercase tracking-wider block text-[10px]">Class & Section</span>
@@ -87,8 +87,8 @@ export default function MarksheetDocument({ marksheet }) {
       </div>
 
       {/* Marks Table */}
-      <div className="my-5 overflow-hidden rounded-lg border border-slate-200 shadow-sm">
-        <table className="w-full text-left text-xs border-collapse">
+      <div className="my-5 overflow-x-auto rounded-lg border border-slate-200 shadow-sm touch-scroll">
+        <table className="min-w-[620px] w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-indigo-950 text-white font-semibold uppercase tracking-wider">
               <th className="py-2.5 px-3 w-12 text-center">#</th>

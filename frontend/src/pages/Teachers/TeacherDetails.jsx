@@ -114,21 +114,21 @@ function TeacherDetails() {
       />
 
       <div className="space-y-6">
-        <Card className="p-6">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+        <Card className="p-4 sm:p-6">
+          <div className="flex flex-col gap-4 sm:gap-6 sm:flex-row sm:items-center text-center sm:text-left">
             {teacher.photo ? (
-              <img src={teacher.photo} alt={teacher.name} className="h-24 w-24 rounded-2xl object-cover shadow-md" />
+              <img src={teacher.photo} alt={teacher.name} className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover shadow-md mx-auto sm:mx-0" />
             ) : (
-              <Avatar name={teacher.name} size="xl" className="rounded-2xl" />
+              <Avatar name={teacher.name} size="xl" className="rounded-2xl mx-auto sm:mx-0" />
             )}
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <h2 className="text-xl font-bold text-slate-900">{teacher.name}</h2>
                 <Badge className="bg-violet-100 text-violet-700">{teacher.subject}</Badge>
                 {teacher.gender && <Badge className={STATUS_STYLES[teacher.gender]}>{teacher.gender}</Badge>}
               </div>
               <p className="mt-1 text-sm text-slate-500">Teacher ID: {teacher.teacherId || teacher.id}</p>
-              <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-600">
+              <div className="mt-3 flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4 text-sm text-slate-600">
                 <span className="flex items-center gap-1.5"><Mail size={15} className="text-slate-400" />{teacher.email}</span>
                 <span className="flex items-center gap-1.5"><Phone size={15} className="text-slate-400" />{teacher.phone}</span>
                 <span className="flex items-center gap-1.5"><MapPin size={15} className="text-slate-400" />{teacher.address}</span>
@@ -233,17 +233,17 @@ function TeacherDetails() {
 
       {/* Reset Portal Credentials Modal */}
       {resetModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <KeyRound className="text-violet-600" size={20} />
-              {teacher.user ? 'Reset Faculty Credentials' : 'Set Up Faculty Portal Account'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4 animate-fade-in overflow-y-auto">
+          <div className="w-full max-w-md rounded-2xl bg-white p-4 sm:p-6 shadow-2xl border border-slate-100 max-h-[calc(100dvh-1.5rem)] overflow-y-auto">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+              <KeyRound className="text-violet-600 shrink-0" size={20} />
+              <span className="truncate">{teacher.user ? 'Reset Faculty Credentials' : 'Set Up Faculty Portal Account'}</span>
             </h3>
             <p className="mt-1 text-xs text-slate-500">
               Configure login credentials for <strong>{teacher.name}</strong> ({teacher.teacherId || teacher.id}).
             </p>
 
-            <form onSubmit={handleResetCredentials} className="mt-5 space-y-4">
+            <form onSubmit={handleResetCredentials} className="mt-4 sm:mt-5 space-y-4">
               <Input
                 label="Faculty Login ID / Username"
                 value={resetUsername}
@@ -260,11 +260,11 @@ function TeacherDetails() {
                 placeholder="Enter password (min 6 characters)"
                 required
               />
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" onClick={() => setResetModalOpen(false)}>
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setResetModalOpen(false)} className="w-full sm:w-auto">
                   Cancel
                 </Button>
-                <Button type="submit" variant="primary" loading={resetting}>
+                <Button type="submit" variant="primary" loading={resetting} className="w-full sm:w-auto">
                   Save Credentials
                 </Button>
               </div>

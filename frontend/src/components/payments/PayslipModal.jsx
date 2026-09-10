@@ -59,20 +59,20 @@ export default function PayslipModal({ open, onClose, payslipNumberOrId }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto print:p-0 print:bg-white animate-fade-in">
-      <div className="relative w-full max-w-3xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden my-6 print:m-0 print:border-none print:shadow-none print:w-full print:max-w-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] overflow-hidden print:p-0 print:bg-white animate-fade-in">
+      <div className="relative w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[min(90vh,860px)] rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden flex flex-col print:m-0 print:border-none print:shadow-none print:w-full print:max-w-none">
         {/* Modal Toolbar - Hidden during print */}
-        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-6 py-4 print:hidden">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/95 px-3.5 sm:px-6 py-3 sm:py-4 print:hidden shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 shrink-0">
               <FileCheck size={18} />
             </span>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Official Teacher Payslip</h3>
-              <p className="text-xs text-slate-500">Verified monthly salary disbursement record</p>
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">Official Teacher Payslip</h3>
+              <p className="text-[11px] sm:text-xs text-slate-500 truncate">Verified monthly salary disbursement record</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Button
               size="sm"
               variant="outline"
@@ -80,7 +80,8 @@ export default function PayslipModal({ open, onClose, payslipNumberOrId }) {
               onClick={handlePrint}
               disabled={loading || !!error}
             >
-              Print / Save as PDF
+              <span className="hidden sm:inline">Print / Save as PDF</span>
+              <span className="sm:hidden">Print</span>
             </Button>
             <button
               onClick={onClose}
@@ -93,7 +94,7 @@ export default function PayslipModal({ open, onClose, payslipNumberOrId }) {
         </div>
 
         {/* Modal Body / Printable Payslip Area */}
-        <div className="p-6 sm:p-8" ref={printRef}>
+        <div className="p-3 sm:p-6 md:p-8 overflow-y-auto flex-1 min-h-0 touch-scroll overscroll-contain print:overflow-visible print:p-0" ref={printRef}>
           {loading ? (
             <div className="py-16 flex flex-col items-center justify-center">
               <Loader label="Loading official teacher payslip..." />
@@ -104,7 +105,7 @@ export default function PayslipModal({ open, onClose, payslipNumberOrId }) {
               <p className="text-xs text-slate-500 mt-1">{error}</p>
             </div>
           ) : payslipData ? (
-            <div className="payslip-container border-2 border-slate-200 rounded-xl p-6 sm:p-8 bg-white relative">
+            <div className="payslip-container border sm:border-2 border-slate-200 rounded-xl p-3 sm:p-6 md:p-8 bg-white relative overflow-x-auto">
               {/* Watermark */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
                 <span className="text-8xl font-extrabold tracking-widest uppercase rotate-[-25deg]">

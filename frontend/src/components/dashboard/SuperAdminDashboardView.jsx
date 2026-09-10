@@ -55,7 +55,7 @@ export default function SuperAdminDashboardView({ data, user }) {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Super Admin Top Header Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="rounded-3xl bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 p-4 sm:p-8 text-white shadow-xl relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-12 -translate-y-8 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
@@ -202,8 +202,8 @@ export default function SuperAdminDashboardView({ data, user }) {
         <p className="text-xs text-slate-500 mb-4">
           Hierarchical privilege enforcement controlling access across academy micro-frontends and API endpoints.
         </p>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <table className="min-w-[620px] w-full divide-y divide-slate-200 text-left text-xs">
             <thead className="bg-slate-50 text-slate-600 font-semibold uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3">Functional Domain</th>

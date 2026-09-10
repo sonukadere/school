@@ -62,9 +62,9 @@ function StudentStatistics({ data = [], gradeData = [], totalStudents = null }) 
   }, [activeList])
 
   return (
-    <div className="w-full space-y-3.5">
+    <div className="w-full min-w-0 overflow-hidden space-y-3.5">
       {/* Top Header info */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
           <Users size={14} className="text-indigo-600" />
           <span>Class Distribution</span>

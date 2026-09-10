@@ -80,8 +80,8 @@ function SettingsPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card title="School Logo" className="max-w-2xl">
-          <div className="flex items-center gap-6">
-            <div className="relative">
+          <div className="flex flex-col min-[480px]:flex-row items-center gap-4 sm:gap-6 text-center min-[480px]:text-left">
+            <div className="relative shrink-0">
               {settings.schoolLogo ? (
                 <img src={settings.schoolLogo} alt="School logo" className="h-24 w-24 rounded-2xl object-cover shadow-md" />
               ) : (
@@ -128,10 +128,10 @@ function SettingsPage() {
             <Input label="Contact Number" name="contactNumber" value={values.contactNumber} onChange={handleChange} placeholder="+91 98765 43210" />
             <Input label="Email" type="email" name="email" value={values.email} onChange={handleChange} error={errors.email} required placeholder="info@school.com" />
             <Input label="Academic Year" name="academicYear" value={values.academicYear} onChange={handleChange} placeholder="2026-2027" />
-            <Input label="Currency Symbol" name="currency" value={values.currency} onChange={handleChange} placeholder="$" />
+            <Input label="Currency Symbol" name="currency" value={values.currency} onChange={handleChange} placeholder="₹" />
           </div>
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <Button type="submit" loading={submitting} leftIcon={Save}>Save Settings</Button>
+            <Button type="submit" loading={submitting} leftIcon={Save} className="w-full sm:w-auto">Save Settings</Button>
           </div>
         </Card>
       </form>

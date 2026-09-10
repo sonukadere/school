@@ -102,7 +102,7 @@ function TeacherAttendance() {
           bodyClassName="p-0"
         >
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-left">
+            <table className="min-w-[500px] w-full divide-y divide-slate-200 text-left">
               <thead className="bg-slate-50">
                 <tr>
                   {['Teacher', 'Subject', 'Status'].map((header) => (

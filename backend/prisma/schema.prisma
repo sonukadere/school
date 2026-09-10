@@ -617,6 +617,28 @@ model Mark {
 }
 
 // -------------------------------------------------------------
+// Period
+// -------------------------------------------------------------
+
+model Period {
+  id           String      @id @default(cuid()) @map("_id")
+  name         String      // e.g., "Period 1", "Morning Break", "Lunch"
+  periodNumber Int?        // 1, 2, 3... (null for break/lunch)
+  startTime    String      // "08:00"
+  endTime      String      // "08:45"
+  isBreak      Boolean     @default(false)
+  sortOrder    Int         @default(1)
+
+  timetableSlots Timetable[]
+
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
+
+  @@index([sortOrder])
+}
+
+// -------------------------------------------------------------
 // Timetable
 // -------------------------------------------------------------
 
@@ -625,6 +647,9 @@ model Timetable {
   day       DayOfWeek
   startTime String
   endTime   String
+
+  periodId  String?
+  period    Period?   @relation(fields: [periodId], references: [id], onDelete: SetNull)
 
   classId   String
   class     Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
@@ -635,12 +660,15 @@ model Timetable {
   teacherId String?
   teacher   Teacher?  @relation(fields: [teacherId], references: [id], onDelete: SetNull)
 
+  roomNumber String?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   @@index([classId, day])
-  @@index([teacherId])
+  @@index([teacherId, day])
+  @@index([periodId])
 }
 
 // -------------------------------------------------------------
@@ -717,6 +745,15 @@ model Setting {
   academicYear      String?
   affiliationNumber String?
   principalName     String?
+
+  // Timetable Settings
+  timetableStartTime String?   @default("08:00")
+  timetableEndTime   String?   @default("14:00")
+  periodDuration     Int?      @default(45)
+  totalPeriods       Int?      @default(7)
+  breakStartTime     String?   @default("10:15")
+  breakEndTime       String?   @default("10:30")
+  workingDays        String[]  @default(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"])
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

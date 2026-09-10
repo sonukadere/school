@@ -178,7 +178,7 @@ function ResultView() {
             bodyClassName="p-0"
           >
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-left">
+              <table className="min-w-[640px] w-full divide-y divide-slate-200 text-left">
                 <thead className="bg-slate-50">
                   <tr>
                     {['Rank', 'Student', 'Marks', 'Total', 'Percentage', 'Grade', 'Action'].map((header) => (

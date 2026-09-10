@@ -64,6 +64,7 @@ const QuestionBankList = lazyRetry(() => import('../pages/Questions/QuestionBank
 const ExamPaperView = lazyRetry(() => import('../pages/Exams/ExamPaperView'), 'exam_paper')
 const DigitalExamAttempt = lazyRetry(() => import('../pages/Exams/DigitalExamAttempt'), 'digital_exam')
 const PayrollPage = lazyRetry(() => import('../pages/Payroll/PayrollPage'), 'payroll')
+const TimetablePage = lazyRetry(() => import('../pages/Timetable/TimetablePage'), 'timetable')
 
 function ForbiddenRedirect() {
   const { showToast } = useToast()
@@ -249,6 +250,8 @@ function AppRoutes() {
         <Route path="/attendance" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><Attendance /></Suspense>} />
         <Route path="/attendance/students" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><StudentAttendance /></Suspense>} />
         <Route path="/attendance/teachers" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><TeacherAttendance /></Suspense>} />
+
+        <Route path="/timetable" element={<Suspense fallback={<Loader fullScreen label="Loading timetable..." />}><TimetablePage /></Suspense>} />
 
         <Route path="/fees" element={<Suspense fallback={<Loader fullScreen label="Loading fees..." />}><FeeList /></Suspense>} />
         <Route path="/payroll" element={<Suspense fallback={<Loader fullScreen label="Loading payroll..." />}><PayrollPage /></Suspense>} />

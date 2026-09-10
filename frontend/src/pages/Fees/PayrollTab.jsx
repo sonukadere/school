@@ -405,16 +405,16 @@ export default function PayrollTab() {
         size="md"
         footer={
           <>
-            <Button variant="outline" onClick={() => setPayModalOpen(false)} disabled={processingPay}>
+            <Button variant="outline" onClick={() => setPayModalOpen(false)} disabled={processingPay} className="flex-1 sm:flex-initial">
               Cancel
             </Button>
             <Button
               variant="primary"
               onClick={handleConfirmSalaryPayment}
               loading={processingPay}
-              className="bg-emerald-600 hover:bg-emerald-700 border-none"
+              className="bg-emerald-600 hover:bg-emerald-700 border-none flex-1 sm:flex-initial"
             >
-              Confirm Disbursement & Generate Payslip
+              Confirm Disbursement
             </Button>
           </>
         }

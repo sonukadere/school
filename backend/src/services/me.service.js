@@ -256,14 +256,30 @@ export async function getMyExams(user) {
 }
 
 /**
- * Timetable for the actor's class/classes.
+ * Timetable for the actor's class/classes (or teacher's own lectures).
  */
 export async function getMyTimetable(user) {
+  if (user.role === 'TEACHER') {
+    const teacherId = user.teacher?.id;
+    if (!teacherId) return [];
+    return prisma.timetable.findMany({
+      where: { teacherId, ...notDeleted() },
+      include: {
+        period: { select: { id: true, name: true, periodNumber: true, isBreak: true, startTime: true, endTime: true, sortOrder: true } },
+        class: { select: { id: true, name: true, section: true } },
+        subject: { select: { id: true, name: true, code: true } },
+        teacher: { select: { id: true, name: true } },
+      },
+      orderBy: [{ day: 'asc' }, { startTime: 'asc' }],
+    });
+  }
+
   const classIds = await myClassIds(user);
   if (!classIds.length) return [];
   return prisma.timetable.findMany({
     where: { classId: { in: classIds }, ...notDeleted() },
     include: {
+      period: { select: { id: true, name: true, periodNumber: true, isBreak: true, startTime: true, endTime: true, sortOrder: true } },
       class: { select: { id: true, name: true, section: true } },
       subject: { select: { id: true, name: true, code: true } },
       teacher: { select: { id: true, name: true } },

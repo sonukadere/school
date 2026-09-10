@@ -70,6 +70,12 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
         if ((user?.role === 'Student' || user?.isStudent) && item.path === '/subjects') {
           return { ...item, label: 'My Subjects' }
         }
+        if ((user?.role === 'Student' || user?.isStudent) && item.path === '/timetable') {
+          return { ...item, label: 'My Timetable' }
+        }
+        if ((user?.role === 'Parent' || user?.isParent) && item.path === '/timetable') {
+          return { ...item, label: 'Class Timetable' }
+        }
         return item
       })
     return { ...group, items }
@@ -156,7 +162,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
       )}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 transition-all duration-300 shadow-2xl shrink-0',
+          'fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 transition-all duration-300 shadow-2xl shrink-0 h-full max-h-[100dvh]',
           'lg:static lg:z-auto lg:shadow-none lg:translate-x-0',
           mobileOpen
             ? 'w-72 max-w-[85vw] translate-x-0'
@@ -193,7 +199,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           </button>
         </div>
 
-        <nav className={cn('flex-1 overflow-y-auto py-4', collapsed && !mobileOpen ? 'px-2' : 'px-3')}>
+        <nav className={cn('flex-1 overflow-y-auto py-4 touch-scroll', collapsed && !mobileOpen ? 'px-2' : 'px-3')}>
           {filteredMenuItems.map((group) => (
             <div key={group.heading} className={cn(collapsed && !mobileOpen ? 'mb-2' : 'mb-4')}>
               {(!collapsed || mobileOpen) && (
@@ -206,7 +212,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           ))}
         </nav>
 
-        <div className={cn('shrink-0 border-t border-slate-800 pb-6 sm:pb-3', collapsed && !mobileOpen ? 'p-2' : 'p-3')}>
+        <div className={cn('shrink-0 border-t border-slate-800 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2', collapsed && !mobileOpen ? 'p-2' : 'p-3')}>
           <button
             type="button"
             onClick={logout}

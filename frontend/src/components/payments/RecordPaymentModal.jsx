@@ -215,8 +215,8 @@ export default function RecordPaymentModal({
       description="Create a real database-backed payment transaction and generate official receipt"
       size="lg"
       footer={
-        <>
-          <Button variant="outline" onClick={onClose} disabled={submitting}>
+        <div className="flex items-center justify-end gap-2.5 w-full sm:w-auto">
+          <Button variant="outline" className="flex-1 sm:flex-initial justify-center" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
           <Button
@@ -225,14 +225,15 @@ export default function RecordPaymentModal({
             onClick={handleSubmit}
             loading={submitting}
             disabled={submitting || !selectedStudentId || (pendingDue === 0 && totalFee > 0)}
+            className="flex-1 sm:flex-initial justify-center shadow-sm"
           >
             {!selectedStudentId
-              ? 'Select Student to Pay'
+              ? 'Select Student'
               : pendingDue === 0 && totalFee > 0
-              ? 'Dues Already Cleared'
-              : 'Process Payment & Generate Receipt'}
+              ? 'Dues Cleared'
+              : 'Record Payment'}
           </Button>
-        </>
+        </div>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -390,22 +391,22 @@ export default function RecordPaymentModal({
 
         {/* Dynamic Balance Snapshot */}
         {selectedStudentId && (
-          <div className="grid grid-cols-3 gap-3 rounded-xl bg-indigo-50/70 border border-indigo-100 p-3.5 text-center">
-            <div>
-              <span className="text-[10px] uppercase font-bold text-indigo-500 block">Total Fee</span>
-              <span className="font-mono font-bold text-slate-900 text-sm">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 rounded-xl bg-indigo-50/70 border border-indigo-100 p-2.5 sm:p-3.5 text-center">
+            <div className="min-w-0">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-indigo-500 block truncate">Total Fee</span>
+              <span className="font-mono font-bold text-slate-900 text-xs sm:text-sm truncate block">
                 {formatCurrency(totalFee)}
               </span>
             </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-emerald-600 block">Paid So Far</span>
-              <span className="font-mono font-bold text-emerald-600 text-sm">
+            <div className="min-w-0">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-600 block truncate">Paid So Far</span>
+              <span className="font-mono font-bold text-emerald-600 text-xs sm:text-sm truncate block">
                 {formatCurrency(paidAmount)}
               </span>
             </div>
-            <div>
-              <span className="text-[10px] uppercase font-bold text-rose-600 block">Remaining Due</span>
-              <span className="font-mono font-bold text-rose-600 text-sm">
+            <div className="min-w-0">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold text-rose-600 block truncate">Remaining Due</span>
+              <span className="font-mono font-bold text-rose-600 text-xs sm:text-sm truncate block">
                 {formatCurrency(pendingDue)}
               </span>
             </div>
@@ -413,7 +414,7 @@ export default function RecordPaymentModal({
         )}
 
         {/* Fee Head & Amount */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
           <Input
             label="Fee Head / Type"
             value={feeType}
@@ -422,7 +423,7 @@ export default function RecordPaymentModal({
             required
           />
           <Input
-            label="Payment Amount ($)"
+            label="Payment Amount (₹)"
             type="number"
             step="0.01"
             value={amount}
@@ -434,7 +435,7 @@ export default function RecordPaymentModal({
         </div>
 
         {/* Date & Method */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
           <Input
             label="Payment Date"
             type="date"
@@ -455,7 +456,7 @@ export default function RecordPaymentModal({
         </div>
 
         {/* Transaction ID & Reference Number */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
           <Input
             label="Transaction ID (Bank / UPI / Cheque No)"
             value={transactionId}
@@ -478,7 +479,7 @@ export default function RecordPaymentModal({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Any special remarks or receipt instructions..."
-            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 resize-none"
           />
         </div>
       </form>

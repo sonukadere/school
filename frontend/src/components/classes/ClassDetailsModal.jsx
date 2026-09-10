@@ -137,7 +137,7 @@ export default function ClassDetailsModal({ open, onClose, classData }) {
     >
       <div className="space-y-4">
         {/* KPI Counter Cards */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="grid grid-cols-1 min-[440px]:grid-cols-3 gap-2 sm:gap-3">
           <div
             onClick={() => setStatusFilter('ALL')}
             className={`cursor-pointer rounded-xl border p-3 transition-all ${
@@ -266,8 +266,8 @@ export default function ClassDetailsModal({ open, onClose, classData }) {
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white">
-            <div className="max-h-[380px] overflow-y-auto">
-              <table className="w-full text-left text-xs">
+            <div className="max-h-[380px] overflow-y-auto overflow-x-auto touch-scroll">
+              <table className="min-w-[520px] w-full text-left text-xs">
                 <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
                   <tr>
                     <th className="py-2.5 px-3 w-12 text-center">#</th>

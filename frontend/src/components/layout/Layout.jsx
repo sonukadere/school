@@ -34,7 +34,7 @@ function Layout() {
         <Navbar collapsed={collapsed} onToggleSidebar={toggleSidebar} />
         <main
           className={cn(
-            'relative flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7 touch-scroll',
+            'relative flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-7 touch-scroll',
             'bg-slate-50/60',
             'transition-all duration-300',
           )}
@@ -49,7 +49,7 @@ function Layout() {
 
           <div
             key={location.pathname}
-            className="w-full max-w-[1600px] mx-auto animate-fade-in pb-8 sm:pb-12"
+            className="w-full max-w-[1600px] mx-auto animate-fade-in pb-8 sm:pb-12 min-w-0"
           >
             <Outlet />
           </div>

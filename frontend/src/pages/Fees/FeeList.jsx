@@ -385,8 +385,8 @@ export default function FeeList() {
 
             {/* Invoices Table */}
             <Card title="Billing Invoices & Dues">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+              <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                <table className="min-w-[760px] w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase">
                       <th className="py-3 px-4">Invoice #</th>
@@ -449,8 +449,8 @@ export default function FeeList() {
 
             {/* Payment History & Receipts */}
             <Card title="Payment History & Official Receipts">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+              <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                <table className="min-w-[620px] w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase">
                       <th className="py-3 px-4">Receipt #</th>

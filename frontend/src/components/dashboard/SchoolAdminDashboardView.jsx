@@ -38,7 +38,7 @@ export default function SchoolAdminDashboardView({ data, user }) {
   return (
     <div className="space-y-6 animate-fade-in pb-8">
       {/* Modern Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 sm:p-8 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-4 sm:p-8 text-white shadow-xl">
         {/* Background glow meshes */}
         <div className="absolute -right-10 -top-10 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
         <div className="absolute right-1/3 -bottom-10 h-64 w-64 rounded-full bg-purple-500/15 blur-3xl pointer-events-none" />
@@ -88,7 +88,7 @@ export default function SchoolAdminDashboardView({ data, user }) {
       </div>
 
       {/* Top Key Metrics Row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Students"
           value={data?.totalStudents ?? 0}

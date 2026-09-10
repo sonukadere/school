@@ -51,7 +51,8 @@ function DataTable({
     <div className={cn('overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs', className)}>
       {(toolbar || searchPlaceholder) && (
         <div className="flex flex-col gap-3 border-b border-slate-200/70 bg-white px-3.5 py-3 sm:px-5 sm:py-3.5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <SearchBar value={search} onChange={setSearch} placeholder={searchPlaceholder} />
+          <div className="flex flex-1 flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto sm:justify-end">
             {toolbar ? (
               toolbar
             ) : (
@@ -60,7 +61,6 @@ function DataTable({
               </span>
             )}
           </div>
-          <SearchBar value={search} onChange={setSearch} placeholder={searchPlaceholder} />
         </div>
       )}
       <div className="overflow-x-auto touch-scroll">

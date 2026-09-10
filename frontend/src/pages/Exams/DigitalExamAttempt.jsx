@@ -225,26 +225,26 @@ export default function DigitalExamAttempt() {
   return (
     <div className="space-y-4">
       {/* Top Floating Examination Header */}
-      <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white/95 px-6 py-3.5 shadow-sm backdrop-blur-md">
+      <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 sm:gap-4 rounded-xl border border-slate-200 bg-white/95 px-3.5 sm:px-6 py-2.5 sm:py-3.5 shadow-sm backdrop-blur-md">
         <div>
-          <h2 className="text-base font-bold text-slate-900">{exam?.name}</h2>
-          <p className="text-xs text-slate-500">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900">{exam?.name}</h2>
+          <p className="text-[11px] sm:text-xs text-slate-500">
             {exam?.className} • {exam?.subjectName || exam?.subject} • Total {exam?.totalMarks || 100} Marks
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <span className="text-xs text-slate-400">{lastSaved}</span>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+          <span className="text-xs text-slate-400 hidden min-[480px]:inline">{lastSaved}</span>
 
           {/* Timer Clock */}
           <div
-            className={`flex items-center gap-2 rounded-xl px-3.5 py-1.5 font-mono text-sm font-bold shadow-xs ${
+            className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-2.5 sm:px-3.5 py-1 sm:py-1.5 font-mono text-xs sm:text-sm font-bold shadow-xs ${
               remainingSeconds < 300
                 ? 'animate-pulse bg-rose-50 text-rose-600 border border-rose-200'
                 : 'bg-indigo-50 text-indigo-700'
             }`}
           >
-            <Clock size={16} />
+            <Clock size={15} />
             <span>{formatTime(remainingSeconds)}</span>
           </div>
 
@@ -252,7 +252,7 @@ export default function DigitalExamAttempt() {
             size="sm"
             leftIcon={Send}
             onClick={() => setSubmitModalOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
           >
             Submit Exam
           </Button>
@@ -266,7 +266,7 @@ export default function DigitalExamAttempt() {
           <Card className="min-h-[500px] flex flex-col justify-between">
             <div>
               {/* Question Header */}
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
                     Q{currentIndex + 1}

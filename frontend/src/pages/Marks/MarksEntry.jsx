@@ -418,7 +418,7 @@ function MarksEntry() {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200/80 text-left">
+              <table className="min-w-[620px] w-full divide-y divide-slate-200/80 text-left">
                 <thead className="bg-slate-50/75">
                   <tr>
                     <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
