@@ -52,6 +52,7 @@ const CreateExam = lazyRetry(() => import('../pages/Exams/CreateExam'), 'create_
 const Marks = lazyRetry(() => import('../pages/Marks/Marks'), 'marks')
 const MarksEntry = lazyRetry(() => import('../pages/Marks/MarksEntry'), 'marks_entry')
 const ResultView = lazyRetry(() => import('../pages/Marks/ResultView'), 'result_view')
+const GenerateMarksheet = lazyRetry(() => import('../pages/Marks/GenerateMarksheet'), 'generate_marksheet')
 const TransferCertificateList = lazyRetry(() => import('../pages/Certificates/TransferCertificateList'), 'tc_list')
 const NoticeList = lazyRetry(() => import('../pages/Notices/NoticeList'), 'notice_list')
 const CreateNotice = lazyRetry(() => import('../pages/Notices/CreateNotice'), 'create_notice')
@@ -265,6 +266,8 @@ function AppRoutes() {
         <Route path="/marks" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><Marks /></Suspense>} />
         <Route path="/marks/entry" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><MarksEntry /></Suspense>} />
         <Route path="/marks/results" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><ResultView /></Suspense>} />
+        <Route path="/marks/generate" element={<Suspense fallback={<Loader fullScreen label="Loading marksheet generator..." />}><GenerateMarksheet /></Suspense>} />
+        <Route path="/marksheets" element={<Suspense fallback={<Loader fullScreen label="Loading marksheet generator..." />}><GenerateMarksheet /></Suspense>} />
         <Route path="/certificates" element={<Suspense fallback={<Loader fullScreen label="Loading certificates..." />}><TransferCertificateList /></Suspense>} />
 
         <Route path="/notices" element={<Suspense fallback={<Loader fullScreen label="Loading notices..." />}><NoticeList /></Suspense>} />

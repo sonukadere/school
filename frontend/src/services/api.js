@@ -29,6 +29,51 @@ function normalizeStudent(s) {
     fatherName: s.fatherName || '',
     motherName: s.motherName || '',
     status: s.status === 'ACTIVE' ? 'Active' : s.status === 'INACTIVE' ? 'Inactive' : s.status || 'Active',
+
+    // Daily Day Academy Admission Form Fields
+    photo: s.photo || '',
+    formNo: s.formNo || '',
+    scholarNo: s.scholarNo || '',
+    medium: s.medium || 'HINDI',
+    nameInHindi: s.nameInHindi || '',
+    fatherNameHindi: s.fatherNameHindi || '',
+    motherNameHindi: s.motherNameHindi || '',
+    occupation: s.occupation || '',
+    annualIncome: s.annualIncome || '',
+    houseNo: s.houseNo || '',
+    apartmentSectorStreet: s.apartmentSectorStreet || '',
+    colony: s.colony || '',
+    district: s.district || 'Indore',
+    state: s.state || 'Madhya Pradesh',
+    dobInWords: s.dobInWords || '',
+    ageAsOnJuly1: s.ageAsOnJuly1 || '',
+    motherTongue: s.motherTongue || 'Hindi',
+    religion: s.religion || 'Hindu',
+    caste: s.caste || '',
+    category: s.category || 'GEN',
+    previousSchool: s.previousSchool || '',
+    previousSchoolDiseCode: s.previousSchoolDiseCode || '',
+    sssmId: s.sssmId || '',
+    familyId: s.familyId || '',
+    bankAccountNo: s.bankAccountNo || '',
+    ifscCode: s.ifscCode || '',
+    enclosures: s.enclosures || '',
+
+    // FOR OFFICE USE ONLY (कार्यालयीन उपयोग हेतु)
+    busNumber: s.busNumber || '',
+    admissionGranted: s.admissionGranted || 'GRANTED',
+    testDate: s.testDate ? s.testDate.slice(0, 10) : '',
+    testTime: s.testTime || '',
+    testConductedBy: s.testConductedBy || '',
+    testRemarks: s.testRemarks || '',
+    interviewRemarks: s.interviewRemarks || '',
+    docBirthCertificate: s.docBirthCertificate || 'SUBMITTED',
+    docTransferCertificate: s.docTransferCertificate || 'SUBMITTED',
+    docCasteCertificate: s.docCasteCertificate || 'NA',
+    docMarksheet: s.docMarksheet || 'SUBMITTED',
+    docPendingLastDate: s.docPendingLastDate ? s.docPendingLastDate.slice(0, 10) : '',
+    feeDepositDate: s.feeDepositDate ? s.feeDepositDate.slice(0, 10) : '',
+    officeInstructions: s.officeInstructions || '',
   }
 }
 
@@ -270,6 +315,51 @@ export const api = {
       createLoginAccount: data.createLoginAccount !== false,
       username: data.username || null,
       password: data.password || null,
+
+      // Daily Day Academy Admission Form Details
+      photo: data.photo || null,
+      formNo: data.formNo || null,
+      scholarNo: data.scholarNo || null,
+      medium: data.medium || 'HINDI',
+      nameInHindi: data.nameInHindi || null,
+      fatherNameHindi: data.fatherNameHindi || null,
+      motherNameHindi: data.motherNameHindi || null,
+      occupation: data.occupation || null,
+      annualIncome: data.annualIncome || null,
+      houseNo: data.houseNo || null,
+      apartmentSectorStreet: data.apartmentSectorStreet || null,
+      colony: data.colony || null,
+      district: data.district || null,
+      state: data.state || null,
+      dobInWords: data.dobInWords || null,
+      ageAsOnJuly1: data.ageAsOnJuly1 || null,
+      motherTongue: data.motherTongue || null,
+      religion: data.religion || null,
+      caste: data.caste || null,
+      category: data.category || 'GEN',
+      previousSchool: data.previousSchool || null,
+      previousSchoolDiseCode: data.previousSchoolDiseCode || null,
+      sssmId: data.sssmId || null,
+      familyId: data.familyId || null,
+      bankAccountNo: data.bankAccountNo || null,
+      ifscCode: data.ifscCode || null,
+      enclosures: data.enclosures || null,
+
+      // FOR OFFICE USE ONLY
+      busNumber: data.busNumber || null,
+      admissionGranted: data.admissionGranted || 'GRANTED',
+      testDate: data.testDate ? new Date(data.testDate) : null,
+      testTime: data.testTime || null,
+      testConductedBy: data.testConductedBy || null,
+      testRemarks: data.testRemarks || null,
+      interviewRemarks: data.interviewRemarks || null,
+      docBirthCertificate: data.docBirthCertificate || 'SUBMITTED',
+      docTransferCertificate: data.docTransferCertificate || 'SUBMITTED',
+      docCasteCertificate: data.docCasteCertificate || 'NA',
+      docMarksheet: data.docMarksheet || 'SUBMITTED',
+      docPendingLastDate: data.docPendingLastDate ? new Date(data.docPendingLastDate) : null,
+      feeDepositDate: data.feeDepositDate ? new Date(data.feeDepositDate) : null,
+      officeInstructions: data.officeInstructions || null,
     }
 
     const res = await apiClient.post('/students', payload)
@@ -326,6 +416,51 @@ export const api = {
       ...(data.rollNumber !== undefined ? { rollNumber: Number(data.rollNumber) } : {}),
       ...(classId ? { classId } : {}),
       ...(data.section ? { section: data.section } : {}),
+
+      // Admission Form Details
+      ...(data.photo !== undefined ? { photo: data.photo || null } : {}),
+      ...(data.formNo !== undefined ? { formNo: data.formNo || null } : {}),
+      ...(data.scholarNo !== undefined ? { scholarNo: data.scholarNo || null } : {}),
+      ...(data.medium !== undefined ? { medium: data.medium || null } : {}),
+      ...(data.nameInHindi !== undefined ? { nameInHindi: data.nameInHindi || null } : {}),
+      ...(data.fatherNameHindi !== undefined ? { fatherNameHindi: data.fatherNameHindi || null } : {}),
+      ...(data.motherNameHindi !== undefined ? { motherNameHindi: data.motherNameHindi || null } : {}),
+      ...(data.occupation !== undefined ? { occupation: data.occupation || null } : {}),
+      ...(data.annualIncome !== undefined ? { annualIncome: data.annualIncome || null } : {}),
+      ...(data.houseNo !== undefined ? { houseNo: data.houseNo || null } : {}),
+      ...(data.apartmentSectorStreet !== undefined ? { apartmentSectorStreet: data.apartmentSectorStreet || null } : {}),
+      ...(data.colony !== undefined ? { colony: data.colony || null } : {}),
+      ...(data.district !== undefined ? { district: data.district || null } : {}),
+      ...(data.state !== undefined ? { state: data.state || null } : {}),
+      ...(data.dobInWords !== undefined ? { dobInWords: data.dobInWords || null } : {}),
+      ...(data.ageAsOnJuly1 !== undefined ? { ageAsOnJuly1: data.ageAsOnJuly1 || null } : {}),
+      ...(data.motherTongue !== undefined ? { motherTongue: data.motherTongue || null } : {}),
+      ...(data.religion !== undefined ? { religion: data.religion || null } : {}),
+      ...(data.caste !== undefined ? { caste: data.caste || null } : {}),
+      ...(data.category !== undefined ? { category: data.category || null } : {}),
+      ...(data.previousSchool !== undefined ? { previousSchool: data.previousSchool || null } : {}),
+      ...(data.previousSchoolDiseCode !== undefined ? { previousSchoolDiseCode: data.previousSchoolDiseCode || null } : {}),
+      ...(data.sssmId !== undefined ? { sssmId: data.sssmId || null } : {}),
+      ...(data.familyId !== undefined ? { familyId: data.familyId || null } : {}),
+      ...(data.bankAccountNo !== undefined ? { bankAccountNo: data.bankAccountNo || null } : {}),
+      ...(data.ifscCode !== undefined ? { ifscCode: data.ifscCode || null } : {}),
+      ...(data.enclosures !== undefined ? { enclosures: data.enclosures || null } : {}),
+
+      // FOR OFFICE USE ONLY
+      ...(data.busNumber !== undefined ? { busNumber: data.busNumber || null } : {}),
+      ...(data.admissionGranted !== undefined ? { admissionGranted: data.admissionGranted || 'GRANTED' } : {}),
+      ...(data.testDate !== undefined ? { testDate: data.testDate ? new Date(data.testDate) : null } : {}),
+      ...(data.testTime !== undefined ? { testTime: data.testTime || null } : {}),
+      ...(data.testConductedBy !== undefined ? { testConductedBy: data.testConductedBy || null } : {}),
+      ...(data.testRemarks !== undefined ? { testRemarks: data.testRemarks || null } : {}),
+      ...(data.interviewRemarks !== undefined ? { interviewRemarks: data.interviewRemarks || null } : {}),
+      ...(data.docBirthCertificate !== undefined ? { docBirthCertificate: data.docBirthCertificate || null } : {}),
+      ...(data.docTransferCertificate !== undefined ? { docTransferCertificate: data.docTransferCertificate || null } : {}),
+      ...(data.docCasteCertificate !== undefined ? { docCasteCertificate: data.docCasteCertificate || null } : {}),
+      ...(data.docMarksheet !== undefined ? { docMarksheet: data.docMarksheet || null } : {}),
+      ...(data.docPendingLastDate !== undefined ? { docPendingLastDate: data.docPendingLastDate ? new Date(data.docPendingLastDate) : null } : {}),
+      ...(data.feeDepositDate !== undefined ? { feeDepositDate: data.feeDepositDate ? new Date(data.feeDepositDate) : null } : {}),
+      ...(data.officeInstructions !== undefined ? { officeInstructions: data.officeInstructions || null } : {}),
     }
 
     const res = await apiClient.put(`/students/${id}`, payload)
@@ -877,6 +1012,19 @@ export const api = {
     return apiClient.delete(`/marks/${id}`)
   },
 
+  // --- Marksheets ---
+  getMarksheet: async (studentId, examId) => {
+    return apiClient.get(`/marksheets/student/${studentId}/exam/${examId}`)
+  },
+
+  getStudentMarksheets: async (studentId) => {
+    return apiClient.get(`/marksheets/student/${studentId}`)
+  },
+
+  getClassMarksheets: async (classId, examId) => {
+    return apiClient.get(`/marksheets/class/${classId}/exam/${examId}`)
+  },
+
   // --- Notices ---
   getNotices: async (params = {}) => {
     const res = await apiClient.get('/notices', { limit: 100, ...params })
@@ -963,7 +1111,7 @@ export const api = {
 
   // --- Marksheets ---
   getMarksheet: async (studentId, examId) => {
-    return apiClient.get('/marksheets/generate', { studentId, examId })
+    return apiClient.get(`/marksheets/student/${studentId}/exam/${examId}`)
   },
 
   getStudentMarksheets: async (studentId) => {

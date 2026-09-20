@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
@@ -16,11 +16,11 @@ export function NotificationProvider({ children }) {
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
   );
 
-  // Fetch notifications from backend
-  const fetchNotifications = useCallback(async () => {
+  // Fetch notifications from backend (with optional silent flag for periodic background sync)
+  const fetchNotifications = useCallback(async (silent = false) => {
     if (!isAuthenticated) return;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await api.getNotifications({ limit: 30 });
       if (res && res.data) {
         setNotifications(res.data);
@@ -32,7 +32,7 @@ export function NotificationProvider({ children }) {
     } catch (err) {
       console.warn('[NotificationContext] Failed to fetch notifications:', err.message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [isAuthenticated]);
 
@@ -56,12 +56,29 @@ export function NotificationProvider({ children }) {
     }
   }, [showToast]);
 
-  // Sync notifications on mount / auth state change & periodic check every 30s
+  // Sync notifications on mount / auth state change & periodic check every 30s only when tab is visible
   useEffect(() => {
     if (isAuthenticated) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
+
+      const interval = setInterval(() => {
+        if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+          fetchNotifications(true);
+        }
+      }, 30000);
+
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          fetchNotifications(true);
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        clearInterval(interval);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     } else {
       setNotifications([]);
       setUnreadCount(0);
@@ -69,7 +86,7 @@ export function NotificationProvider({ children }) {
   }, [isAuthenticated, fetchNotifications]);
 
   // Mark single notification as read
-  const markAsRead = async (id) => {
+  const markAsRead = useCallback(async (id) => {
     try {
       await api.markNotificationRead(id);
       setNotifications((prev) =>
@@ -79,10 +96,10 @@ export function NotificationProvider({ children }) {
     } catch (err) {
       console.warn('Failed to mark notification as read:', err.message);
     }
-  };
+  }, []);
 
   // Mark all as read
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     try {
       await api.markAllNotificationsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -91,25 +108,27 @@ export function NotificationProvider({ children }) {
     } catch (err) {
       console.warn('Failed to mark all as read:', err.message);
     }
-  };
+  }, [showToast]);
 
   // Delete single notification
-  const deleteNotification = async (id) => {
+  const deleteNotification = useCallback(async (id) => {
     try {
       await api.deleteNotification(id);
-      const target = notifications.find((n) => n.id === id);
-      if (target && !target.isRead) {
-        setUnreadCount((c) => Math.max(0, c - 1));
-      }
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      setNotifications((prev) => {
+        const target = prev.find((n) => n.id === id);
+        if (target && !target.isRead) {
+          setUnreadCount((c) => Math.max(0, c - 1));
+        }
+        return prev.filter((n) => n.id !== id);
+      });
       showToast('Notification deleted', 'info');
     } catch (err) {
       showToast(err.message || 'Failed to delete notification', 'error');
     }
-  };
+  }, [showToast]);
 
   // Clear all notifications
-  const clearAllNotifications = async () => {
+  const clearAllNotifications = useCallback(async () => {
     try {
       await api.clearAllNotifications();
       setNotifications([]);
@@ -118,10 +137,10 @@ export function NotificationProvider({ children }) {
     } catch (err) {
       showToast(err.message || 'Failed to clear notifications', 'error');
     }
-  };
+  }, [showToast]);
 
   // Send a test notification
-  const sendTestNotification = async () => {
+  const sendTestNotification = useCallback(async () => {
     try {
       await api.sendTestNotification();
       showToast('Notification dispatched! Check your notification list.', 'success');
@@ -134,29 +153,44 @@ export function NotificationProvider({ children }) {
         });
       }
 
-      await fetchNotifications();
+      await fetchNotifications(true);
     } catch (err) {
       showToast(err.message || 'Failed to dispatch test notification', 'error');
     }
-  };
+  }, [showToast, user?.name, fetchNotifications]);
+
+  const contextValue = useMemo(
+    () => ({
+      notifications,
+      unreadCount,
+      loading,
+      permission,
+      deviceToken: null,
+      fetchNotifications,
+      requestPermissionAndRegister,
+      markAsRead,
+      markAllAsRead,
+      deleteNotification,
+      clearAllNotifications,
+      sendTestNotification,
+    }),
+    [
+      notifications,
+      unreadCount,
+      loading,
+      permission,
+      fetchNotifications,
+      requestPermissionAndRegister,
+      markAsRead,
+      markAllAsRead,
+      deleteNotification,
+      clearAllNotifications,
+      sendTestNotification,
+    ]
+  );
 
   return (
-    <NotificationContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        loading,
-        permission,
-        deviceToken: null,
-        fetchNotifications,
-        requestPermissionAndRegister,
-        markAsRead,
-        markAllAsRead,
-        deleteNotification,
-        clearAllNotifications,
-        sendTestNotification,
-      }}
-    >
+    <NotificationContext.Provider value={contextValue}>
       {children}
     </NotificationContext.Provider>
   );

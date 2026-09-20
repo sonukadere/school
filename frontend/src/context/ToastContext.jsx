@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState } from 'react'
+import { createContext, useCallback, useContext, useState, useMemo } from 'react'
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react'
 import { cn } from '../utils/helpers'
 
@@ -26,8 +26,10 @@ export function ToastProvider({ children }) {
     [removeToast],
   )
 
+  const contextValue = useMemo(() => ({ showToast, removeToast }), [showToast, removeToast])
+
   return (
-    <ToastContext.Provider value={{ showToast, removeToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <div className="fixed top-4 right-4 z-[100] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-3">
         {toasts.map((toast) => {

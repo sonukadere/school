@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { useSessionStorage } from '../hooks/useSessionStorage'
 import { apiClient, tokenStorage } from '../services/apiClient'
 
@@ -94,7 +94,7 @@ export function AuthProvider({ children }) {
   /**
    * Real backend JWT login with optional role-based enforcement
    */
-  const login = async (identifier, password, expectedRole = null) => {
+  const login = useCallback(async (identifier, password, expectedRole = null) => {
     setLoading(true)
     try {
       const response = await apiClient.post('/auth/login', {
@@ -137,12 +137,12 @@ export function AuthProvider({ children }) {
       const errorMsg = error.message || 'Invalid credentials'
       return { ok: false, error: errorMsg }
     }
-  }
+  }, [setUserState])
 
   /**
    * Logout and invalidate session
    */
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await apiClient.post('/auth/logout')
     } catch {
@@ -151,12 +151,12 @@ export function AuthProvider({ children }) {
       tokenStorage.clear()
       setUserState(null)
     }
-  }
+  }, [setUserState])
 
   /**
    * Change password for authenticated user (required on first login if mustChangePassword is true)
    */
-  const changePassword = async (currentPassword, newPassword) => {
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
     setLoading(true)
     try {
       const response = await apiClient.post('/auth/change-password', {
@@ -178,12 +178,12 @@ export function AuthProvider({ children }) {
       const errorMsg = error.message || 'Failed to change password'
       return { ok: false, error: errorMsg }
     }
-  }
+  }, [setUserState])
 
   /**
    * Update profile via backend
    */
-  const updateProfile = async (updates) => {
+  const updateProfile = useCallback(async (updates) => {
     try {
       const updated = await apiClient.put('/me/profile', updates)
       if (updated) {
@@ -195,22 +195,25 @@ export function AuthProvider({ children }) {
       setUserState((prev) => ({ ...prev, ...updates }))
       return { ok: false, error: error.message }
     }
-  }
+  }, [setUser, setUserState])
+
+  const contextValue = useMemo(
+    () => ({
+      user,
+      setUser,
+      loading,
+      initializing,
+      login,
+      logout,
+      changePassword,
+      updateProfile,
+      isAuthenticated: Boolean(user && tokenStorage.get()),
+    }),
+    [user, setUser, loading, initializing, login, logout, changePassword, updateProfile]
+  )
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        setUser,
-        loading,
-        initializing,
-        login,
-        logout,
-        changePassword,
-        updateProfile,
-        isAuthenticated: Boolean(user && tokenStorage.get()),
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   )

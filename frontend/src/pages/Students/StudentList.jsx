@@ -117,7 +117,7 @@ function StudentList() {
     {
       key: 'student',
       header: 'Student',
-      searchValue: (student) => `${student.fullName} ${student.id} ${student.email} ${student.phone}`,
+      searchValue: (student) => `${student.fullName} ${student.nameInHindi || ''} ${student.id} ${student.studentId || ''} ${student.scholarNo || ''} ${student.formNo || ''} ${student.sssmId || ''} ${student.email || ''} ${student.phone || ''}`,
       render: (student) => (
         <div className="flex items-center gap-3">
           {student.photo ? (
@@ -126,8 +126,18 @@ function StudentList() {
             <Avatar name={student.fullName} size="md" />
           )}
           <div className="min-w-0">
-            <p className="font-semibold text-slate-900">{student.fullName}</p>
-            <p className="text-xs font-mono text-slate-400">ID: {student.studentId || (student.id ? `STU-${student.id.slice(-4).toUpperCase()}` : '—')}</p>
+            <p className="font-semibold text-slate-900 flex items-center gap-1.5 flex-wrap">
+              <span>{student.fullName}</span>
+              {student.nameInHindi && (
+                <span className="text-xs font-normal text-slate-500 font-sans">
+                  ({student.nameInHindi})
+                </span>
+              )}
+            </p>
+            <p className="text-xs font-mono text-slate-400">
+              ID: {student.studentId || (student.id ? `STU-${student.id.slice(-4).toUpperCase()}` : '—')}
+              {student.scholarNo && <span className="text-indigo-600 font-semibold ml-1.5">• Sch: {student.scholarNo}</span>}
+            </p>
           </div>
         </div>
       ),

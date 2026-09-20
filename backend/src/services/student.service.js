@@ -60,7 +60,7 @@ export async function listStudents(query = {}, actor = null) {
       ...(section ? [{ section }] : []),
       ...(status ? [{ status }] : []),
       ...(visibleIds ? [{ id: { in: visibleIds } }] : []),
-      ...(search ? [searchFilter(['firstName', 'lastName', 'studentId', 'email', 'phone'], search)] : []),
+      ...(search ? [searchFilter(['firstName', 'lastName', 'studentId', 'email', 'phone', 'scholarNo', 'formNo', 'sssmId', 'nameInHindi'], search)] : []),
     ],
   };
 
@@ -215,6 +215,9 @@ export async function createStudent(data) {
         ...studentFields,
         dob: studentFields.dob ? toDateOnly(studentFields.dob) : null,
         admissionDate: studentFields.admissionDate ? toDateOnly(studentFields.admissionDate) : toDateOnly(new Date()),
+        testDate: studentFields.testDate ? toDateOnly(studentFields.testDate) : null,
+        docPendingLastDate: studentFields.docPendingLastDate ? toDateOnly(studentFields.docPendingLastDate) : null,
+        feeDepositDate: studentFields.feeDepositDate ? toDateOnly(studentFields.feeDepositDate) : null,
         studentId,
         userId,
         deletedAt: null,
@@ -316,6 +319,15 @@ export async function updateStudent(id, data) {
   }
   if (updateData.admissionDate !== undefined) {
     updateData.admissionDate = updateData.admissionDate ? toDateOnly(updateData.admissionDate) : null;
+  }
+  if (updateData.testDate !== undefined) {
+    updateData.testDate = updateData.testDate ? toDateOnly(updateData.testDate) : null;
+  }
+  if (updateData.docPendingLastDate !== undefined) {
+    updateData.docPendingLastDate = updateData.docPendingLastDate ? toDateOnly(updateData.docPendingLastDate) : null;
+  }
+  if (updateData.feeDepositDate !== undefined) {
+    updateData.feeDepositDate = updateData.feeDepositDate ? toDateOnly(updateData.feeDepositDate) : null;
   }
 
   return prisma.student.update({

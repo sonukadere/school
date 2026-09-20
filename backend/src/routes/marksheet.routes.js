@@ -10,6 +10,12 @@ router.use(authenticate);
 
 // Marksheet generation & lookup endpoints with RBAC
 router.get(
+  '/generate',
+  authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT, ROLES.PARENT),
+  marksheetController.getStudentMarksheet
+);
+
+router.get(
   '/student/:studentId/exam/:examId',
   authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT, ROLES.PARENT),
   marksheetController.getStudentMarksheet

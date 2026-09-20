@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Plus, Edit2, Trash2, Clock, BookOpen, Users, MapPin, Coffee } from 'lucide-react'
+import { Plus, Edit2, Trash2, Clock, Users, MapPin, Coffee } from 'lucide-react'
 import Button from '../common/Button'
-import Badge from '../common/Badge'
 
 const DAY_LABELS = {
   MONDAY: 'Monday',

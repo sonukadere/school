@@ -20,6 +20,7 @@ import {
   Zap,
   ArrowRight,
   ArrowLeft,
+  Award,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
@@ -28,6 +29,7 @@ import { cn } from '../../utils/helpers'
 
 const QUICK_ACTIONS = [
   { label: 'Add Student', to: '/students/add', icon: GraduationCap, color: 'text-indigo-600 bg-indigo-50' },
+  { label: 'Generate Marksheet', to: '/marks/generate', icon: Award, color: 'text-amber-600 bg-amber-50' },
   { label: 'Add Teacher', to: '/teachers/add', icon: Users, color: 'text-emerald-600 bg-emerald-50' },
   { label: 'Create Exam', to: '/exams/create', icon: FilePlus2, color: 'text-violet-600 bg-violet-50' },
   { label: 'Pay Fees', to: '/fees?record=true', icon: Wallet, color: 'text-rose-600 bg-rose-50' },

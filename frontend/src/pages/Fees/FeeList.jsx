@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, lazy, Suspense } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   Wallet,
@@ -11,12 +11,9 @@ import {
   BarChart3,
   Building2,
   Search,
-  Filter,
   DollarSign,
   Scale,
   Briefcase,
-  ShieldCheck,
-  CreditCard,
   Receipt,
   ChevronDown,
   X,
@@ -29,20 +26,23 @@ import Button from '../../components/common/Button'
 import Badge from '../../components/common/Badge'
 import Select from '../../components/common/Select'
 import Loader from '../../components/common/Loader'
-import RecordPaymentModal from '../../components/payments/RecordPaymentModal'
-import PaymentReceiptModal from '../../components/payments/PaymentReceiptModal'
-import AssignFeeModal from '../../components/payments/AssignFeeModal'
-import FeeStructureTab from './FeeStructureTab'
-import PendingFeesTab from './PendingFeesTab'
-import PaymentHistoryTab from './PaymentHistoryTab'
-import PaymentReportsTab from './PaymentReportsTab'
-import FinanceOverviewTab from './FinanceOverviewTab'
-import SalaryStructureTab from './SalaryStructureTab'
-import PayrollTab from './PayrollTab'
+
+// Code-split heavy sub-tabs and modals for maximum initial load performance
+const FeeStructureTab = lazy(() => import('./FeeStructureTab'))
+const FinanceOverviewTab = lazy(() => import('./FinanceOverviewTab'))
+const PendingFeesTab = lazy(() => import('./PendingFeesTab'))
+const PaymentHistoryTab = lazy(() => import('./PaymentHistoryTab'))
+const PaymentReportsTab = lazy(() => import('./PaymentReportsTab'))
+const SalaryStructureTab = lazy(() => import('./SalaryStructureTab'))
+const PayrollTab = lazy(() => import('./PayrollTab'))
+const RecordPaymentModal = lazy(() => import('../../components/payments/RecordPaymentModal'))
+const PaymentReceiptModal = lazy(() => import('../../components/payments/PaymentReceiptModal'))
+const AssignFeeModal = lazy(() => import('../../components/payments/AssignFeeModal'))
+
 import { api } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
-import { STATUS_STYLES, formatDate, formatCurrency, cn } from '../../utils/helpers'
+import { formatDate, formatCurrency, cn } from '../../utils/helpers'
 
 export default function FeeList() {
   const { user } = useAuth()
@@ -99,7 +99,6 @@ export default function FeeList() {
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
-  const [classFilter, setClassFilter] = useState('')
 
   // Student personal ledger data (for Student / Parent view)
   const [studentLedger, setStudentLedger] = useState(null)
@@ -179,10 +178,9 @@ export default function FeeList() {
   const filteredFees = useMemo(() => {
     return enrichedFees.filter((fee) => {
       if (statusFilter && fee.status !== statusFilter) return false
-      if (classFilter && fee.className !== classFilter && !fee.className.includes(classFilter)) return false
       return true
     })
-  }, [enrichedFees, statusFilter, classFilter])
+  }, [enrichedFees, statusFilter])
 
   const totalCollected = enrichedFees.reduce((sum, f) => sum + (f.paidFee || 0), 0)
   const totalDue = enrichedFees.reduce((sum, f) => sum + (f.dueFee || 0), 0)
@@ -328,7 +326,6 @@ export default function FeeList() {
 
   // If viewing as Student or Parent, render clean personal ledger view
   if (isStudentOrParent) {
-    const personalStudent = studentLedger?.student || {}
     const personalLedger = studentLedger?.ledger || {}
     const invoices = studentLedger?.invoices || []
     const payments = studentLedger?.payments || []
@@ -710,7 +707,11 @@ export default function FeeList() {
       </div>
 
       {/* Tab 0: Finance Dashboard */}
-      {activeTab === 'finance' && <FinanceOverviewTab />}
+      {activeTab === 'finance' && (
+        <Suspense fallback={<div className="py-12 flex justify-center"><Loader label="Loading finance overview..." /></div>}>
+          <FinanceOverviewTab />
+        </Suspense>
+      )}
 
       {/* Tab 1: Overview / Student Fees */}
       {activeTab === 'overview' && (
@@ -793,62 +794,70 @@ export default function FeeList() {
       )}
 
       {/* Tab 2: Payment History & Receipts */}
-      {activeTab === 'history' && (
-        <PaymentHistoryTab onViewReceipt={handleOpenReceipt} />
-      )}
+      <Suspense fallback={<div className="py-12 flex justify-center"><Loader label="Loading section..." /></div>}>
+        {activeTab === 'history' && (
+          <PaymentHistoryTab onViewReceipt={handleOpenReceipt} />
+        )}
 
-      {/* Tab 3: Pending & Overdue Fees */}
-      {activeTab === 'pending' && (
-        <PendingFeesTab onCollectPayment={openPaymentForStudent} />
-      )}
+        {/* Tab 3: Pending & Overdue Fees */}
+        {activeTab === 'pending' && (
+          <PendingFeesTab onCollectPayment={openPaymentForStudent} />
+        )}
 
-      {/* Tab 4: Fee Structures */}
-      {activeTab === 'structures' && <FeeStructureTab />}
+        {/* Tab 4: Fee Structures */}
+        {activeTab === 'structures' && <FeeStructureTab />}
 
-      {/* Tab 5: Teacher Salary Structures */}
-      {activeTab === 'salary-structures' && <SalaryStructureTab />}
+        {/* Tab 5: Teacher Salary Structures */}
+        {activeTab === 'salary-structures' && <SalaryStructureTab />}
 
-      {/* Tab 6: Monthly Payroll */}
-      {activeTab === 'payroll' && <PayrollTab />}
+        {/* Tab 6: Monthly Payroll */}
+        {activeTab === 'payroll' && <PayrollTab />}
 
-      {/* Tab 7: Collection Reports */}
-      {activeTab === 'reports' && <PaymentReportsTab />}
+        {/* Tab 7: Collection Reports */}
+        {activeTab === 'reports' && <PaymentReportsTab />}
 
-      {/* Record Payment Modal */}
-      <RecordPaymentModal
-        open={recordPaymentOpen}
-        onClose={() => {
-          setRecordPaymentOpen(false)
-          setSelectedStudentForPay(null)
-          if (searchParams.get('record') || searchParams.get('pay')) {
-            setSearchParams((prev) => {
-              const next = new URLSearchParams(prev)
-              next.delete('record')
-              next.delete('pay')
-              return next
-            })
-          }
-        }}
-        preselectedStudent={selectedStudentForPay}
-        onPaymentSuccess={handlePaymentSuccess}
-      />
+        {/* Record Payment Modal */}
+        {recordPaymentOpen && (
+          <RecordPaymentModal
+            open={recordPaymentOpen}
+            onClose={() => {
+              setRecordPaymentOpen(false)
+              setSelectedStudentForPay(null)
+              if (searchParams.get('record') || searchParams.get('pay')) {
+                setSearchParams((prev) => {
+                  const next = new URLSearchParams(prev)
+                  next.delete('record')
+                  next.delete('pay')
+                  return next
+                })
+              }
+            }}
+            preselectedStudent={selectedStudentForPay}
+            onPaymentSuccess={handlePaymentSuccess}
+          />
+        )}
 
-      {/* Assign Fee Modal */}
-      <AssignFeeModal
-        open={assignFeeModalOpen}
-        onClose={() => setAssignFeeModalOpen(false)}
-        onAssigned={loadFeeData}
-      />
+        {/* Assign Fee Modal */}
+        {assignFeeModalOpen && (
+          <AssignFeeModal
+            open={assignFeeModalOpen}
+            onClose={() => setAssignFeeModalOpen(false)}
+            onAssigned={loadFeeData}
+          />
+        )}
 
-      {/* Official Payment Receipt Modal */}
-      <PaymentReceiptModal
-        open={receiptModalOpen}
-        onClose={() => {
-          setReceiptModalOpen(false)
-          setSelectedReceiptId(null)
-        }}
-        receiptNumberOrId={selectedReceiptId}
-      />
+        {/* Official Payment Receipt Modal */}
+        {receiptModalOpen && (
+          <PaymentReceiptModal
+            open={receiptModalOpen}
+            onClose={() => {
+              setReceiptModalOpen(false)
+              setSelectedReceiptId(null)
+            }}
+            receiptNumberOrId={selectedReceiptId}
+          />
+        )}
+      </Suspense>
     </div>
   )
 }

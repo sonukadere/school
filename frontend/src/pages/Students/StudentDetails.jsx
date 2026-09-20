@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Pencil, Trash2, Mail, Phone, MapPin, GraduationCap, FileText, KeyRound, Wallet, Receipt, History, Printer } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, Mail, Phone, MapPin, GraduationCap, FileText, KeyRound, Wallet, Receipt, Printer } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import Avatar from '../../components/common/Avatar'
 import Button from '../../components/common/Button'
@@ -9,11 +9,15 @@ import Card from '../../components/common/Card'
 import Input from '../../components/common/Input'
 import Loader from '../../components/common/Loader'
 import ConfirmDialog from '../../components/common/ConfirmDialog'
-import MarksheetModal from '../../components/marksheets/MarksheetModal'
-import TransferCertificateModal from '../../components/certificates/TransferCertificateModal'
-import GenerateTcModal from '../../components/certificates/GenerateTcModal'
-import RecordPaymentModal from '../../components/payments/RecordPaymentModal'
-import PaymentReceiptModal from '../../components/payments/PaymentReceiptModal'
+import AdmissionFormModal from '../../components/students/AdmissionFormModal'
+
+// Lazy load heavy document and payment modals
+const MarksheetModal = lazy(() => import('../../components/marksheets/MarksheetModal'))
+const TransferCertificateModal = lazy(() => import('../../components/certificates/TransferCertificateModal'))
+const GenerateTcModal = lazy(() => import('../../components/certificates/GenerateTcModal'))
+const RecordPaymentModal = lazy(() => import('../../components/payments/RecordPaymentModal'))
+const PaymentReceiptModal = lazy(() => import('../../components/payments/PaymentReceiptModal'))
+
 import { api } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -62,6 +66,7 @@ function StudentDetails() {
   const [tcModalOpen, setTcModalOpen] = useState(false)
   const [generateTcOpen, setGenerateTcOpen] = useState(false)
   const [existingTc, setExistingTc] = useState(null)
+  const [admissionModalOpen, setAdmissionModalOpen] = useState(false)
 
   // Portal Account Credentials Modal
   const [resetModalOpen, setResetModalOpen] = useState(false)
@@ -178,6 +183,9 @@ function StudentDetails() {
                 Back
               </Button>
             </Link>
+            <Button variant="primary" leftIcon={Printer} onClick={() => setAdmissionModalOpen(true)}>
+              Print Admission Form (प्रवेश फार्म)
+            </Button>
             <Button variant="outline" leftIcon={GraduationCap} onClick={handleOpenMarksheet}>
               Marksheet
             </Button>
@@ -200,21 +208,36 @@ function StudentDetails() {
         <Card bodyClassName="p-4 sm:p-6">
           <div className="flex flex-col gap-4 sm:gap-6 sm:flex-row sm:items-center">
             {student.photo ? (
-              <img src={student.photo} alt={student.fullName} className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover shadow-md mx-auto sm:mx-0" />
+              <img src={student.photo} alt={student.fullName} className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover shadow-md mx-auto sm:mx-0 border-2 border-indigo-100" />
             ) : (
               <Avatar name={student.fullName} size="xl" className="rounded-2xl mx-auto sm:mx-0" />
             )}
             <div className="min-w-0 flex-1 text-center sm:text-left">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <h2 className="text-xl font-bold text-slate-900">{student.fullName}</h2>
+                {student.nameInHindi && (
+                  <span className="text-sm font-semibold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-md">
+                    {student.nameInHindi}
+                  </span>
+                )}
                 <Badge className="bg-indigo-100 text-indigo-700">{student.className} - {student.section}</Badge>
                 <Badge className={STATUS_STYLES[student.gender]}>{student.gender}</Badge>
+                {student.category && (
+                  <Badge variant="outline" className="font-bold text-indigo-600 border-indigo-200">
+                    {student.category}
+                  </Badge>
+                )}
               </div>
-              <p className="mt-1 text-xs sm:text-sm text-slate-500 font-mono">Student ID: {student.studentId || student.id}</p>
+              <div className="mt-1 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs sm:text-sm text-slate-500 font-mono">
+                <span>Student ID: <strong className="text-slate-800">{student.studentId || student.id}</strong></span>
+                {student.scholarNo && <span>Scholar No: <strong className="text-slate-800">{student.scholarNo}</strong></span>}
+                {student.formNo && <span>Form No: <strong className="text-slate-800">{student.formNo}</strong></span>}
+                <span>Medium: <strong className="text-slate-800 uppercase">{student.medium || 'HINDI'}</strong></span>
+              </div>
               <div className="mt-3 flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4 text-xs sm:text-sm text-slate-600">
-                <span className="flex items-center gap-1.5"><Mail size={15} className="text-slate-400" />{student.email}</span>
-                <span className="flex items-center gap-1.5"><Phone size={15} className="text-slate-400" />{student.phone}</span>
-                <span className="flex items-center gap-1.5"><MapPin size={15} className="text-slate-400" />{student.address}</span>
+                <span className="flex items-center gap-1.5"><Mail size={15} className="text-slate-400" />{student.email || '—'}</span>
+                <span className="flex items-center gap-1.5"><Phone size={15} className="text-slate-400" />{student.phone || '—'}</span>
+                <span className="flex items-center gap-1.5"><MapPin size={15} className="text-slate-400" />{student.address || student.colony || 'Indore'}</span>
               </div>
             </div>
           </div>
@@ -225,7 +248,7 @@ function StudentDetails() {
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><GraduationCap size={22} /></div>
             <div>
               <p className="text-xs text-slate-500">Roll Number</p>
-              <p className="text-base sm:text-lg font-bold text-slate-900">{student.rollNumber}</p>
+              <p className="text-base sm:text-lg font-bold text-slate-900">{student.rollNumber || '—'}</p>
             </div>
           </Card>
           {!isTeacher && isAdmin && (
@@ -249,27 +272,138 @@ function StudentDetails() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Card title="Personal Information" className="h-fit">
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <InfoItem label="Full Name" value={student.fullName} />
-              <InfoItem label="Student ID" value={student.studentId || student.id} />
-              <InfoItem label="Father Name" value={student.fatherName} />
-              <InfoItem label="Mother Name" value={student.motherName} />
+          {/* Card 1: Personal & Family Information */}
+          <Card title="Personal & Family Information (विद्यार्थी व पालक विवरण)" className="h-fit">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <InfoItem label="Student Name (English)" value={student.fullName} />
+              <InfoItem label="विद्यार्थी का नाम (हिन्दी)" value={student.nameInHindi} />
+              <InfoItem label="Father's Name" value={student.fatherName} />
+              <InfoItem label="पिता का नाम (हिन्दी)" value={student.fatherNameHindi} />
+              <InfoItem label="Mother's Name" value={student.motherName} />
+              <InfoItem label="माता का नाम (हिन्दी)" value={student.motherNameHindi} />
+              <InfoItem label="Occupation (व्यवसाय)" value={student.occupation} />
+              <InfoItem label="Income (आय)" value={student.annualIncome ? `₹ ${student.annualIncome}` : '—'} />
               <InfoItem label="Gender" value={student.gender} />
               <InfoItem label="Date of Birth" value={formatDate(student.dob)} />
+              <div className="sm:col-span-2">
+                <InfoItem label="Date of Birth in Words (जन्म दिनांक शब्दों में)" value={student.dobInWords} />
+              </div>
+              <div className="sm:col-span-2">
+                <InfoItem label="Age as on 1st July (1 जुलाई को आयु)" value={student.ageAsOnJuly1} />
+              </div>
             </div>
           </Card>
 
-          <Card title="Academic Information" className="h-fit">
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <InfoItem label="Class" value={student.className} />
-              <InfoItem label="Section" value={student.section} />
+          {/* Card 2: Academic & Admission Information */}
+          <Card title="Academic & Admission Records (प्रवेश विवरण)" className="h-fit">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <InfoItem label="Scholar No. (स्कॉलर नं.)" value={student.scholarNo || student.studentId} />
+              <InfoItem label="Form No. (प्रवेश फार्म क्र.)" value={student.formNo} />
+              <InfoItem label="Class (कक्षा)" value={student.className} />
+              <InfoItem label="Section (सेक्शन)" value={student.section} />
+              <InfoItem label="Medium (माध्यम)" value={student.medium ? (student.medium === 'HINDI' ? 'Hindi (हिन्दी)' : 'English') : 'Hindi (हिन्दी)'} />
               <InfoItem label="Roll Number" value={student.rollNumber} />
               <InfoItem label="Admission Date" value={formatDate(student.admissionDate)} />
-              <InfoItem label="Email Address" value={student.email} />
-              <InfoItem label="Phone Number" value={student.phone} />
+              <InfoItem label="Student Status" value={student.status} />
               <div className="sm:col-span-2">
-                <InfoItem label="Address" value={student.address} />
+                <InfoItem label="संलग्न दस्तावेज (Enclosures)" value={student.enclosures} />
+              </div>
+            </div>
+          </Card>
+
+          {/* Card 3: Permanent Address & Contact */}
+          <Card title="Permanent Address & Contact (स्थाई पता व सम्पर्क)" className="h-fit">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <InfoItem label="H.No. (मकान नं.)" value={student.houseNo} />
+              <InfoItem label="Apartment / Sector / Street" value={student.apartmentSectorStreet} />
+              <InfoItem label="Colony / Area" value={student.colony} />
+              <InfoItem label="District" value={student.district || 'Indore'} />
+              <InfoItem label="State" value={student.state || 'Madhya Pradesh'} />
+              <InfoItem label="Mobile Number" value={student.phone} />
+              <InfoItem label="Email Address" value={student.email} />
+              <div className="sm:col-span-2">
+                <InfoItem label="Full Residential Address" value={student.address} />
+              </div>
+            </div>
+          </Card>
+
+          {/* Card 4: Demographics, Previous School & Government IDs */}
+          <Card title="Demographics, Previous School & Govt IDs (सामाजिक व समग्र विवरण)" className="h-fit">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <InfoItem label="Mother Tongue (मातृभाषा)" value={student.motherTongue || 'Hindi'} />
+              <InfoItem label="Religion (धर्म)" value={student.religion || 'Hindu'} />
+              <InfoItem label="Caste (जाति)" value={student.caste} />
+              <InfoItem label="Category (वर्ग)" value={student.category || 'GEN'} />
+              <InfoItem label="SSSM I.D. (समग्र आईडी - 9 अंक)" value={student.sssmId} />
+              <InfoItem label="Family ID (परिवार आईडी - 8 अंक)" value={student.familyId} />
+              <InfoItem label="Bank Account No. (खाता क्र.)" value={student.bankAccountNo} />
+              <InfoItem label="IFSC Code" value={student.ifscCode} />
+              <div className="sm:col-span-2">
+                <InfoItem label="Previous School (पूर्व विद्यालय)" value={student.previousSchool} />
+              </div>
+              <div className="sm:col-span-2">
+                <InfoItem label="पिछले विद्यालय का डायस कोड (DISE Code)" value={student.previousSchoolDiseCode} />
+              </div>
+            </div>
+          </Card>
+
+          {/* Card 5: FOR OFFICE USE ONLY (कार्यालयीन उपयोग व दस्तावेज सत्यापन) */}
+          <Card title="Office Verification & Test Details (कार्यालयीन उपयोग व सत्यापन)" className="h-fit lg:col-span-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <p className="text-xs font-medium tracking-wide text-slate-400 uppercase">Admission Status</p>
+                <div className="mt-1">
+                  <Badge variant={student.admissionGranted === 'NOT_GRANTED' ? 'danger' : 'success'}>
+                    {student.admissionGranted === 'NOT_GRANTED' ? 'Admission Not Granted' : 'Admission Granted'}
+                  </Badge>
+                </div>
+              </div>
+              <InfoItem label="Bus Number (बस क्रमांक)" value={student.busNumber} />
+              <InfoItem label="Entrance Test Date & Time" value={student.testDate ? `${formatDate(student.testDate)} ${student.testTime || ''}`.trim() : '—'} />
+              <InfoItem label="Test Conducted By" value={student.testConductedBy} />
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <InfoItem label="Remarks - Test (Subject Wise)" value={student.testRemarks} />
+              <InfoItem label="Interview - Parent / Guardian" value={student.interviewRemarks} />
+            </div>
+
+            {/* Document Checklist Badges */}
+            <div className="mt-4 pt-3 border-t border-slate-100">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Document Verification Checklist:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="rounded-lg border border-slate-200 p-2.5 bg-slate-50/60">
+                  <span className="text-[11px] text-slate-500 block font-medium">Birth Certificate</span>
+                  <Badge variant={student.docBirthCertificate === 'NOT_SUBMITTED' ? 'danger' : 'success'} className="mt-1">
+                    {student.docBirthCertificate === 'NOT_SUBMITTED' ? 'Not Submitted' : 'Submitted'}
+                  </Badge>
+                </div>
+                <div className="rounded-lg border border-slate-200 p-2.5 bg-slate-50/60">
+                  <span className="text-[11px] text-slate-500 block font-medium">Transfer Certificate (TC)</span>
+                  <Badge variant={student.docTransferCertificate === 'NOT_SUBMITTED' ? 'danger' : 'success'} className="mt-1">
+                    {student.docTransferCertificate === 'NOT_SUBMITTED' ? 'Not Submitted' : 'Submitted'}
+                  </Badge>
+                </div>
+                <div className="rounded-lg border border-slate-200 p-2.5 bg-slate-50/60">
+                  <span className="text-[11px] text-slate-500 block font-medium">Caste Certificate</span>
+                  <Badge variant={student.docCasteCertificate === 'NOT_SUBMITTED' ? 'danger' : student.docCasteCertificate === 'NA' ? 'secondary' : 'success'} className="mt-1">
+                    {student.docCasteCertificate === 'NOT_SUBMITTED' ? 'Not Submitted' : student.docCasteCertificate === 'NA' ? 'N/A' : 'Submitted'}
+                  </Badge>
+                </div>
+                <div className="rounded-lg border border-slate-200 p-2.5 bg-slate-50/60">
+                  <span className="text-[11px] text-slate-500 block font-medium">Copy of Marksheet</span>
+                  <Badge variant={student.docMarksheet === 'NOT_SUBMITTED' ? 'danger' : 'success'} className="mt-1">
+                    {student.docMarksheet === 'NOT_SUBMITTED' ? 'Not Submitted' : 'Submitted'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <InfoItem label="Pending Documents Last Date" value={formatDate(student.docPendingLastDate)} />
+              <InfoItem label="Fee Deposit Due Date" value={formatDate(student.feeDepositDate)} />
+              <div className="sm:col-span-2">
+                <InfoItem label="Office Instruction / Remarks" value={student.officeInstructions} />
               </div>
             </div>
           </Card>
@@ -490,30 +624,79 @@ function StudentDetails() {
         )}
       </div>
 
-      {/* Record Payment Modal for this Student */}
-      <RecordPaymentModal
-        open={recordPaymentOpen}
-        onClose={() => setRecordPaymentOpen(false)}
-        preselectedStudent={student}
-        onPaymentSuccess={(result) => {
-          loadStudentData()
-          const rcpt = result?.receipt?.receiptNumber || result?.payment?.receiptNumber
-          if (rcpt) {
-            setSelectedReceiptId(rcpt)
-            setReceiptModalOpen(true)
-          }
-        }}
-      />
+      <Suspense fallback={null}>
+        {/* Record Payment Modal for this Student */}
+        {recordPaymentOpen && (
+          <RecordPaymentModal
+            open={recordPaymentOpen}
+            onClose={() => setRecordPaymentOpen(false)}
+            preselectedStudent={student}
+            onPaymentSuccess={(result) => {
+              loadStudentData()
+              const rcpt = result?.receipt?.receiptNumber || result?.payment?.receiptNumber
+              if (rcpt) {
+                setSelectedReceiptId(rcpt)
+                setReceiptModalOpen(true)
+              }
+            }}
+          />
+        )}
 
-      {/* Official Payment Receipt Modal */}
-      <PaymentReceiptModal
-        open={receiptModalOpen}
-        onClose={() => {
-          setReceiptModalOpen(false)
-          setSelectedReceiptId(null)
-        }}
-        receiptNumberOrId={selectedReceiptId}
-      />
+        {/* Official Payment Receipt Modal */}
+        {receiptModalOpen && (
+          <PaymentReceiptModal
+            open={receiptModalOpen}
+            onClose={() => {
+              setReceiptModalOpen(false)
+              setSelectedReceiptId(null)
+            }}
+            receiptNumberOrId={selectedReceiptId}
+          />
+        )}
+
+        {/* Marksheet Modal */}
+        {selectedExamId && marksheetModalOpen && (
+          <MarksheetModal
+            open={marksheetModalOpen}
+            onClose={() => setMarksheetModalOpen(false)}
+            studentId={id}
+            examId={selectedExamId}
+          />
+        )}
+
+        {/* Transfer Certificate Modal */}
+        {tcModalOpen && (
+          <TransferCertificateModal
+            open={tcModalOpen}
+            onClose={() => setTcModalOpen(false)}
+            studentId={id}
+            initialCertificate={existingTc}
+            onStatusChange={(updated) => setExistingTc(updated)}
+          />
+        )}
+
+        {/* Generate TC Modal */}
+        {generateTcOpen && (
+          <GenerateTcModal
+            open={generateTcOpen}
+            onClose={() => setGenerateTcOpen(false)}
+            student={student}
+            onGenerated={(newTc) => {
+              setExistingTc(newTc)
+              setTcModalOpen(true)
+            }}
+          />
+        )}
+      </Suspense>
+
+      {/* Official Daily Day Academy Admission Form (प्रवेश फार्म) Modal */}
+      {admissionModalOpen && (
+        <AdmissionFormModal
+          open={admissionModalOpen}
+          onClose={() => setAdmissionModalOpen(false)}
+          student={student}
+        />
+      )}
 
       <ConfirmDialog
         open={deleteOpen}
@@ -522,36 +705,6 @@ function StudentDetails() {
         loading={deleting}
         title="Delete Student"
         message={`Are you sure you want to delete ${student.fullName}? This action cannot be undone.`}
-      />
-
-      {/* Marksheet Modal */}
-      {selectedExamId && (
-        <MarksheetModal
-          open={marksheetModalOpen}
-          onClose={() => setMarksheetModalOpen(false)}
-          studentId={id}
-          examId={selectedExamId}
-        />
-      )}
-
-      {/* Transfer Certificate Modal */}
-      <TransferCertificateModal
-        open={tcModalOpen}
-        onClose={() => setTcModalOpen(false)}
-        studentId={id}
-        initialCertificate={existingTc}
-        onStatusChange={(updated) => setExistingTc(updated)}
-      />
-
-      {/* Generate TC Modal */}
-      <GenerateTcModal
-        open={generateTcOpen}
-        onClose={() => setGenerateTcOpen(false)}
-        student={student}
-        onGenerated={(newTc) => {
-          setExistingTc(newTc)
-          setTcModalOpen(true)
-        }}
       />
 
       {/* Reset Portal Credentials Modal */}

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
 import { LogOut, X } from 'lucide-react'
 import { MENU_ITEMS } from '../../utils/constants'
@@ -9,102 +10,104 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
   const { user, logout } = useAuth()
   const { settings } = useSettings()
 
-  const filteredMenuItems = MENU_ITEMS.map((group) => {
-    const items = group.items
-      .filter((item) => {
-        const roleUpper = (user?.role || '').toUpperCase()
-        if (roleUpper === 'TEACHER') {
-          const forbidden = ['/teachers', '/fees', '/payroll', '/settings']
-          return !forbidden.some((path) => item.path.startsWith(path))
-        }
-        if (user?.role === 'Student' || user?.isStudent) {
-          const forbidden = [
-            '/students',
-            '/teachers',
-            '/classes',
-            '/attendance',
-            '/settings',
-            '/questions',
-            '/payroll',
-          ]
-          return !forbidden.some((path) => item.path.startsWith(path))
-        }
-        if (user?.role === 'Parent' || user?.isParent) {
-          const forbidden = [
-            '/students',
-            '/teachers',
-            '/classes',
-            '/attendance',
-            '/settings',
-            '/questions',
-            '/payroll',
-          ]
-          return !forbidden.some((path) => item.path.startsWith(path))
-        }
-        if (roleUpper === 'STAFF' || user?.isStaff) {
-          const forbidden = [
-            '/students',
-            '/teachers',
-            '/classes',
-            '/subjects',
-            '/attendance',
-            '/exams',
-            '/questions',
-            '/marks',
-            '/certificates',
-            '/fees',
-            '/payroll',
-            '/settings',
-          ]
-          return !forbidden.some((path) => item.path.startsWith(path))
-        }
-        return true
-      })
-      .map((item) => {
-        if ((user?.role === 'Student' || user?.isStudent) && item.path === '/marks') {
-          return { ...item, label: 'My Results', path: '/marks/results' }
-        }
-        if ((user?.role === 'Parent' || user?.isParent) && item.path === '/marks') {
-          return { ...item, label: 'Child Results', path: '/marks/results' }
-        }
-        if ((user?.role === 'Student' || user?.isStudent) && item.path === '/subjects') {
-          return { ...item, label: 'My Subjects' }
-        }
-        if ((user?.role === 'Student' || user?.isStudent) && item.path === '/timetable') {
-          return { ...item, label: 'My Timetable' }
-        }
-        if ((user?.role === 'Parent' || user?.isParent) && item.path === '/timetable') {
-          return { ...item, label: 'Class Timetable' }
-        }
-        return item
-      })
-    return { ...group, items }
-  }).filter((group) => group.items.length > 0)
+  const filteredMenuItems = useMemo(() => {
+    return MENU_ITEMS.map((group) => {
+      const items = group.items
+        .filter((item) => {
+          const roleUpper = (user?.role || '').toUpperCase()
+          if (roleUpper === 'TEACHER') {
+            const forbidden = ['/teachers', '/fees', '/payroll', '/settings']
+            return !forbidden.some((path) => item.path.startsWith(path))
+          }
+          if (user?.role === 'Student' || user?.isStudent) {
+            const forbidden = [
+              '/students',
+              '/teachers',
+              '/classes',
+              '/attendance',
+              '/settings',
+              '/questions',
+              '/payroll',
+            ]
+            return !forbidden.some((path) => item.path.startsWith(path))
+          }
+          if (user?.role === 'Parent' || user?.isParent) {
+            const forbidden = [
+              '/students',
+              '/teachers',
+              '/classes',
+              '/attendance',
+              '/settings',
+              '/questions',
+              '/payroll',
+            ]
+            return !forbidden.some((path) => item.path.startsWith(path))
+          }
+          if (roleUpper === 'STAFF' || user?.isStaff) {
+            const forbidden = [
+              '/students',
+              '/teachers',
+              '/classes',
+              '/subjects',
+              '/attendance',
+              '/exams',
+              '/questions',
+              '/marks',
+              '/certificates',
+              '/fees',
+              '/payroll',
+              '/settings',
+            ]
+            return !forbidden.some((path) => item.path.startsWith(path))
+          }
+          return true
+        })
+        .map((item) => {
+          if ((user?.role === 'Student' || user?.isStudent) && item.path === '/marks') {
+            return { ...item, label: 'My Results', path: '/marks/results' }
+          }
+          if ((user?.role === 'Parent' || user?.isParent) && item.path === '/marks') {
+            return { ...item, label: 'Child Results', path: '/marks/results' }
+          }
+          if ((user?.role === 'Student' || user?.isStudent) && item.path === '/subjects') {
+            return { ...item, label: 'My Subjects' }
+          }
+          if ((user?.role === 'Student' || user?.isStudent) && item.path === '/timetable') {
+            return { ...item, label: 'My Timetable' }
+          }
+          if ((user?.role === 'Parent' || user?.isParent) && item.path === '/timetable') {
+            return { ...item, label: 'Class Timetable' }
+          }
+          return item
+        })
+      return { ...group, items }
+    }).filter((group) => group.items.length > 0)
+  }, [user?.role, user?.isStudent, user?.isParent, user?.isStaff, user?.isTeacher])
 
-  const roleUpper = (user?.role || '').toUpperCase()
-  const activeStyle = user?.isSuperAdmin || roleUpper === 'SUPER_ADMIN' || roleUpper === 'SUPER ADMIN'
-    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-md shadow-purple-900/50 ring-1 ring-purple-400/30'
-    : user?.isTeacher || roleUpper === 'TEACHER'
-    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-md shadow-emerald-900/50 ring-1 ring-emerald-400/30'
-    : user?.isStudent || roleUpper === 'STUDENT'
-    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold shadow-md shadow-blue-900/50 ring-1 ring-blue-400/30'
-    : user?.isParent || roleUpper === 'PARENT'
-    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold shadow-md shadow-amber-900/50 ring-1 ring-amber-400/30'
-    : user?.isStaff || roleUpper === 'STAFF'
-    ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white font-semibold shadow-md shadow-sky-900/50 ring-1 ring-sky-400/30'
-    : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-md shadow-indigo-900/50 ring-1 ring-indigo-400/30'
+  const { activeStyle, indicatorColor } = useMemo(() => {
+    const roleUpper = (user?.role || '').toUpperCase()
+    let style = 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-md shadow-indigo-900/50 ring-1 ring-indigo-400/30'
+    let color = 'bg-indigo-300'
 
-  const indicatorColor = user?.isSuperAdmin || roleUpper === 'SUPER_ADMIN' || roleUpper === 'SUPER ADMIN'
-    ? 'bg-purple-300'
-    : user?.isTeacher || roleUpper === 'TEACHER'
-    ? 'bg-emerald-300'
-    : user?.isStudent || roleUpper === 'STUDENT'
-    ? 'bg-blue-300'
-    : user?.isParent || roleUpper === 'PARENT'
-    ? 'bg-amber-300'
-    : user?.isStaff || roleUpper === 'STAFF'
-    ? 'bg-sky-300'
-    : 'bg-indigo-300'
+    if (user?.isSuperAdmin || roleUpper === 'SUPER_ADMIN' || roleUpper === 'SUPER ADMIN') {
+      style = 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-md shadow-purple-900/50 ring-1 ring-purple-400/30'
+      color = 'bg-purple-300'
+    } else if (user?.isTeacher || roleUpper === 'TEACHER') {
+      style = 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-md shadow-emerald-900/50 ring-1 ring-emerald-400/30'
+      color = 'bg-emerald-300'
+    } else if (user?.isStudent || roleUpper === 'STUDENT') {
+      style = 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold shadow-md shadow-blue-900/50 ring-1 ring-blue-400/30'
+      color = 'bg-blue-300'
+    } else if (user?.isParent || roleUpper === 'PARENT') {
+      style = 'bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold shadow-md shadow-amber-900/50 ring-1 ring-amber-400/30'
+      color = 'bg-amber-300'
+    } else if (user?.isStaff || roleUpper === 'STAFF') {
+      style = 'bg-gradient-to-r from-sky-600 to-blue-600 text-white font-semibold shadow-md shadow-sky-900/50 ring-1 ring-sky-400/30'
+      color = 'bg-sky-300'
+    }
+
+    return { activeStyle: style, indicatorColor: color }
+  }, [user?.role, user?.isSuperAdmin, user?.isTeacher, user?.isStudent, user?.isParent, user?.isStaff])
 
   const renderLink = (item) => {
     const Icon = item.icon

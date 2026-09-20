@@ -55,9 +55,7 @@ async function getAdminDashboard(user) {
     upcomingEvents,
     upcomingHolidays,
     recentStudents,
-    recentNotices,
-    recentEvents,
-    classStats,
+    allClasses,
     chartRecords,
   ] = await Promise.all([
     prisma.student?.count ? prisma.student.count({ where: notDeleted() }).catch(() => 0) : 0,
@@ -149,18 +147,21 @@ async function getAdminDashboard(user) {
     prisma.student?.findMany
       ? prisma.student.findMany({ where: notDeleted(), orderBy: { createdAt: 'desc' }, take: 5 }).catch(() => [])
       : Promise.resolve([]),
-    prisma.notice?.findMany
-      ? prisma.notice.findMany({ where: notDeleted(), orderBy: { createdAt: 'desc' }, take: 5 }).catch(() => [])
-      : Promise.resolve([]),
-    prisma.event?.findMany
-      ? prisma.event.findMany({ where: notDeleted(), orderBy: { createdAt: 'desc' }, take: 5 }).catch(() => [])
-      : Promise.resolve([]),
-    prisma.student?.groupBy
-      ? prisma.student
-          .groupBy({
-            by: ['classId'],
+    prisma.class?.findMany
+      ? prisma.class
+          .findMany({
             where: notDeleted(),
-            _count: { _all: true },
+            select: {
+              id: true,
+              name: true,
+              section: true,
+              _count: {
+                select: {
+                  students: { where: notDeleted() },
+                },
+              },
+            },
+            orderBy: [{ name: 'asc' }, { section: 'asc' }],
           })
           .catch(() => [])
       : Promise.resolve([]),
@@ -174,29 +175,13 @@ async function getAdminDashboard(user) {
       : Promise.resolve([]),
   ]);
 
+  const recentNotices = latestNotices;
+  const recentEvents = upcomingEvents;
+
   const totalPresent = (todayRecords || []).filter((r) => r.status === 'PRESENT').length;
   const todayAttendance = todayRecords?.length
     ? Math.round((totalPresent / todayRecords.length) * 100)
     : 0;
-
-  const allClasses = prisma.class?.findMany
-    ? await prisma.class
-        .findMany({
-          where: notDeleted(),
-          select: {
-            id: true,
-            name: true,
-            section: true,
-            _count: {
-              select: {
-                students: { where: notDeleted() },
-              },
-            },
-          },
-          orderBy: [{ name: 'asc' }, { section: 'asc' }],
-        })
-        .catch(() => [])
-    : [];
 
   const studentStats = (allClasses || []).map((c) => ({
     id: c.id,

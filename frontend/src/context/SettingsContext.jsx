@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { api } from '../services/api'
 
@@ -93,8 +93,13 @@ export function SettingsProvider({ children }) {
     }
   }, [setLocalSettings])
 
+  const contextValue = useMemo(
+    () => ({ settings, updateSettings, resetSettings }),
+    [settings, updateSettings, resetSettings]
+  )
+
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, resetSettings }}>
+    <SettingsContext.Provider value={contextValue}>
       {children}
     </SettingsContext.Provider>
   )

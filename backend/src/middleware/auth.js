@@ -6,6 +6,18 @@ import asyncHandler from '../utils/asyncHandler.js';
 import { extractBearerToken, notDeleted } from '../utils/helpers.js';
 import { isBlacklisted } from '../utils/tokenBlacklist.js';
 
+// Lightweight in-memory user cache with short TTL (30s) to avoid repetitive database roundtrips
+const userCache = new Map();
+const USER_CACHE_TTL_MS = 30 * 1000;
+
+export function invalidateUserCache(userId) {
+  if (userId) {
+    userCache.delete(userId);
+  } else {
+    userCache.clear();
+  }
+}
+
 /**
  * Verifies the JWT in the Authorization header, loads the user,
  * and attaches it to req.user. Rejects expired/blacklisted tokens
@@ -33,6 +45,13 @@ const authenticate = asyncHandler(async (req, res, next) => {
 
   req.token = payload;
 
+  const now = Date.now();
+  const cached = userCache.get(payload.sub);
+  if (cached && now - cached.timestamp < USER_CACHE_TTL_MS) {
+    req.user = cached.user;
+    return next();
+  }
+
   const user = await prisma.user.findFirst({
     where: {
       id: payload.sub,
@@ -57,9 +76,11 @@ const authenticate = asyncHandler(async (req, res, next) => {
   });
 
   if (!user) {
+    userCache.delete(payload.sub);
     throw ApiError.unauthorized('User account no longer exists or is inactive.');
   }
 
+  userCache.set(payload.sub, { user, timestamp: now });
   req.user = user;
   next();
 });

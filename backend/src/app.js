@@ -1,5 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import env from './config/env.js';
@@ -16,6 +19,32 @@ const app = express();
 
 // Trust proxy when running behind a reverse proxy (Render / Load Balancer)
 app.set('trust proxy', 1);
+
+// Security Headers
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: false,
+  })
+);
+
+// Response compression for high-performance data transfer
+app.use(compression());
+
+// Auth rate limiter to protect sensitive endpoints from brute force
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many requests from this IP. Please try again after 15 minutes.',
+  },
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register-student', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
 
 // Configure CORS allowed origins
 const allowedOrigins = new Set([

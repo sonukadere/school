@@ -9,11 +9,9 @@ import {
   CheckCircle2,
   Copy,
   ArrowLeft,
-  Calendar,
   Phone,
   Mail,
   MapPin,
-  Users,
 } from 'lucide-react'
 import Input from '../../components/common/Input'
 import Select from '../../components/common/Select'

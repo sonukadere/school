@@ -82,6 +82,8 @@ export const PAGE_TITLES = {
   '/marks': 'Marks',
   '/marks/entry': 'Marks Entry',
   '/marks/results': 'Result View',
+  '/marks/generate': 'Generate Marksheet',
+  '/marksheets': 'Generate Marksheet',
   '/certificates': 'Transfer Certificates',
   '/notices': 'Notice Board',
   '/notices/create': 'Create Notice',

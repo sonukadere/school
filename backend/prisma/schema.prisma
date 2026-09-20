@@ -176,6 +176,7 @@ model User {
 
   @@index([role])
   @@index([schoolId])
+  @@index([isActive, deletedAt])
 }
 
 // -------------------------------------------------------------
@@ -209,6 +210,51 @@ model Student {
   admissionDate DateTime?
   status      StudentStatus @default(ACTIVE)
 
+  // Daily Day Academy Admission Form (प्रवेश फार्म) Details
+  photo                 String?
+  formNo                String?
+  scholarNo             String?
+  medium                String?       @default("HINDI")
+  nameInHindi           String?
+  fatherNameHindi       String?
+  motherNameHindi       String?
+  occupation            String?
+  annualIncome          String?
+  houseNo               String?
+  apartmentSectorStreet String?
+  colony                String?
+  district              String?       @default("Indore")
+  state                 String?       @default("Madhya Pradesh")
+  dobInWords            String?
+  ageAsOnJuly1          String?
+  motherTongue          String?       @default("Hindi")
+  religion              String?       @default("Hindu")
+  caste                 String?
+  category              String?       @default("GEN")
+  previousSchool        String?
+  previousSchoolDiseCode String?
+  sssmId                String?
+  familyId              String?
+  bankAccountNo         String?
+  ifscCode              String?
+  enclosures            String?
+
+  // FOR OFFICE USE ONLY (कार्यालयीन उपयोग हेतु)
+  busNumber              String?
+  admissionGranted       String?       @default("GRANTED")
+  testDate               DateTime?
+  testTime               String?
+  testConductedBy        String?
+  testRemarks            String?
+  interviewRemarks       String?
+  docBirthCertificate    String?       @default("SUBMITTED")
+  docTransferCertificate String?       @default("SUBMITTED")
+  docCasteCertificate    String?       @default("NA")
+  docMarksheet           String?       @default("SUBMITTED")
+  docPendingLastDate     DateTime?
+  feeDepositDate         DateTime?
+  officeInstructions     String?
+
   classId     String?
   class       Class?        @relation(fields: [classId], references: [id])
 
@@ -237,6 +283,8 @@ model Student {
   @@index([status])
   @@index([schoolId])
   @@index([classId, rollNumber])
+  @@index([schoolId, deletedAt])
+  @@index([deletedAt])
 }
 
 // -------------------------------------------------------------
@@ -277,6 +325,7 @@ model Teacher {
   deletedAt    DateTime?
 
   @@index([subjectId])
+  @@index([deletedAt])
 }
 
 // -------------------------------------------------------------
@@ -484,6 +533,7 @@ model Exam {
 
   @@index([name, classId])
   @@index([classId])
+  @@index([startDate, deletedAt])
 }
 
 // -------------------------------------------------------------
@@ -791,6 +841,7 @@ model Notification {
 
   @@index([userId])
   @@index([isRead])
+  @@index([userId, isRead, createdAt])
 }
 
 // -------------------------------------------------------------
@@ -958,6 +1009,8 @@ model Payment {
   @@index([academicYear])
   @@index([paymentDate])
   @@index([paymentStatus])
+  @@index([paymentStatus, paymentDate])
+  @@index([deletedAt])
 }
 
 // -------------------------------------------------------------

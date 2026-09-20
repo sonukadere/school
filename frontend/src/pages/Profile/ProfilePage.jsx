@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, ShieldCheck, Pencil, KeyRound, UserCircle, GraduationCap, FileText, Download } from 'lucide-react'
+import { Mail, ShieldCheck, Pencil, KeyRound, UserCircle, GraduationCap, FileText } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import Card from '../../components/common/Card'
 import Button from '../../components/common/Button'
@@ -30,13 +30,11 @@ function ProfilePage() {
   const [selectedMarksheet, setSelectedMarksheet] = useState(null)
   const [marksheetModalOpen, setMarksheetModalOpen] = useState(false)
   const [tcModalOpen, setTcModalOpen] = useState(false)
-  const [loadingDocs, setLoadingDocs] = useState(false)
 
   const isStudentOrParent = user?.role === 'STUDENT' || user?.role === 'PARENT'
 
   useEffect(() => {
     if (!isStudentOrParent) return
-    setLoadingDocs(true)
     Promise.all([
       api.getMyMarksheets().catch(() => []),
       api.getMyTransferCertificate().catch(() => null),
@@ -44,11 +42,8 @@ function ProfilePage() {
       .then(([msList, tcDoc]) => {
         setMarksheets(msList)
         setTc(tcDoc)
-        setLoadingDocs(false)
       })
-      .catch(() => {
-        setLoadingDocs(false)
-      })
+      .catch(() => {})
   }, [isStudentOrParent])
 
   const handleOpenMarksheet = (ms) => {
