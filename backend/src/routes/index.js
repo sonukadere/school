@@ -25,6 +25,10 @@ import transferCertificateRoutes from './transferCertificate.routes.js';
 import paymentRoutes from './payment.routes.js';
 import payrollRoutes from './payroll.routes.js';
 import questionRoutes from './question.routes.js';
+import homeworkRoutes from './homework.routes.js';
+import assignmentRoutes from './assignment.routes.js';
+import studyMaterialRoutes from './studyMaterial.routes.js';
+import leaveRoutes from './leave.routes.js';
 
 const router = Router();
 
@@ -54,5 +58,9 @@ router.use('/settings', settingRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/me', meRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/homework', homeworkRoutes);
+router.use('/assignments', assignmentRoutes);
+router.use('/study-materials', studyMaterialRoutes);
+router.use('/leave-requests', leaveRoutes);
 
 export default router;

@@ -11,12 +11,12 @@ const router = Router();
 
 router.use(authenticate);
 
-// Parents management is restricted to admins. Students/Parents access
-// their own data through /api/me endpoints.
+// Parents management: Admins manage, Receptionists can view contact directory.
+const canRead = authorize(ROLES.ADMIN, ROLES.RECEPTIONIST);
 const canWrite = authorize(ROLES.ADMIN);
 
-router.get('/', canWrite, validate({ query: parentQuerySchema }), parentController.listParents);
-router.get('/:id', canWrite, validate({ params: idParamSchema }), parentController.getParent);
+router.get('/', canRead, validate({ query: parentQuerySchema }), parentController.listParents);
+router.get('/:id', canRead, validate({ params: idParamSchema }), parentController.getParent);
 router.post('/', canWrite, validate({ body: parentCreateSchema }), parentController.createParent);
 router.put(
   '/:id',

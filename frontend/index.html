@@ -1,17 +1,73 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-50">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Daily Day Academy - Modern School Management System" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    
+    <!-- Primary SEO Meta Tags -->
+    <title>Daily Day Academy - School Management System</title>
+    <meta name="title" content="Daily Day Academy - School Management System" />
+    <meta name="description" content="Daily Day Academy comprehensive institutional school management system for academic administration, student fees, admissions, and faculty management." />
+    <meta name="keywords" content="school management, education portal, student fee collection, attendance, marksheet generation, faculty management" />
+    <meta name="author" content="Daily Day Academy" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="application-name" content="Daily Day Academy" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="canonical" href="http://localhost:5175/" />
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="http://localhost:5175/" />
+    <meta property="og:title" content="Daily Day Academy - School Management System" />
+    <meta property="og:description" content="Comprehensive institutional school management platform for admissions, academic grades, fee accounts, and faculty management." />
+    <meta property="og:image" content="/logo.svg" />
+    <meta property="og:site_name" content="Daily Day Academy" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:url" content="http://localhost:5175/" />
+    <meta name="twitter:title" content="Daily Day Academy - School Management System" />
+    <meta name="twitter:description" content="Comprehensive institutional school management platform for admissions, academic grades, fee accounts, and faculty management." />
+    <meta name="twitter:image" content="/logo.svg" />
+
+    <!-- JSON-LD Structured Data for Search Engines -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "Daily Day Academy",
+      "url": "http://localhost:5175/",
+      "logo": "http://localhost:5175/logo.svg",
+      "description": "Comprehensive institutional school management system for academic administration, student fees, admissions, and faculty management.",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "123 Education Street",
+        "addressLocality": "New Delhi",
+        "postalCode": "110001",
+        "addressCountry": "IN"
+      }
+    }
+    </script>
+
+    <!-- DNS Prefetch & Google Fonts Asynchronous Loading -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
-    <title>Daily Day Academy | School Management System</title>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" />
+    </noscript>
   </head>
-  <body>
-    <div id="root"></div>
+  <body class="h-full antialiased selection:bg-indigo-500 selection:text-white">
+    <div id="root" class="min-h-full"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+

@@ -1,14 +1,17 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react'
 import { AlertCircle, RefreshCw } from 'lucide-react'
 import Loader from '../../components/common/Loader'
 import Button from '../../components/common/Button'
-import SuperAdminDashboardView from '../../components/dashboard/SuperAdminDashboardView'
-import SchoolAdminDashboardView from '../../components/dashboard/SchoolAdminDashboardView'
-import TeacherDashboardView from '../../components/dashboard/TeacherDashboardView'
-import StudentDashboardView from '../../components/dashboard/StudentDashboardView'
-import ParentDashboardView from '../../components/dashboard/ParentDashboardView'
 import { getDashboardData } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+
+const SuperAdminDashboardView = lazy(() => import('../../components/dashboard/SuperAdminDashboardView'))
+const SchoolAdminDashboardView = lazy(() => import('../../components/dashboard/SchoolAdminDashboardView'))
+const TeacherDashboardView = lazy(() => import('../../components/dashboard/TeacherDashboardView'))
+const StudentDashboardView = lazy(() => import('../../components/dashboard/StudentDashboardView'))
+const ParentDashboardView = lazy(() => import('../../components/dashboard/ParentDashboardView'))
+const AccountantDashboardView = lazy(() => import('../../components/dashboard/AccountantDashboardView'))
+const ReceptionistDashboardView = lazy(() => import('../../components/dashboard/ReceptionistDashboardView'))
 
 function Dashboard() {
   const { user } = useAuth()
@@ -70,24 +73,41 @@ function Dashboard() {
   }
 
   // Role-Based Access Control (RBAC): Render distinct customized dashboard view per role
-  if (user?.role === 'Super Admin' || user?.isSuperAdmin) {
-    return <SuperAdminDashboardView data={data} user={user} />
+  const renderDashboardView = () => {
+    if (user?.role === 'Super Admin' || user?.isSuperAdmin) {
+      return <SuperAdminDashboardView data={data} user={user} />
+    }
+
+    if (user?.role === 'Accountant' || user?.isAccountant || user?.rawRole === 'ACCOUNTANT') {
+      return <AccountantDashboardView data={data} user={user} />
+    }
+
+    if (user?.role === 'Receptionist' || user?.isReceptionist || user?.rawRole === 'RECEPTIONIST') {
+      return <ReceptionistDashboardView data={data} user={user} />
+    }
+
+    if (user?.role === 'Teacher' || user?.isTeacher) {
+      return <TeacherDashboardView data={data} user={user} />
+    }
+
+    if (user?.role === 'Student' || user?.isStudent) {
+      return <StudentDashboardView data={data} user={user} />
+    }
+
+    if (user?.role === 'Parent' || user?.isParent) {
+      return <ParentDashboardView data={data} user={user} />
+    }
+
+    // Default: School Admin
+    return <SchoolAdminDashboardView data={data} user={user} />
   }
 
-  if (user?.role === 'Teacher' || user?.isTeacher) {
-    return <TeacherDashboardView data={data} user={user} />
-  }
-
-  if (user?.role === 'Student' || user?.isStudent) {
-    return <StudentDashboardView data={data} user={user} />
-  }
-
-  if (user?.role === 'Parent' || user?.isParent) {
-    return <ParentDashboardView data={data} user={user} />
-  }
-
-  // Default: School Admin
-  return <SchoolAdminDashboardView data={data} user={user} />
+  return (
+    <Suspense fallback={<Loader label="Loading view..." />}>
+      {renderDashboardView()}
+    </Suspense>
+  )
 }
 
 export default Dashboard
+

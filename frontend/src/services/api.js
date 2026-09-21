@@ -1072,6 +1072,19 @@ export const api = {
     return apiClient.put('/settings', data)
   },
 
+  getSmtpSettings: async () => {
+    return apiClient.get('/settings/smtp')
+  },
+
+  updateSmtpSettings: async (data) => {
+    return apiClient.put('/settings/smtp', data)
+  },
+
+  testSmtpConnection: async (data) => {
+    return apiClient.post('/settings/smtp/test', data)
+  },
+
+
   // --- Notifications ---
   getNotifications: async (params = {}) => {
     return apiClient.get('/notifications', params)
@@ -1296,7 +1309,104 @@ export const attendanceApi = {
   deleteTransferCertificate: async (id) => {
     return apiClient.delete(`/transfer-certificates/${id}`)
   },
+
+  // -------------------------------------------------------------
+  // Academics: Homework, Assignments & Study Material
+  // -------------------------------------------------------------
+  getHomeworkList: async (params = {}) => {
+    const res = await apiClient.get('/homework', params)
+    return {
+      data: Array.isArray(res) ? res : (res?.data || []),
+      pagination: res?.pagination || null,
+    }
+  },
+
+  createHomework: async (data) => {
+    const res = await apiClient.post('/homework', data)
+    return res?.data || res
+  },
+
+  deleteHomework: async (id) => {
+    return apiClient.delete(`/homework/${id}`)
+  },
+
+  getAssignmentsList: async (params = {}) => {
+    const res = await apiClient.get('/assignments', params)
+    return {
+      data: Array.isArray(res) ? res : (res?.data || []),
+      pagination: res?.pagination || null,
+    }
+  },
+
+  createAssignment: async (data) => {
+    const res = await apiClient.post('/assignments', data)
+    return res?.data || res
+  },
+
+  deleteAssignment: async (id) => {
+    return apiClient.delete(`/assignments/${id}`)
+  },
+
+  submitAssignment: async (id, data) => {
+    const res = await apiClient.post(`/assignments/${id}/submit`, data)
+    return res?.data || res
+  },
+
+  getStudyMaterialsList: async (params = {}) => {
+    const res = await apiClient.get('/study-materials', params)
+    return {
+      data: Array.isArray(res) ? res : (res?.data || []),
+      pagination: res?.pagination || null,
+    }
+  },
+
+  createStudyMaterial: async (data) => {
+    const res = await apiClient.post('/study-materials', data)
+    return res?.data || res
+  },
+
+  deleteStudyMaterial: async (id) => {
+    return apiClient.delete(`/study-materials/${id}`)
+  },
+
+  // -------------------------------------------------------------
+  // Leave Management
+  // -------------------------------------------------------------
+  getLeaveRequests: async (params = {}) => {
+    const res = await apiClient.get('/leave-requests', params)
+    return {
+      data: Array.isArray(res) ? res : (res?.data || []),
+      pagination: res?.pagination || null,
+    }
+  },
+
+  createLeaveRequest: async (data) => {
+    const res = await apiClient.post('/leave-requests', data)
+    return res?.data || res
+  },
+
+  reviewLeaveRequest: async (id, data) => {
+    const res = await apiClient.patch(`/leave-requests/${id}/review`, data)
+    return res?.data || res
+  },
+
+  // -------------------------------------------------------------
+  // Student Promotion
+  // -------------------------------------------------------------
+  promoteStudents: async (data) => {
+    const res = await apiClient.post('/students/promote', data)
+    return res?.data || res
+  },
+
+  getPromotionHistory: async (params = {}) => {
+    const res = await apiClient.get('/students/promotion-history', params)
+    return {
+      data: Array.isArray(res) ? res : (res?.data || []),
+      pagination: res?.pagination || null,
+    }
+  },
 }
 
 export default api
+
 

@@ -559,6 +559,128 @@ async function getParentDashboard(user) {
   };
 }
 
+async function getAccountantDashboard(user) {
+  const monthStart = startOfMonth();
+  const todayStart = today();
+
+  const [
+    totalPaymentsAgg,
+    todayPaymentsAgg,
+    monthPaymentsAgg,
+    feeInvoicesAgg,
+    monthPayrollPaidAgg,
+    monthPayrollPendingAgg,
+    recentPayments,
+    recentInvoices,
+    notices,
+  ] = await Promise.all([
+    prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: { ...notDeleted(), paymentStatus: { not: 'CANCELLED' } },
+    }).catch(() => ({ _sum: { amount: 0 } })),
+    prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: { ...notDeleted(), paymentStatus: { not: 'CANCELLED' }, paymentDate: { gte: todayStart } },
+    }).catch(() => ({ _sum: { amount: 0 } })),
+    prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: { ...notDeleted(), paymentStatus: { not: 'CANCELLED' }, paymentDate: { gte: monthStart } },
+    }).catch(() => ({ _sum: { amount: 0 } })),
+    prisma.feeInvoice.aggregate({
+      _sum: { pendingAmount: true, finalAmount: true },
+      where: notDeleted(),
+    }).catch(() => ({ _sum: { pendingAmount: 0, finalAmount: 0 } })),
+    prisma.payroll.aggregate({
+      _sum: { netSalary: true },
+      where: { ...notDeleted(), paymentStatus: 'PAID' },
+    }).catch(() => ({ _sum: { netSalary: 0 } })),
+    prisma.payroll.aggregate({
+      _sum: { netSalary: true },
+      where: { ...notDeleted(), paymentStatus: 'PENDING' },
+    }).catch(() => ({ _sum: { netSalary: 0 } })),
+    prisma.payment.findMany({
+      where: notDeleted(),
+      include: {
+        student: { select: { id: true, studentId: true, firstName: true, lastName: true, class: { select: { name: true, section: true } } } },
+      },
+      orderBy: { paymentDate: 'desc' },
+      take: 8,
+    }).catch(() => []),
+    prisma.feeInvoice.findMany({
+      where: { ...notDeleted(), status: { in: ['PENDING', 'PARTIAL', 'OVERDUE'] } },
+      include: {
+        student: { select: { id: true, studentId: true, firstName: true, lastName: true, class: { select: { name: true, section: true } } } },
+      },
+      orderBy: { dueDate: 'asc' },
+      take: 8,
+    }).catch(() => []),
+    prisma.notice.findMany({
+      where: { ...notDeleted(), audience: { in: ['ALL', 'ADMIN'] } },
+      orderBy: { publishDate: 'desc' },
+      take: 4,
+    }).catch(() => []),
+  ]);
+
+  return {
+    role: 'ACCOUNTANT',
+    roleLabel: 'Accountant',
+    counts: {
+      totalFeeCollected: totalPaymentsAgg._sum?.amount || 0,
+      todayFeeCollected: todayPaymentsAgg._sum?.amount || 0,
+      monthFeeCollected: monthPaymentsAgg._sum?.amount || 0,
+      totalPendingFees: feeInvoicesAgg._sum?.pendingAmount || 0,
+      totalInvoiced: feeInvoicesAgg._sum?.finalAmount || 0,
+      monthPayrollDisbursed: monthPayrollPaidAgg._sum?.netSalary || 0,
+      monthPayrollPending: monthPayrollPendingAgg._sum?.netSalary || 0,
+    },
+    recentPayments,
+    recentInvoices,
+    notices,
+  };
+}
+
+async function getReceptionistDashboard(user) {
+  const [
+    totalStudents,
+    totalTeachers,
+    totalStaff,
+    totalClasses,
+    recentStudents,
+    notices,
+  ] = await Promise.all([
+    prisma.student.count({ where: notDeleted() }).catch(() => 0),
+    prisma.teacher.count({ where: notDeleted() }).catch(() => 0),
+    prisma.staff.count({ where: notDeleted() }).catch(() => 0),
+    prisma.class.count({ where: notDeleted() }).catch(() => 0),
+    prisma.student.findMany({
+      where: notDeleted(),
+      orderBy: { createdAt: 'desc' },
+      take: 8,
+      include: {
+        class: { select: { id: true, name: true, section: true } },
+      },
+    }).catch(() => []),
+    prisma.notice.findMany({
+      where: { ...notDeleted(), audience: { in: ['ALL', 'ADMIN'] } },
+      orderBy: { publishDate: 'desc' },
+      take: 5,
+    }).catch(() => []),
+  ]);
+
+  return {
+    role: 'RECEPTIONIST',
+    roleLabel: 'Receptionist',
+    counts: {
+      totalStudents,
+      totalTeachers,
+      totalStaff,
+      totalClasses,
+    },
+    recentStudents,
+    notices,
+  };
+}
+
 /**
  * Dispatch to the dashboard implementation for the caller's role.
  */
@@ -567,6 +689,10 @@ export async function getDashboard(user) {
     case 'SUPER_ADMIN':
     case 'ADMIN':
       return getAdminDashboard(user);
+    case 'ACCOUNTANT':
+      return getAccountantDashboard(user);
+    case 'RECEPTIONIST':
+      return getReceptionistDashboard(user);
     case 'TEACHER':
       return getTeacherDashboard(user);
     case 'STUDENT':

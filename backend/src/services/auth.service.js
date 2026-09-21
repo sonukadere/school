@@ -9,6 +9,7 @@ import {
   serializeUser,
   signToken,
 } from '../utils/helpers.js';
+import { sendPasswordResetEmail } from './email.service.js';
 
 const USER_SELECT = {
   id: true,
@@ -303,6 +304,98 @@ export async function changePassword(userId, currentPassword, newPassword) {
     expiresIn: env.jwtExpiresIn,
     user: serializeUser(updatedUser),
     message: 'Password changed successfully.',
+  };
+}
+
+/**
+ * Request password reset token.
+ */
+export async function forgotPassword(email) {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const user = await prisma.user.findFirst({
+    where: {
+      email: cleanEmail,
+      isActive: true,
+      ...notDeleted(),
+    },
+  });
+
+  // Security best practice: Don't leak whether the email exists, but return success
+  if (!user) {
+    return {
+      message: 'If an account exists with that email address, a password reset link has been sent.',
+    };
+  }
+
+  // Generate 32-byte hex token (valid for 1 hour)
+  const { randomBytes } = await import('crypto');
+  const token = randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 60 * 60 * 1000);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordResetToken: token,
+      passwordResetExpires: expires,
+    },
+  });
+
+  console.log(`[AUTH] Password reset token generated for ${user.email}: ${token}`);
+
+  // Send password reset email asynchronously
+  sendPasswordResetEmail({
+    to: user.email,
+    resetToken: token,
+    userName: user.name,
+  }).catch((err) => {
+    console.error(`[AUTH] Failed to send password reset email to ${user.email}:`, err.message);
+  });
+
+  return {
+    message: 'If an account exists with that email address, a password reset link has been sent.',
+    // For development convenience / direct reset:
+    resetToken: token,
+  };
+}
+
+/**
+ * Reset password using a valid reset token.
+ */
+export async function resetPassword(token, newPassword) {
+  if (!token || !newPassword || newPassword.length < 6) {
+    throw ApiError.badRequest('Valid token and new password (min 6 chars) are required.');
+  }
+
+  const user = await prisma.user.findFirst({
+    where: {
+      passwordResetToken: token,
+      passwordResetExpires: { gt: new Date() },
+      isActive: true,
+      ...notDeleted(),
+    },
+    select: USER_SELECT,
+  });
+
+  if (!user) {
+    throw ApiError.badRequest('Password reset token is invalid or has expired.');
+  }
+
+  const hashedPassword = await hashPassword(newPassword);
+
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: hashedPassword,
+      passwordResetToken: null,
+      passwordResetExpires: null,
+      mustChangePassword: false,
+    },
+    select: USER_SELECT,
+  });
+
+  return {
+    success: true,
+    message: 'Your password has been reset successfully. You can now log in with your new password.',
   };
 }
 

@@ -43,6 +43,17 @@ const env = {
     keyId: process.env.RAZORPAY_KEY_ID || '',
     keySecret: process.env.RAZORPAY_KEY_SECRET || '',
   },
+
+  // SMTP Email configuration defaults
+  smtp: {
+    host: process.env.SMTP_HOST || '',
+    port: parseInt(process.env.SMTP_PORT, 10) || 587,
+    secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    fromName: process.env.SMTP_FROM_NAME || 'Daily Day Academy',
+    fromEmail: process.env.SMTP_FROM_EMAIL || 'no-reply@dailydayacademy.edu',
+  },
 };
 
 export default env;

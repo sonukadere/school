@@ -1,40 +1,96 @@
-import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
-import { Mail, ArrowLeft, Send } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Link, Navigate, useSearchParams, useNavigate } from 'react-router-dom'
+import { Mail, ArrowLeft, Send, KeyRound, CheckCircle } from 'lucide-react'
 import Input from '../../components/common/Input'
 import Button from '../../components/common/Button'
 import { useAuth } from '../../context/AuthContext'
 import { useSettings } from '../../context/SettingsContext'
 import { useToast } from '../../context/ToastContext'
+import { apiClient } from '../../services/apiClient'
 
 function ForgotPassword() {
   const { isAuthenticated } = useAuth()
   const { settings } = useSettings()
   const { showToast } = useToast()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const urlToken = searchParams.get('token')
+
   const schoolName = settings?.schoolName || 'Daily Day Academy'
   const [email, setEmail] = useState('')
+  const [resetToken, setResetToken] = useState(urlToken || '')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const [step, setStep] = useState(urlToken ? 'reset' : 'forgot')
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (urlToken) {
+      setResetToken(urlToken)
+      setStep('reset')
+    }
+  }, [urlToken])
 
   if (isAuthenticated) return <Navigate to="/dashboard" replace />
 
-  const handleSubmit = async (event) => {
+  const handleForgotSubmit = async (event) => {
     event.preventDefault()
     if (!email.trim()) {
       setError('Email is required')
       return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Enter a valid email')
+      setError('Enter a valid email address')
       return
     }
     setError('')
     setSubmitting(true)
-    await new Promise((resolve) => setTimeout(resolve, 800))
-    setSubmitting(false)
-    setSubmitted(true)
-    showToast('Reset link sent to your email', 'success')
+    try {
+      const res = await apiClient.post('/auth/forgot-password', { email })
+      setSubmitting(false)
+      showToast(res.message || 'Reset link generated successfully.', 'success')
+      if (res.data?.resetToken) {
+        setResetToken(res.data.resetToken)
+      }
+      setStep('reset')
+    } catch (err) {
+      setSubmitting(false)
+      setError(err.message || 'Failed to process request.')
+      showToast(err.message || 'Failed to process request.', 'error')
+    }
+  }
+
+  const handleResetSubmit = async (event) => {
+    event.preventDefault()
+    if (!resetToken.trim()) {
+      setError('Reset token is required.')
+      return
+    }
+    if (!newPassword || newPassword.length < 6) {
+      setError('Password must be at least 6 characters.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    setError('')
+    setSubmitting(true)
+    try {
+      const res = await apiClient.post('/auth/reset-password', {
+        token: resetToken.trim(),
+        password: newPassword,
+      })
+      setSubmitting(false)
+      showToast(res.message || 'Password reset successfully! Please log in.', 'success')
+      setStep('success')
+    } catch (err) {
+      setSubmitting(false)
+      setError(err.message || 'Failed to reset password.')
+      showToast(err.message || 'Failed to reset password.', 'error')
+    }
   }
 
   return (

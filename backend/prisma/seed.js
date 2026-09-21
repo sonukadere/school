@@ -80,6 +80,80 @@ async function main() {
     console.log(`Seeded admin user: ${adminEmail}`);
   }
 
+  // Accountant User & Staff
+  let accountant = await prisma.user.findUnique({ where: { email: 'accountant@school.com' } });
+  if (!accountant) {
+    accountant = await prisma.user.create({
+      data: {
+        username: 'accountant',
+        email: 'accountant@school.com',
+        password: await hash('accountant123'),
+        name: 'Ramesh Verma',
+        role: 'ACCOUNTANT',
+      },
+    });
+    console.log('Seeded accountant user: accountant@school.com');
+  } else {
+    await prisma.user.update({
+      where: { id: accountant.id },
+      data: { role: 'ACCOUNTANT' },
+    });
+  }
+
+  let accountantStaff = await prisma.staff.findUnique({ where: { staffId: 'STF-ACC-001' } });
+  if (!accountantStaff) {
+    await prisma.staff.create({
+      data: {
+        staffId: 'STF-ACC-001',
+        name: 'Ramesh Verma',
+        email: 'accountant@school.com',
+        phone: '9812345671',
+        position: 'Accountant',
+        department: 'Accounts',
+        salary: 45000,
+        joiningDate: new Date('2024-01-15'),
+        userId: accountant.id,
+      },
+    });
+  }
+
+  // Receptionist User & Staff
+  let receptionist = await prisma.user.findUnique({ where: { email: 'receptionist@school.com' } });
+  if (!receptionist) {
+    receptionist = await prisma.user.create({
+      data: {
+        username: 'receptionist',
+        email: 'receptionist@school.com',
+        password: await hash('receptionist123'),
+        name: 'Kavita Sen',
+        role: 'RECEPTIONIST',
+      },
+    });
+    console.log('Seeded receptionist user: receptionist@school.com');
+  } else {
+    await prisma.user.update({
+      where: { id: receptionist.id },
+      data: { role: 'RECEPTIONIST' },
+    });
+  }
+
+  let receptionistStaff = await prisma.staff.findUnique({ where: { staffId: 'STF-REC-001' } });
+  if (!receptionistStaff) {
+    await prisma.staff.create({
+      data: {
+        staffId: 'STF-REC-001',
+        name: 'Kavita Sen',
+        email: 'receptionist@school.com',
+        phone: '9812345672',
+        position: 'Receptionist',
+        department: 'Front Desk',
+        salary: 32000,
+        joiningDate: new Date('2024-03-01'),
+        userId: receptionist.id,
+      },
+    });
+  }
+
   // 3. Classes
   const classDefs = [
     { name: 'Class 5', section: 'A', roomNumber: '101' },
@@ -93,8 +167,8 @@ async function main() {
 
   const classes = [];
   for (const c of classDefs) {
-    let existing = await prisma.class.findUnique({
-      where: { name_section: { name: c.name, section: c.section } },
+    let existing = await prisma.class.findFirst({
+      where: { name: c.name, section: c.section },
     });
     if (!existing) {
       existing = await prisma.class.create({ data: c });
@@ -214,8 +288,8 @@ async function main() {
   for (const c of classes) {
     for (let i = 0; i < subjectList.length; i++) {
       const s = subjectList[i];
-      let sub = await prisma.subject.findUnique({
-        where: { classId_name: { classId: c.id, name: s.name } },
+      let sub = await prisma.subject.findFirst({
+        where: { classId: c.id, name: s.name },
       });
       if (!sub) {
         sub = await prisma.subject.create({

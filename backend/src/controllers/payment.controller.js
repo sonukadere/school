@@ -77,27 +77,20 @@ export const deleteFeeStructure = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, 'Fee structure deleted successfully.', null));
 });
 
-// Schools list (for Super Admin filter)
+// School info endpoint (Single School)
 export const listSchools = asyncHandler(async (req, res) => {
-  let schools = await prisma.school.findMany({
-    where: notDeleted(),
-    orderBy: { name: 'asc' },
-  });
-
-  if (!schools.length) {
-    const setting = await prisma.setting.findFirst();
-    schools = [
-      {
-        id: 'SCH001',
-        code: 'SCH001',
-        name: setting?.schoolName || 'Daily Day Academy',
-        logo: setting?.schoolLogo || '/logo.svg',
-        address: setting?.address,
-      },
-    ];
-  }
-
-  res.status(200).json(new ApiResponse(200, 'Schools fetched successfully.', schools));
+  const setting = await prisma.setting.findFirst();
+  const school = {
+    id: 'school-main',
+    code: 'SCH001',
+    name: setting?.schoolName || 'Daily Day Academy',
+    logo: setting?.schoolLogo || '/logo.svg',
+    address: setting?.address || '',
+    phone: setting?.phone || '',
+    email: setting?.email || '',
+    academicYear: setting?.academicYear || '2026-2027',
+  };
+  res.status(200).json(new ApiResponse(200, 'School information retrieved successfully.', [school]));
 });
 
 export const assignFeeStructureToClass = asyncHandler(async (req, res) => {

@@ -582,6 +582,7 @@ export default function FeeList() {
               <select
                 value={activeTab}
                 onChange={(e) => handleTabChange(e.target.value)}
+                aria-label="Select finance tab"
                 className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/90 py-2.5 pl-3.5 pr-10 text-xs font-semibold text-slate-800 shadow-2xs focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
               >
                 {TABS.map((tab) => (
@@ -603,6 +604,7 @@ export default function FeeList() {
               type="text"
               value={tabSearch}
               onChange={(e) => setTabSearch(e.target.value)}
+              aria-label="Search tabs and modules"
               placeholder="Search tabs & modules (e.g. payroll, history, pending)..."
               className="w-full rounded-xl border border-slate-200 bg-slate-50/80 py-2 pl-9 pr-8 text-xs text-slate-800 placeholder-slate-400 transition focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             />
@@ -612,6 +614,7 @@ export default function FeeList() {
                 onClick={() => setTabSearch('')}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 title="Clear search"
+                aria-label="Clear search"
               >
                 <X size={14} />
               </button>
@@ -624,6 +627,7 @@ export default function FeeList() {
               <select
                 value={tabCategory}
                 onChange={(e) => setTabCategory(e.target.value)}
+                aria-label="Filter modules by category"
                 className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50/80 py-2 pl-3 pr-8 text-xs font-medium text-slate-700 transition focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
               >
                 <option value="all">All Modules ({TABS.length})</option>

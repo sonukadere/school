@@ -40,6 +40,16 @@ export async function generateNextSequenceId(tx, type, prefixText, padLength = 3
         const numPart = parseInt(latest.teacherId.replace(idPrefix, ''), 10);
         if (!isNaN(numPart)) maxExistingNum = numPart;
       }
+    } else if (type === 'lead') {
+      const latest = await client.lead.findFirst({
+        where: { enquiryId: { startsWith: idPrefix } },
+        orderBy: { enquiryId: 'desc' },
+        select: { enquiryId: true },
+      });
+      if (latest && latest.enquiryId) {
+        const numPart = parseInt(latest.enquiryId.replace(idPrefix, ''), 10);
+        if (!isNaN(numPart)) maxExistingNum = numPart;
+      }
     }
 
     try {

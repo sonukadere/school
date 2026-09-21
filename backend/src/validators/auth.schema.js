@@ -10,7 +10,16 @@ export const registerSchema = z.object({
   email: z.string().trim().toLowerCase().email('Invalid email address.'),
   username: z.string().trim().min(3, 'Username must be at least 3 characters.').max(50),
   password: z.string().min(6, 'Password must be at least 6 characters.').max(100),
-  role: z.enum(['SUPER_ADMIN', 'ADMIN', 'TEACHER', 'STUDENT', 'PARENT', 'STAFF']).optional(),
+  role: z.enum(['SUPER_ADMIN', 'ADMIN', 'ACCOUNTANT', 'TEACHER', 'STUDENT', 'PARENT', 'RECEPTIONIST', 'STAFF']).optional(),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Please enter a valid email address.'),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().trim().min(1, 'Password reset token is required.'),
+  password: z.string().min(6, 'Password must be at least 6 characters.').max(100),
 });
 
 export const studentRegistrationSchema = z.object({

@@ -37,6 +37,11 @@ const SOFT_DELETE_MODELS = new Set([
   'notice',
   'event',
   'holiday',
+  'lead',
+  'leaverequest',
+  'homework',
+  'assignment',
+  'studymaterial',
 ]);
 
 if (!globalThis.__prismaMiddlewareAttached) {

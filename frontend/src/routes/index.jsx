@@ -66,6 +66,15 @@ const ExamPaperView = lazyRetry(() => import('../pages/Exams/ExamPaperView'), 'e
 const DigitalExamAttempt = lazyRetry(() => import('../pages/Exams/DigitalExamAttempt'), 'digital_exam')
 const PayrollPage = lazyRetry(() => import('../pages/Payroll/PayrollPage'), 'payroll')
 const TimetablePage = lazyRetry(() => import('../pages/Timetable/TimetablePage'), 'timetable')
+const HomeworkList = lazyRetry(() => import('../pages/Homework/HomeworkList'), 'homework_list')
+const AssignmentList = lazyRetry(() => import('../pages/Assignments/AssignmentList'), 'assignment_list')
+const StudyMaterialList = lazyRetry(() => import('../pages/StudyMaterial/StudyMaterialList'), 'study_material_list')
+const LeaveManagementPage = lazyRetry(() => import('../pages/Leave/LeaveManagementPage'), 'leave_page')
+const StudentPromotionPage = lazyRetry(() => import('../pages/Students/StudentPromotionPage'), 'promotion_page')
+const ParentList = lazyRetry(() => import('../pages/Parents/ParentList'), 'parent_list')
+const StaffList = lazyRetry(() => import('../pages/Staff/StaffList'), 'staff_list')
+const SchoolCalendarPage = lazyRetry(() => import('../pages/Calendar/SchoolCalendarPage'), 'calendar_page')
+const ReportsPage = lazyRetry(() => import('../pages/Reports/ReportsPage'), 'reports_page')
 
 function ForbiddenRedirect() {
   const { showToast } = useToast()
@@ -92,19 +101,39 @@ function ProtectedRoute({ children }) {
   }
 
   const roleUpper = (user?.role || '').toUpperCase()
+
+  // 1. Accountant Role Guards
+  if (roleUpper === 'ACCOUNTANT' || user?.isAccountant) {
+    const allowed = ['/dashboard', '/fees', '/payroll', '/reports', '/crm', '/notices', '/profile', '/settings', '/change-password']
+    const isAllowed = allowed.some((prefix) => location.pathname === prefix || location.pathname.startsWith(prefix))
+    if (!isAllowed) return <ForbiddenRedirect />
+  }
+
+  // 2. Receptionist Role Guards
+  if (roleUpper === 'RECEPTIONIST' || user?.isReceptionist) {
+    const allowed = ['/dashboard', '/crm', '/parents', '/students', '/staff', '/attendance', '/calendar', '/notices', '/profile', '/change-password']
+    const isAllowed = allowed.some((prefix) => location.pathname === prefix || location.pathname.startsWith(prefix))
+    if (!isAllowed) return <ForbiddenRedirect />
+  }
+
+  // 3. Teacher Role Guards
   if (roleUpper === 'TEACHER') {
     const forbiddenPrefixes = [
       '/students/add',
       '/students/edit',
+      '/students/promote',
       '/classes/add',
       '/classes/edit',
       '/subjects/add',
       '/teachers',
+      '/staff',
       '/attendance/teachers',
       '/fees',
       '/payroll',
       '/notices/create',
       '/settings',
+      '/crm',
+      '/reports',
     ]
     const isForbidden = forbiddenPrefixes.some((prefix) =>
       location.pathname.startsWith(prefix)
@@ -114,7 +143,8 @@ function ProtectedRoute({ children }) {
     }
   }
 
-  if (user?.role === 'Student' || user?.isStudent) {
+  // 4. Student Role Guards
+  if (user?.role === 'Student' || user?.isStudent || roleUpper === 'STUDENT') {
     const forbiddenPrefixes = [
       '/students',
       '/teachers',
@@ -127,6 +157,10 @@ function ProtectedRoute({ children }) {
       '/marks/entry',
       '/notices/create',
       '/payroll',
+      '/fees',
+      '/crm',
+      '/staff',
+      '/reports',
     ]
     const isForbidden = forbiddenPrefixes.some((prefix) =>
       location.pathname.startsWith(prefix)
@@ -136,7 +170,8 @@ function ProtectedRoute({ children }) {
     }
   }
 
-  if (user?.role === 'Parent' || user?.isParent) {
+  // 5. Parent Role Guards
+  if (user?.role === 'Parent' || user?.isParent || roleUpper === 'PARENT') {
     const forbiddenPrefixes = [
       '/students',
       '/teachers',
@@ -149,6 +184,9 @@ function ProtectedRoute({ children }) {
       '/marks/entry',
       '/notices/create',
       '/payroll',
+      '/crm',
+      '/staff',
+      '/reports',
     ]
     const isForbidden = forbiddenPrefixes.some((prefix) =>
       location.pathname.startsWith(prefix)
@@ -158,6 +196,7 @@ function ProtectedRoute({ children }) {
     }
   }
 
+  // 6. Generic Staff Role Guards
   if (roleUpper === 'STAFF' || user?.isStaff) {
     const forbiddenPrefixes = [
       '/students',
@@ -172,6 +211,8 @@ function ProtectedRoute({ children }) {
       '/certificates',
       '/fees',
       '/payroll',
+      '/crm',
+      '/reports',
     ]
     const isForbidden = forbiddenPrefixes.some((prefix) =>
       location.pathname.startsWith(prefix)
@@ -230,17 +271,23 @@ function AppRoutes() {
           }
         />
         <Route path="/dashboard" element={<Suspense fallback={<Loader fullScreen label="Loading dashboard..." />}><Dashboard /></Suspense>} />
+        <Route path="/parents" element={<Suspense fallback={<Loader fullScreen label="Loading parents directory..." />}><ParentList /></Suspense>} />
 
+        {/* Student Management & Promotion */}
         <Route path="/students" element={<Suspense fallback={<Loader fullScreen label="Loading students..." />}><StudentList /></Suspense>} />
         <Route path="/students/add" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><AddStudent /></Suspense>} />
+        <Route path="/students/promote" element={<Suspense fallback={<Loader fullScreen label="Loading promotion console..." />}><StudentPromotionPage /></Suspense>} />
         <Route path="/students/edit/:id" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><EditStudent /></Suspense>} />
         <Route path="/students/:id" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><StudentDetails /></Suspense>} />
 
+        {/* Teachers & Non-Teaching Staff */}
         <Route path="/teachers" element={<Suspense fallback={<Loader fullScreen label="Loading teachers..." />}><TeacherList /></Suspense>} />
         <Route path="/teachers/add" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><AddTeacher /></Suspense>} />
         <Route path="/teachers/edit/:id" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><EditTeacher /></Suspense>} />
         <Route path="/teachers/:id" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><TeacherDetails /></Suspense>} />
+        <Route path="/staff" element={<Suspense fallback={<Loader fullScreen label="Loading staff directory..." />}><StaffList /></Suspense>} />
 
+        {/* Classes & Subjects */}
         <Route path="/classes" element={<Suspense fallback={<Loader fullScreen label="Loading classes..." />}><ClassList /></Suspense>} />
         <Route path="/classes/add" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><AddClass /></Suspense>} />
         <Route path="/classes/edit/:id" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><EditClass /></Suspense>} />
@@ -248,15 +295,25 @@ function AppRoutes() {
         <Route path="/subjects" element={<Suspense fallback={<Loader fullScreen label="Loading subjects..." />}><SubjectList /></Suspense>} />
         <Route path="/subjects/add" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><AddSubject /></Suspense>} />
 
+        {/* Attendance & Timetable */}
         <Route path="/attendance" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><Attendance /></Suspense>} />
         <Route path="/attendance/students" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><StudentAttendance /></Suspense>} />
         <Route path="/attendance/teachers" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><TeacherAttendance /></Suspense>} />
-
         <Route path="/timetable" element={<Suspense fallback={<Loader fullScreen label="Loading timetable..." />}><TimetablePage /></Suspense>} />
 
+        {/* Homework, Assignments, Study Material, Leave & Calendar */}
+        <Route path="/homework" element={<Suspense fallback={<Loader fullScreen label="Loading homework..." />}><HomeworkList /></Suspense>} />
+        <Route path="/assignments" element={<Suspense fallback={<Loader fullScreen label="Loading assignments..." />}><AssignmentList /></Suspense>} />
+        <Route path="/study-material" element={<Suspense fallback={<Loader fullScreen label="Loading study materials..." />}><StudyMaterialList /></Suspense>} />
+        <Route path="/leave" element={<Suspense fallback={<Loader fullScreen label="Loading leave requests..." />}><LeaveManagementPage /></Suspense>} />
+        <Route path="/calendar" element={<Suspense fallback={<Loader fullScreen label="Loading calendar..." />}><SchoolCalendarPage /></Suspense>} />
+
+        {/* Financials & Reports */}
         <Route path="/fees" element={<Suspense fallback={<Loader fullScreen label="Loading fees..." />}><FeeList /></Suspense>} />
         <Route path="/payroll" element={<Suspense fallback={<Loader fullScreen label="Loading payroll..." />}><PayrollPage /></Suspense>} />
+        <Route path="/reports" element={<Suspense fallback={<Loader fullScreen label="Loading reports..." />}><ReportsPage /></Suspense>} />
 
+        {/* Exams, Questions & Marks */}
         <Route path="/exams" element={<Suspense fallback={<Loader fullScreen label="Loading exams..." />}><ExamList /></Suspense>} />
         <Route path="/exams/create" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><CreateExam /></Suspense>} />
         <Route path="/exams/:id/paper" element={<Suspense fallback={<Loader fullScreen label="Loading exam paper..." />}><ExamPaperView /></Suspense>} />
@@ -270,6 +327,7 @@ function AppRoutes() {
         <Route path="/marksheets" element={<Suspense fallback={<Loader fullScreen label="Loading marksheet generator..." />}><GenerateMarksheet /></Suspense>} />
         <Route path="/certificates" element={<Suspense fallback={<Loader fullScreen label="Loading certificates..." />}><TransferCertificateList /></Suspense>} />
 
+        {/* Notices & Profile */}
         <Route path="/notices" element={<Suspense fallback={<Loader fullScreen label="Loading notices..." />}><NoticeList /></Suspense>} />
         <Route path="/notices/create" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><CreateNotice /></Suspense>} />
 

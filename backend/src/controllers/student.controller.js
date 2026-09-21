@@ -33,3 +33,14 @@ export const resetStudentCredentials = asyncHandler(async (req, res) => {
   const result = await studentService.resetStudentCredentials(req.params.id, req.body);
   res.status(200).json(new ApiResponse(200, result.message || 'Student credentials updated successfully.', result));
 });
+
+export const promoteStudents = asyncHandler(async (req, res) => {
+  const result = await studentService.promoteStudents(req.body, req.user);
+  res.status(200).json(new ApiResponse(200, result.message, result));
+});
+
+export const getPromotionHistory = asyncHandler(async (req, res) => {
+  const result = await studentService.getPromotionHistory(req.query);
+  res.status(200).json(new ApiResponse(200, 'Promotion history fetched successfully.', result.data, result.pagination));
+});
+

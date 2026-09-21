@@ -184,8 +184,8 @@ export async function getTeacherSalaryStructures(query = {}, actor) {
  * SAVE / UPDATE TEACHER SALARY STRUCTURE
  */
 export async function saveTeacherSalaryStructure(data, actor) {
-  if (actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
-    throw ApiError.forbidden('Only administrators can configure salary structures.');
+  if (actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN' && actor.role !== 'ACCOUNTANT') {
+    throw ApiError.forbidden('Only administrators and accountants can configure salary structures.');
   }
 
   const teacher = await prisma.teacher.findFirst({
@@ -211,7 +211,6 @@ export async function saveTeacherSalaryStructure(data, actor) {
   const netSalary = Math.max(grossSalary - deductions - advance, 0);
 
   const payload = {
-    schoolId: schoolId || 'SCH001',
     designation: data.designation || 'Teacher',
     basicSalary,
     allowances,
@@ -250,8 +249,8 @@ export async function saveTeacherSalaryStructure(data, actor) {
  * Prevents duplicate payroll for the same teacher and month.
  */
 export async function generateMonthlyPayroll(data, actor) {
-  if (actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
-    throw ApiError.forbidden('Only administrators can generate monthly payroll.');
+  if (actor.role !== 'ADMIN' && actor.role !== 'SUPER_ADMIN' && actor.role !== 'ACCOUNTANT') {
+    throw ApiError.forbidden('Only administrators and accountants can generate monthly payroll.');
   }
 
   const month = parseInt(data.salaryMonth, 10);
@@ -306,15 +305,29 @@ export async function generateMonthlyPayroll(data, actor) {
     const deductions = struct?.deductions ?? 0;
     const advance = struct?.advance ?? 0;
 
-    const grossSalary = basicSalary + allowances + bonus;
-    const netSalary = Math.max(grossSalary - deductions - advance, 0);
+    // Calculate attendance-based deduction if any
+    const startOfSalaryMonth = new Date(year, month - 1, 1);
+    const endOfSalaryMonth = new Date(year, month, 0, 23, 59, 59, 999);
+    const absentDays = await prisma.teacherAttendance.count({
+      where: {
+        teacherId: teacher.id,
+        status: 'ABSENT',
+        date: { gte: startOfSalaryMonth, lte: endOfSalaryMonth },
+        ...notDeleted(),
+      },
+    });
+    const perDaySalary = Math.round((basicSalary / 30) * 100) / 100;
+    const attendanceDeduction = Math.round(absentDays * perDaySalary);
+    const totalDeductions = deductions + attendanceDeduction;
 
-    const payrollNumber = await generatePayrollNumber(school.code || 'SCH001', year, month);
+    const grossSalary = basicSalary + allowances + bonus;
+    const netSalary = Math.max(grossSalary - totalDeductions - advance, 0);
+
+    const payrollNumber = await generatePayrollNumber('SCH001', year, month);
 
     const record = await prisma.payroll.create({
       data: {
         payrollNumber,
-        schoolId: school.code || schoolId || 'SCH001',
         teacherId: teacher.id,
         salaryMonth: month,
         salaryYear: year,
@@ -322,7 +335,7 @@ export async function generateMonthlyPayroll(data, actor) {
         basicSalary,
         allowances,
         bonus,
-        deductions,
+        deductions: totalDeductions,
         advance,
         grossSalary,
         netSalary,
@@ -487,9 +500,7 @@ export async function markSalaryPaid(id, data, actor) {
     throw ApiError.badRequest('This monthly salary has already been marked as PAID.');
   }
 
-  assertSchoolAccess(actor, payroll.schoolId);
-
-  const school = await getSchoolInfo(payroll.schoolId);
+  const school = await getSchoolInfo();
   const paymentDate = data.paymentDate ? toDateOnly(data.paymentDate) : new Date();
   const paymentMethod = data.paymentMethod || payroll.paymentMethod || 'BANK_TRANSFER';
 
@@ -563,11 +574,10 @@ export async function markSalaryPaid(id, data, actor) {
   };
 
   if (!payslip) {
-    const payslipNumber = await generatePayslipNumber(school.code || 'SCH001', payroll.salaryYear, payroll.salaryMonth);
+    const payslipNumber = await generatePayslipNumber('SCH001', payroll.salaryYear, payroll.salaryMonth);
     payslip = await prisma.payslip.create({
       data: {
         payslipNumber,
-        schoolId: school.code || payroll.schoolId || 'SCH001',
         payrollId: payroll.id,
         teacherId: payroll.teacherId,
         issueDate: paymentDate,
@@ -635,8 +645,6 @@ export async function getPayslip(payslipNumberOrId, actor) {
   if (actor.role === 'STUDENT' || actor.role === 'PARENT') {
     throw ApiError.forbidden('You are not authorized to view teacher payslips.');
   }
-
-  assertSchoolAccess(actor, payslip.schoolId);
 
   let metadata = null;
   if (payslip.metadata) {

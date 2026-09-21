@@ -6,6 +6,30 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: '/',
+  server: {
+    port: 5175,
+    strictPort: false,
+    warmup: {
+      clientFiles: [
+        './src/main.jsx',
+        './src/App.jsx',
+        './src/pages/Dashboard/Dashboard.jsx',
+        './src/pages/Fees/FeeList.jsx',
+        './src/components/layout/Layout.jsx',
+        './src/components/layout/Navbar.jsx',
+        './src/components/layout/Sidebar.jsx',
+      ],
+    },
+  },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'lucide-react',
+      'recharts',
+    ],
+  },
   build: {
     outDir: 'dist',
     sourcemap: false,
@@ -30,4 +54,9 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    port: 5175,
+    strictPort: false,
+  },
 })
+

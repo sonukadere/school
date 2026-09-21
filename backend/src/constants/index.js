@@ -1,24 +1,28 @@
 export const ROLES = Object.freeze({
   SUPER_ADMIN: 'SUPER_ADMIN',
   ADMIN: 'ADMIN',
+  ACCOUNTANT: 'ACCOUNTANT',
   TEACHER: 'TEACHER',
   STUDENT: 'STUDENT',
   PARENT: 'PARENT',
+  RECEPTIONIST: 'RECEPTIONIST',
   STAFF: 'STAFF',
 });
 
 export const ROLE_LABELS = Object.freeze({
   SUPER_ADMIN: 'Super Administrator',
   ADMIN: 'Administrator',
+  ACCOUNTANT: 'Accountant',
   TEACHER: 'Teacher',
   STUDENT: 'Student',
   PARENT: 'Parent',
+  RECEPTIONIST: 'Receptionist',
   STAFF: 'Staff',
 });
 
 export const GENDERS = Object.freeze(['MALE', 'FEMALE', 'OTHER']);
 
-export const ATTENDANCE_STATUSES = Object.freeze(['PRESENT', 'ABSENT', 'LEAVE']);
+export const ATTENDANCE_STATUSES = Object.freeze(['PRESENT', 'ABSENT', 'LEAVE', 'LATE', 'HALF_DAY']);
 
 export const STUDENT_STATUSES = Object.freeze([
   'ACTIVE',
@@ -85,8 +89,10 @@ export const PAGINATION = Object.freeze({
 export const USER_ROLES = Object.freeze([
   ROLES.SUPER_ADMIN,
   ROLES.ADMIN,
+  ROLES.ACCOUNTANT,
   ROLES.TEACHER,
   ROLES.STUDENT,
   ROLES.PARENT,
+  ROLES.RECEPTIONIST,
   ROLES.STAFF,
 ]);

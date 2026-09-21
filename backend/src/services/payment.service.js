@@ -126,29 +126,21 @@ export async function generateInvoiceNumber(schoolCode = 'SCH001') {
 /**
  * Helper to fetch school settings / info for receipt headers
  */
-export async function getSchoolInfo(schoolId = 'SCH001') {
-  let school = await prisma.school.findFirst({
-    where: { OR: [{ id: schoolId }, { code: schoolId }], ...notDeleted() },
-  });
-
-  if (!school) {
-    const setting = await prisma.setting.findFirst();
-    return {
-      id: schoolId || 'SCH001',
-      code: 'SCH001',
-      name: setting?.schoolName || 'Daily Day Academy',
-      logo: setting?.schoolLogo || '/logo.svg',
-      address: setting?.address || '123 Education Street, New Delhi - 110001',
-      phone: setting?.phone || '+91 98765 43210',
-      email: setting?.email || 'info@dailydayacademy.edu',
-      website: setting?.website || 'www.dailydayacademy.edu',
-      affiliationNumber: setting?.affiliationNumber || 'CBSE-AFF-2026-9921',
-      principalName: setting?.principalName || 'Dr. R. K. Sharma',
-      academicYear: setting?.academicYear || '2026-2027',
-    };
-  }
-
-  return school;
+export async function getSchoolInfo() {
+  const setting = await prisma.setting.findFirst();
+  return {
+    id: 'school-main',
+    code: 'SCH001',
+    name: setting?.schoolName || 'Daily Day Academy',
+    logo: setting?.schoolLogo || '/logo.svg',
+    address: setting?.address || '123 Education Street, New Delhi - 110001',
+    phone: setting?.phone || '+91 98765 43210',
+    email: setting?.email || 'info@dailydayacademy.edu',
+    website: setting?.website || 'www.dailydayacademy.edu',
+    affiliationNumber: setting?.affiliationNumber || 'CBSE-AFF-2026-9921',
+    principalName: setting?.principalName || 'Dr. R. K. Sharma',
+    academicYear: setting?.academicYear || '2026-2027',
+  };
 }
 
 /**
@@ -274,7 +266,6 @@ export async function recordPayment(data, actor) {
     invoice = await prisma.feeInvoice.create({
       data: {
         invoiceNumber: invNumber,
-        schoolId: school.code || schoolId,
         studentId: student.id,
         academicYear: data.academicYear || school.academicYear || '2026-2027',
         feeStructureId: feeStructure?.id || null,
@@ -333,7 +324,6 @@ export async function recordPayment(data, actor) {
   const payment = await prisma.payment.create({
     data: {
       receiptNumber,
-      schoolId: school.code || schoolId,
       student: { connect: { id: student.id } },
       academicYear: data.academicYear || invoice.academicYear || '2026-2027',
       ...(invoice?.id ? { invoice: { connect: { id: invoice.id } } } : {}),
@@ -448,7 +438,6 @@ export async function recordPayment(data, actor) {
   const receipt = await prisma.paymentReceipt.create({
     data: {
       receiptNumber,
-      schoolId: school.code || schoolId,
       payment: { connect: { id: payment.id } },
       student: { connect: { id: student.id } },
       ...(invoice?.id ? { invoice: { connect: { id: invoice.id } } } : {}),
@@ -680,7 +669,7 @@ export async function getPaymentReceipt(receiptNumberOrId, actor) {
   }
 
   if (!metadata) {
-    const school = await getSchoolInfo(receipt.schoolId);
+    const school = await getSchoolInfo();
     const student = receipt.student;
     const payment = receipt.payment;
     metadata = {
@@ -1172,7 +1161,6 @@ export async function getStudentFeeLedger(studentId, actor) {
         await prisma.feeInvoice.create({
           data: {
             invoiceNumber,
-            schoolId: school?.code || student.schoolId || 'SCH001',
             studentId: student.id,
             feeStructureId: struct.id,
             feeType: struct.feeType,
@@ -1341,7 +1329,6 @@ export async function createFeeStructure(data, actor) {
 
   const created = await prisma.feeStructure.create({
     data: {
-      schoolId: schoolId || 'SCH001',
       academicYear: data.academicYear || '2026-2027',
       feeType: data.feeType || data.name,
       totalFee: Number(data.totalFee ?? data.amount),
@@ -1487,7 +1474,6 @@ export async function assignFeeStructureToClass(data, actor) {
     await prisma.feeInvoice.create({
       data: {
         invoiceNumber,
-        schoolId: school.code || schoolId || 'SCH001',
         student: { connect: { id: student.id } },
         academicYear: targetAcademicYear,
         ...(structure.id ? { feeStructure: { connect: { id: structure.id } } } : {}),
@@ -1557,7 +1543,6 @@ export async function assignFeeToStudent(data, actor) {
   const invoice = await prisma.feeInvoice.create({
     data: {
       invoiceNumber,
-      schoolId: school.code || schoolId || 'SCH001',
       student: { connect: { id: student.id } },
       academicYear: data.academicYear || '2026-2027',
       ...(data.feeStructureId ? { feeStructure: { connect: { id: data.feeStructureId } } } : {}),

@@ -30,6 +30,26 @@ const DEFAULT_INCLUDE = {
   },
 };
 
+const ALLOWED_STUDENT_SCALAR_FIELDS = new Set([
+  'studentId', 'firstName', 'lastName', 'gender', 'dob', 'fatherName', 'motherName',
+  'email', 'phone', 'address', 'section', 'rollNumber', 'admissionDate', 'status',
+  'photo', 'formNo', 'scholarNo', 'medium', 'nameInHindi', 'fatherNameHindi',
+  'motherNameHindi', 'occupation', 'annualIncome', 'houseNo', 'apartmentSectorStreet',
+  'colony', 'district', 'state', 'dobInWords', 'ageAsOnJuly1', 'motherTongue',
+  'religion', 'caste', 'category', 'previousSchool', 'previousSchoolDiseCode',
+  'sssmId', 'familyId', 'bankAccountNo', 'ifscCode', 'enclosures', 'academicSession',
+]);
+
+function filterStudentScalarFields(data) {
+  const result = {};
+  for (const [key, val] of Object.entries(data || {})) {
+    if (ALLOWED_STUDENT_SCALAR_FIELDS.has(key) && val !== undefined) {
+      result[key] = val;
+    }
+  }
+  return result;
+}
+
 /**
  * Generate the next student ID, e.g. STU-2026-001 (3-digit padded)
  */
@@ -210,16 +230,19 @@ export async function createStudent(data) {
       };
     }
 
+    const { classId, parentId, userId: explicitUserId } = studentFields;
+    const finalUserId = userId || explicitUserId;
+    const cleanScalars = filterStudentScalarFields(studentFields);
+
     const student = await tx.student.create({
       data: {
-        ...studentFields,
-        dob: studentFields.dob ? toDateOnly(studentFields.dob) : null,
-        admissionDate: studentFields.admissionDate ? toDateOnly(studentFields.admissionDate) : toDateOnly(new Date()),
-        testDate: studentFields.testDate ? toDateOnly(studentFields.testDate) : null,
-        docPendingLastDate: studentFields.docPendingLastDate ? toDateOnly(studentFields.docPendingLastDate) : null,
-        feeDepositDate: studentFields.feeDepositDate ? toDateOnly(studentFields.feeDepositDate) : null,
+        ...cleanScalars,
+        dob: cleanScalars.dob ? toDateOnly(cleanScalars.dob) : null,
+        admissionDate: cleanScalars.admissionDate ? toDateOnly(cleanScalars.admissionDate) : toDateOnly(new Date()),
         studentId,
-        userId,
+        ...(classId ? { class: { connect: { id: classId } } } : {}),
+        ...(parentId ? { parent: { connect: { id: parentId } } } : {}),
+        ...(finalUserId ? { user: { connect: { id: finalUserId } } } : {}),
         deletedAt: null,
       },
       include: {
@@ -309,26 +332,36 @@ export async function updateStudent(id, data) {
     }
   }
 
-  const updateData = { ...data };
-  delete updateData.id;
-  if (updateData.studentId && updateData.studentId.startsWith('cm') && updateData.studentId.length > 20) {
-    delete updateData.studentId;
+  const updateScalars = filterStudentScalarFields(data);
+  delete updateScalars.id;
+  if (updateScalars.studentId && updateScalars.studentId.startsWith('cm') && updateScalars.studentId.length > 20) {
+    delete updateScalars.studentId;
   }
-  if (updateData.dob !== undefined) {
-    updateData.dob = updateData.dob ? toDateOnly(updateData.dob) : null;
+  if (updateScalars.dob !== undefined) {
+    updateScalars.dob = updateScalars.dob ? toDateOnly(updateScalars.dob) : null;
   }
-  if (updateData.admissionDate !== undefined) {
-    updateData.admissionDate = updateData.admissionDate ? toDateOnly(updateData.admissionDate) : null;
+  if (updateScalars.admissionDate !== undefined) {
+    updateScalars.admissionDate = updateScalars.admissionDate ? toDateOnly(updateScalars.admissionDate) : null;
   }
-  if (updateData.testDate !== undefined) {
-    updateData.testDate = updateData.testDate ? toDateOnly(updateData.testDate) : null;
-  }
-  if (updateData.docPendingLastDate !== undefined) {
-    updateData.docPendingLastDate = updateData.docPendingLastDate ? toDateOnly(updateData.docPendingLastDate) : null;
-  }
-  if (updateData.feeDepositDate !== undefined) {
-    updateData.feeDepositDate = updateData.feeDepositDate ? toDateOnly(updateData.feeDepositDate) : null;
-  }
+
+  const updateData = {
+    ...updateScalars,
+    ...(data.classId !== undefined
+      ? data.classId
+        ? { class: { connect: { id: data.classId } } }
+        : { class: { disconnect: true } }
+      : {}),
+    ...(data.parentId !== undefined
+      ? data.parentId
+        ? { parent: { connect: { id: data.parentId } } }
+        : { parent: { disconnect: true } }
+      : {}),
+    ...(data.userId !== undefined
+      ? data.userId
+        ? { user: { connect: { id: data.userId } } }
+        : { user: { disconnect: true } }
+      : {}),
+  };
 
   return prisma.student.update({
     where: { id },
@@ -439,3 +472,107 @@ export async function resetStudentCredentials(id, { username, password }) {
     };
   }
 }
+
+/**
+ * Bulk promote, retain, or graduate students across academic sessions
+ */
+export async function promoteStudents(data, actor = null) {
+  const { studentIds, fromClassId, toClassId, fromSession = '2025-2026', toSession = '2026-2027', status = 'PROMOTED' } = data;
+
+  if (!Array.isArray(studentIds) || studentIds.length === 0) {
+    throw ApiError.badRequest('At least one student must be selected for promotion.');
+  }
+
+  if (status === 'PROMOTED' && !toClassId) {
+    throw ApiError.badRequest('Target Class is required to promote students.');
+  }
+
+  const students = await prisma.student.findMany({
+    where: {
+      id: { in: studentIds },
+      ...notDeleted(),
+    },
+  });
+
+  const promotedRecords = [];
+
+  for (const stu of students) {
+    let updateData = {};
+    if (status === 'PROMOTED') {
+      updateData = {
+        class: { connect: { id: toClassId } },
+        academicSession: toSession,
+      };
+    } else if (status === 'RETAINED') {
+      updateData = {
+        academicSession: toSession,
+      };
+    } else if (status === 'GRADUATED') {
+      updateData = {
+        status: 'GRADUATED',
+        academicSession: toSession,
+      };
+    }
+
+    await prisma.student.update({
+      where: { id: stu.id },
+      data: updateData,
+    });
+
+    const hist = await prisma.promotionHistory.create({
+      data: {
+        student: { connect: { id: stu.id } },
+        fromClassId: stu.classId || fromClassId || null,
+        toClassId: status === 'PROMOTED' ? toClassId : (stu.classId || null),
+        fromSession,
+        toSession,
+        status,
+        ...(actor?.id ? { promotedBy: { connect: { id: actor.id } } } : {}),
+      },
+    });
+
+    promotedRecords.push(hist);
+  }
+
+  return {
+    success: true,
+    count: promotedRecords.length,
+    status,
+    message: `Successfully processed ${promotedRecords.length} students (${status.toLowerCase()}).`,
+  };
+}
+
+export async function getPromotionHistory(query = {}) {
+  const { page, limit, skip } = getPagination(query);
+  const { fromSession, toSession, status, sortBy = 'createdAt', sortOrder = 'desc' } = query;
+
+  const where = {
+    ...(fromSession ? { fromSession } : {}),
+    ...(toSession ? { toSession } : {}),
+    ...(status ? { status } : {}),
+  };
+
+  const [items, total] = await Promise.all([
+    prisma.promotionHistory.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortOrder },
+      include: {
+        student: {
+          select: { id: true, studentId: true, firstName: true, lastName: true, class: true },
+        },
+        promotedBy: {
+          select: { id: true, name: true },
+        },
+      },
+    }),
+    prisma.promotionHistory.count({ where }),
+  ]);
+
+  return {
+    data: items,
+    pagination: getPaginationMeta(page, limit, total),
+  };
+}
+

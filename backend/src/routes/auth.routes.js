@@ -4,11 +4,20 @@ import authorize from '../middleware/authorize.js';
 import validate from '../middleware/validate.js';
 import { ROLES } from '../constants/index.js';
 import * as authController from '../controllers/auth.controller.js';
-import { loginSchema, registerSchema, studentRegistrationSchema } from '../validators/auth.schema.js';
+import {
+  loginSchema,
+  registerSchema,
+  studentRegistrationSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from '../validators/auth.schema.js';
 
 const router = Router();
 
 router.post('/login', validate({ body: loginSchema }), authController.login);
+
+router.post('/forgot-password', validate({ body: forgotPasswordSchema }), authController.forgotPassword);
+router.post('/reset-password', validate({ body: resetPasswordSchema }), authController.resetPassword);
 
 router.post('/register-student', validate({ body: studentRegistrationSchema }), authController.registerStudent);
 

@@ -121,7 +121,7 @@ function Login() {
               <Info size={14} className="text-indigo-600" />
               Quick Demo Logins (Click to fill):
             </p>
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
               <button
                 type="button"
                 onClick={() => {
@@ -147,13 +147,57 @@ function Login() {
               <button
                 type="button"
                 onClick={() => {
+                  setEmail('accountant@school.com')
+                  setPassword('accountant123')
+                  setErrors({})
+                }}
+                className="rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-emerald-500 hover:text-emerald-600 transition shadow-xs text-center"
+              >
+                💰 Accountant
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('receptionist@school.com')
+                  setPassword('receptionist123')
+                  setErrors({})
+                }}
+                className="rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-pink-500 hover:text-pink-600 transition shadow-xs text-center"
+              >
+                📞 Receptionist
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('teacher@school.com')
+                  setPassword('teacher123')
+                  setErrors({})
+                }}
+                className="rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 transition shadow-xs text-center"
+              >
+                🧑‍🏫 Teacher
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('aarav.sharma@student.com')
+                  setPassword('student123')
+                  setErrors({})
+                }}
+                className="rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-teal-500 hover:text-teal-600 transition shadow-xs text-center"
+              >
+                🎓 Student
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   setEmail(PARENT_USER.email)
                   setPassword(PARENT_USER.password)
                   setErrors({})
                 }}
-                className="col-span-2 rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-amber-500 hover:text-amber-600 transition shadow-xs text-center"
+                className="col-span-2 sm:col-span-3 rounded-lg bg-white border border-slate-200 px-2 py-1.5 font-semibold text-slate-700 hover:border-amber-500 hover:text-amber-600 transition shadow-xs text-center"
               >
-                👨‍👩‍👧 Parent
+                👨‍👩‍👧 Parent ({PARENT_USER.email})
               </button>
             </div>
           </div>

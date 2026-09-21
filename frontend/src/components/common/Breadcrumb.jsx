@@ -8,12 +8,13 @@ function Breadcrumb({ items = [] }) {
   )
 
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
       <Link
         to="/dashboard"
-        className="flex items-center gap-1 text-slate-400 transition hover:text-slate-700"
+        aria-label="Home"
+        className="flex items-center gap-1 text-slate-500 transition hover:text-slate-800"
       >
-        <Home size={13} className="text-slate-400" />
+        <Home size={13} className="text-slate-500" />
         <span className="hidden sm:inline">Home</span>
       </Link>
       {filteredItems.map((item, index) => {

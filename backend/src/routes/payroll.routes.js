@@ -18,8 +18,8 @@ const router = Router();
 router.use(authenticate);
 
 // RBAC Middleware
-const canManagePayroll = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN);
-const canViewPayroll = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER);
+const canManagePayroll = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT);
+const canViewPayroll = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.TEACHER);
 
 // --- Teacher Salary Structures ---
 router.get('/structures', canManagePayroll, payrollController.listSalaryStructures);

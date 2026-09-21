@@ -171,7 +171,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="hidden rounded-lg p-2 text-slate-600 transition hover:bg-slate-100 lg:inline-flex"
+          className="hidden rounded-lg p-2.5 min-h-[42px] min-w-[42px] text-slate-700 transition hover:bg-slate-100 lg:inline-flex items-center justify-center"
           aria-label="Toggle sidebar"
         >
           {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
@@ -179,8 +179,8 @@ function Navbar({ collapsed, onToggleSidebar }) {
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="rounded-lg p-2 text-slate-600 transition hover:bg-slate-100 lg:hidden"
-          aria-label="Open menu"
+          className="rounded-lg p-2.5 min-h-[42px] min-w-[42px] text-slate-700 transition hover:bg-slate-100 lg:hidden flex items-center justify-center"
+          aria-label="Open navigation menu"
         >
           <Menu size={20} />
         </button>
@@ -189,7 +189,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
           <button
             type="button"
             onClick={handleBack}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-slate-50/90 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-indigo-600 hover:border-indigo-200 shadow-2xs shrink-0"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-slate-50/90 px-3 py-2 min-h-[40px] text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-indigo-600 hover:border-indigo-200 shadow-2xs shrink-0"
             title="Go back"
             aria-label="Go back"
           >
@@ -211,7 +211,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
             type="button"
             onClick={toggleQuickActions}
             className={cn(
-              "relative flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-slate-50/80 px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900 shadow-2xs",
+              "relative flex items-center justify-center gap-1.5 rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 min-h-[40px] text-xs font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900 shadow-2xs",
               quickActionsOpen && "bg-slate-100 ring-2 ring-indigo-500/20 border-indigo-300"
             )}
             title="Quick Actions"
@@ -223,7 +223,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
           {quickActionsOpen && (
             <div className="animate-scale-in absolute right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl z-50">
               <div className="border-b border-slate-100 px-4 py-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Quick Actions</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Quick Actions</p>
               </div>
               <div className="py-1">
                 {filteredQuickActions.map((action) => {
@@ -251,12 +251,12 @@ function Navbar({ collapsed, onToggleSidebar }) {
           <button
             type="button"
             onClick={toggleNotifications}
-            className="relative rounded-lg p-2 text-slate-600 transition hover:bg-slate-100"
+            className="relative flex items-center justify-center min-h-[42px] min-w-[42px] rounded-lg p-2.5 text-slate-700 transition hover:bg-slate-100"
             aria-label="Notifications"
           >
             <Bell size={20} />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+              <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}

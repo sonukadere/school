@@ -13,6 +13,11 @@ import {
   Bell,
   UserCircle,
   Settings,
+  PhoneCall,
+  UserCheck,
+  Award,
+  Layers,
+  BarChart3,
 } from 'lucide-react'
 
 export const MENU_ITEMS = [
@@ -21,19 +26,31 @@ export const MENU_ITEMS = [
     items: [{ label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard }],
   },
   {
-    heading: 'Management',
+    heading: 'Academic Management',
     items: [
       { label: 'Students', path: '/students', icon: GraduationCap },
+      { label: 'Student Promotion', path: '/students/promote', icon: Award },
       { label: 'Teachers', path: '/teachers', icon: Users },
+      { label: 'Staff Directory', path: '/staff', icon: Users },
       { label: 'Classes', path: '/classes', icon: School },
       { label: 'Subjects', path: '/subjects', icon: BookOpen },
     ],
   },
   {
-    heading: 'Academics',
+    heading: 'Learning & Classwork',
     items: [
       { label: 'Attendance', path: '/attendance', icon: CalendarCheck },
       { label: 'Timetable', path: '/timetable', icon: Calendar },
+      { label: 'Homework', path: '/homework', icon: BookOpen },
+      { label: 'Assignments', path: '/assignments', icon: ClipboardList },
+      { label: 'Study Material', path: '/study-material', icon: Layers },
+      { label: 'Leave Requests', path: '/leave', icon: CalendarCheck },
+      { label: 'School Calendar', path: '/calendar', icon: Calendar },
+    ],
+  },
+  {
+    heading: 'Assessment & Records',
+    items: [
       { label: 'Exams', path: '/exams', icon: FileText },
       { label: 'Question Bank', path: '/questions', icon: BookOpen },
       { label: 'Marks', path: '/marks', icon: ClipboardList },
@@ -41,10 +58,11 @@ export const MENU_ITEMS = [
     ],
   },
   {
-    heading: 'Financials',
+    heading: 'Financials & Reports',
     items: [
       { label: 'Student Fees', path: '/fees', icon: Wallet },
       { label: 'Teacher Salary', path: '/payroll', icon: CreditCard },
+      { label: 'Reports Center', path: '/reports', icon: BarChart3 },
     ],
   },
   {
@@ -62,10 +80,13 @@ export const MENU_ITEMS = [
 
 export const PAGE_TITLES = {
   '/dashboard': 'Dashboard',
+  '/parents': 'Parents & Guardians',
   '/students': 'Students',
   '/students/add': 'Add Student',
+  '/students/promote': 'Student Promotion',
   '/teachers': 'Teachers',
   '/teachers/add': 'Add Teacher',
+  '/staff': 'Staff Directory',
   '/classes': 'Classes',
   '/classes/add': 'Add Class',
   '/subjects': 'Subjects',
@@ -74,8 +95,14 @@ export const PAGE_TITLES = {
   '/attendance/students': 'Student Attendance',
   '/attendance/teachers': 'Teacher Attendance',
   '/timetable': 'Timetable Management',
+  '/homework': 'Homework & Tasks',
+  '/assignments': 'Assignments & Projects',
+  '/study-material': 'Study Material & Notes',
+  '/leave': 'Leave Management',
+  '/calendar': 'School Academic Calendar',
   '/fees': 'Student Fees',
   '/payroll': 'Teacher Salary & Payroll',
+  '/reports': 'Institutional Reports Center',
   '/exams': 'Exams',
   '/exams/create': 'Create Exam',
   '/questions': 'Question Bank',

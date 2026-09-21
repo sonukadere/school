@@ -14,6 +14,8 @@ export function normalizeUser(rawUser) {
   let role = rawUser.role || 'Admin'
   if (role.toUpperCase() === 'SUPER_ADMIN' || role === 'Super Admin') role = 'Super Admin'
   else if (role.toUpperCase() === 'ADMIN' || role === 'Administrator') role = 'Admin'
+  else if (role.toUpperCase() === 'ACCOUNTANT') role = 'Accountant'
+  else if (role.toUpperCase() === 'RECEPTIONIST') role = 'Receptionist'
   else if (role.toUpperCase() === 'TEACHER') role = 'Teacher'
   else if (role.toUpperCase() === 'STUDENT') role = 'Student'
   else if (role.toUpperCase() === 'PARENT') role = 'Parent'
@@ -29,6 +31,8 @@ export function normalizeUser(rawUser) {
     isSuperAdmin: role === 'Super Admin' || rawUser.role === 'SUPER_ADMIN',
     isAdmin: ['Admin', 'Super Admin', 'Administrator'].includes(role) || ['ADMIN', 'SUPER_ADMIN'].includes(rawUser.role),
     isSchoolAdmin: role === 'Admin' || rawUser.role === 'ADMIN',
+    isAccountant: role === 'Accountant' || rawUser.role === 'ACCOUNTANT',
+    isReceptionist: role === 'Receptionist' || rawUser.role === 'RECEPTIONIST',
     isTeacher: role === 'Teacher' || rawUser.role === 'TEACHER',
     isStudent: role === 'Student' || rawUser.role === 'STUDENT',
     isParent: role === 'Parent' || rawUser.role === 'PARENT',
@@ -111,9 +115,12 @@ export function AuthProvider({ children }) {
           const roleMap = {
             SUPER_ADMIN: ['Super Admin'],
             ADMIN: ['Admin', 'Super Admin'],
+            ACCOUNTANT: ['Accountant'],
+            RECEPTIONIST: ['Receptionist'],
             TEACHER: ['Teacher'],
             STUDENT: ['Student'],
             PARENT: ['Parent'],
+            STAFF: ['Staff', 'Accountant', 'Receptionist'],
           }
           const allowed = roleMap[expectedRole] || []
           if (!allowed.includes(userRole)) {

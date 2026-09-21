@@ -21,9 +21,9 @@ const router = Router();
 router.use(authenticate);
 
 // Role & Permission Middlewares
-const canViewPayments = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.STUDENT, ROLES.PARENT);
-const canManagePayments = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN);
-const canViewReports = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN);
+const canViewPayments = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.STUDENT, ROLES.PARENT);
+const canManagePayments = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT);
+const canViewReports = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT);
 
 // --- Receipts ---
 router.get('/receipt', canViewPayments, paymentController.getPaymentReceipt);

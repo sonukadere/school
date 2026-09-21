@@ -61,8 +61,28 @@ export async function getMyProfile(user) {
       if (!user.staff?.id) throw ApiError.forbidden('No linked staff profile.');
       return prisma.staff.findFirst({ where: { id: user.staff.id, ...notDeleted() } });
     }
+    case 'SUPER_ADMIN':
+    case 'ADMIN':
+    case 'ACCOUNTANT':
+    case 'RECEPTIONIST': {
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        avatar: user.avatar,
+        isActive: user.isActive,
+      };
+    }
     default:
-      throw ApiError.forbidden('Your role does not have a profile view.');
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+      };
   }
 }
 

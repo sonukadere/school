@@ -15,50 +15,51 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
       const items = group.items
         .filter((item) => {
           const roleUpper = (user?.role || '').toUpperCase()
+          if (roleUpper === 'ACCOUNTANT' || user?.isAccountant) {
+            const allowed = ['/dashboard', '/fees', '/payroll', '/reports', '/crm', '/notices', '/profile', '/settings']
+            return allowed.some((path) => item.path === path || item.path.startsWith(path))
+          }
+          if (roleUpper === 'RECEPTIONIST' || user?.isReceptionist) {
+            const allowed = ['/dashboard', '/crm', '/parents', '/students', '/staff', '/attendance', '/calendar', '/notices', '/profile']
+            return allowed.some((path) => item.path === path || item.path.startsWith(path))
+          }
           if (roleUpper === 'TEACHER') {
-            const forbidden = ['/teachers', '/fees', '/payroll', '/settings']
+            const forbidden = ['/teachers', '/staff', '/fees', '/payroll', '/settings', '/crm', '/students/promote', '/reports']
             return !forbidden.some((path) => item.path.startsWith(path))
           }
-          if (user?.role === 'Student' || user?.isStudent) {
-            const forbidden = [
-              '/students',
-              '/teachers',
-              '/classes',
-              '/attendance',
-              '/settings',
-              '/questions',
-              '/payroll',
+          if (user?.role === 'Student' || user?.isStudent || roleUpper === 'STUDENT') {
+            const allowed = [
+              '/dashboard',
+              '/subjects',
+              '/timetable',
+              '/homework',
+              '/assignments',
+              '/study-material',
+              '/exams',
+              '/marks',
+              '/calendar',
+              '/leave',
+              '/notices',
+              '/profile',
             ]
-            return !forbidden.some((path) => item.path.startsWith(path))
+            return allowed.some((path) => item.path === path || item.path.startsWith(path))
           }
-          if (user?.role === 'Parent' || user?.isParent) {
-            const forbidden = [
-              '/students',
-              '/teachers',
-              '/classes',
-              '/attendance',
-              '/settings',
-              '/questions',
-              '/payroll',
+          if (user?.role === 'Parent' || user?.isParent || roleUpper === 'PARENT') {
+            const allowed = [
+              '/dashboard',
+              '/timetable',
+              '/homework',
+              '/marks',
+              '/fees',
+              '/calendar',
+              '/notices',
+              '/profile',
             ]
-            return !forbidden.some((path) => item.path.startsWith(path))
+            return allowed.some((path) => item.path === path || item.path.startsWith(path))
           }
           if (roleUpper === 'STAFF' || user?.isStaff) {
-            const forbidden = [
-              '/students',
-              '/teachers',
-              '/classes',
-              '/subjects',
-              '/attendance',
-              '/exams',
-              '/questions',
-              '/marks',
-              '/certificates',
-              '/fees',
-              '/payroll',
-              '/settings',
-            ]
-            return !forbidden.some((path) => item.path.startsWith(path))
+            const allowed = ['/dashboard', '/leave', '/calendar', '/notices', '/profile']
+            return allowed.some((path) => item.path === path || item.path.startsWith(path))
           }
           return true
         })
@@ -82,7 +83,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
         })
       return { ...group, items }
     }).filter((group) => group.items.length > 0)
-  }, [user?.role, user?.isStudent, user?.isParent, user?.isStaff, user?.isTeacher])
+  }, [user?.role, user?.isStudent, user?.isParent, user?.isStaff, user?.isTeacher, user?.isAccountant, user?.isReceptionist])
 
   const { activeStyle, indicatorColor } = useMemo(() => {
     const roleUpper = (user?.role || '').toUpperCase()
@@ -92,6 +93,12 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
     if (user?.isSuperAdmin || roleUpper === 'SUPER_ADMIN' || roleUpper === 'SUPER ADMIN') {
       style = 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold shadow-md shadow-purple-900/50 ring-1 ring-purple-400/30'
       color = 'bg-purple-300'
+    } else if (user?.isAccountant || roleUpper === 'ACCOUNTANT') {
+      style = 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-semibold shadow-md shadow-emerald-900/50 ring-1 ring-emerald-400/30'
+      color = 'bg-emerald-300'
+    } else if (user?.isReceptionist || roleUpper === 'RECEPTIONIST') {
+      style = 'bg-gradient-to-r from-pink-600 to-rose-700 text-white font-semibold shadow-md shadow-pink-900/50 ring-1 ring-pink-400/30'
+      color = 'bg-pink-300'
     } else if (user?.isTeacher || roleUpper === 'TEACHER') {
       style = 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-md shadow-emerald-900/50 ring-1 ring-emerald-400/30'
       color = 'bg-emerald-300'
@@ -107,7 +114,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
     }
 
     return { activeStyle: style, indicatorColor: color }
-  }, [user?.role, user?.isSuperAdmin, user?.isTeacher, user?.isStudent, user?.isParent, user?.isStaff])
+  }, [user?.role, user?.isSuperAdmin, user?.isAccountant, user?.isReceptionist, user?.isTeacher, user?.isStudent, user?.isParent, user?.isStaff])
 
   const renderLink = (item) => {
     const Icon = item.icon
@@ -116,6 +123,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
         key={item.path}
         to={item.path}
         onClick={onCloseMobile}
+        aria-label={item.label}
         className={({ isActive }) =>
           cn(
             'group relative flex items-center gap-3 py-2.5 text-sm font-medium transition-all duration-150',
@@ -182,7 +190,9 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           <div className={cn('flex items-center gap-3 min-w-0', collapsed && !mobileOpen && 'justify-center')}>
             <img
               src="/logo.svg"
-              alt={settings.schoolName}
+              alt={settings.schoolName || 'Daily Day Academy Logo'}
+              width="36"
+              height="36"
               className="h-9 w-9 shrink-0 rounded-lg"
             />
             {(!collapsed || mobileOpen) && (
@@ -195,7 +205,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           <button
             type="button"
             onClick={onCloseMobile}
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-white lg:hidden"
+            className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white lg:hidden"
             aria-label="Close sidebar"
           >
             <X size={18} />
@@ -219,6 +229,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           <button
             type="button"
             onClick={logout}
+            aria-label="Logout"
             className={cn(
               'flex w-full items-center gap-3 rounded-lg py-2.5 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-rose-600/10 hover:text-rose-400',
               collapsed && !mobileOpen ? 'justify-center px-0' : 'px-3',

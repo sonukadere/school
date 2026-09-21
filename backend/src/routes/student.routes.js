@@ -20,6 +20,8 @@ const canRead = authorize(ROLES.ADMIN, ROLES.TEACHER);
 const canWrite = authorize(ROLES.ADMIN);
 
 router.get('/', canRead, validate({ query: studentQuerySchema }), studentController.listStudents);
+router.get('/promotion-history', canRead, studentController.getPromotionHistory);
+router.post('/promote', canWrite, studentController.promoteStudents);
 router.get('/:id', canRead, validate({ params: idParamSchema }), studentController.getStudent);
 router.post('/', canWrite, validate({ body: studentCreateSchema }), studentController.createStudent);
 router.post(
