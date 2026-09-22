@@ -157,7 +157,6 @@ function ProtectedRoute({ children }) {
       '/marks/entry',
       '/notices/create',
       '/payroll',
-      '/fees',
       '/crm',
       '/staff',
       '/reports',

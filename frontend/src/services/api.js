@@ -1405,6 +1405,19 @@ export const attendanceApi = {
       pagination: res?.pagination || null,
     }
   },
+
+  // -------------------------------------------------------------
+  // Razorpay Integration
+  // -------------------------------------------------------------
+  createRazorpayOrder: async (invoiceId, amount) => {
+    const res = await apiClient.post('/payments/razorpay/order', { invoiceId, amount })
+    return res?.data || res
+  },
+
+  verifyRazorpayPayment: async (paymentData) => {
+    const res = await apiClient.post('/payments/razorpay/verify', paymentData)
+    return res?.data || res
+  },
 }
 
 export default api

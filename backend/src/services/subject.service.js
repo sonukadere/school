@@ -44,11 +44,15 @@ export async function listSubjects(query = {}, actor = null) {
     if (!targetClassId) {
       const children = await prisma.student.findMany({
         where: {
-          OR: [
-            { parentId: actor.parent?.id },
-            { parent: { userId: actor.id } },
+          AND: [
+            notDeleted(),
+            {
+              OR: [
+                { parentId: actor.parent?.id },
+                { parent: { userId: actor.id } },
+              ],
+            },
           ],
-          ...notDeleted(),
         },
         select: { classId: true },
       });

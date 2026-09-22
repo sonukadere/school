@@ -93,8 +93,8 @@ export default function StudyMaterialList() {
           fileType: selectedFileType || undefined,
           limit: 100,
         }),
-        api.getClasses ? api.getClasses() : Promise.resolve([]),
-        api.getSubjects ? api.getSubjects() : Promise.resolve([]),
+        canManage && api.getClasses ? api.getClasses() : Promise.resolve([]),
+        canManage && api.getSubjects ? api.getSubjects() : Promise.resolve([]),
       ])
 
       setMaterials(matRes?.data || [])

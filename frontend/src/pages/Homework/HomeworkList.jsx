@@ -81,8 +81,8 @@ export default function HomeworkList() {
           subjectId: selectedSubjectId || undefined,
           limit: 100,
         }),
-        api.getClasses ? api.getClasses() : Promise.resolve([]),
-        api.getSubjects ? api.getSubjects() : Promise.resolve([]),
+        isTeacherOrAdmin && api.getClasses ? api.getClasses() : Promise.resolve([]),
+        isTeacherOrAdmin && api.getSubjects ? api.getSubjects() : Promise.resolve([]),
       ])
 
       setHomeworkList(hwRes?.data || [])

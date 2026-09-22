@@ -445,8 +445,10 @@ export async function listPayroll(query = {}, actor) {
 export async function getPayrollById(id, actor) {
   const payroll = await prisma.payroll.findFirst({
     where: {
-      OR: [{ id }, { payrollNumber: id }],
-      ...notDeleted(),
+      AND: [
+        notDeleted(),
+        { OR: [{ id }, { payrollNumber: id }] },
+      ],
     },
     include: {
       teacher: {
@@ -624,8 +626,10 @@ export async function markSalaryPaid(id, data, actor) {
 export async function getPayslip(payslipNumberOrId, actor) {
   const payslip = await prisma.payslip.findFirst({
     where: {
-      OR: [{ id: payslipNumberOrId }, { payslipNumber: payslipNumberOrId }, { payrollId: payslipNumberOrId }],
-      ...notDeleted(),
+      AND: [
+        notDeleted(),
+        { OR: [{ id: payslipNumberOrId }, { payslipNumber: payslipNumberOrId }, { payrollId: payslipNumberOrId }] },
+      ],
     },
     include: {
       payroll: true,

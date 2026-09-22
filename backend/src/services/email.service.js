@@ -320,3 +320,103 @@ export async function sendPasswordResetEmail({ to, resetToken, userName }) {
     html,
   });
 }
+
+/**
+ * Sends a fee payment receipt email to the student and/or parent.
+ */
+export async function sendFeePaymentEmail({ student, parent, receipt, payment, school, pdfBuffer }) {
+  const config = await getEffectiveSmtpConfig();
+  if (!config.isConfigured) {
+    console.warn('[EMAIL SERVICE] Fee payment email skipped: SMTP not configured.');
+    return { success: false, skipped: true, reason: 'SMTP not configured' };
+  }
+
+  // Determine recipients
+  const recipients = [];
+  if (parent?.email) recipients.push(parent.email);
+  // Also send to student email if available and different from parent
+  if (student?.email && (!parent?.email || student.email !== parent.email)) {
+    recipients.push(student.email);
+  }
+
+  if (recipients.length === 0) {
+    console.warn(`[EMAIL SERVICE] Fee payment email skipped for Student ${student.studentId}: No valid email addresses found.`);
+    return { success: false, skipped: true, reason: 'No valid recipient emails' };
+  }
+
+  const to = recipients.join(', ');
+  const amountFormatted = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(payment.amount);
+  const dateFormatted = new Date(payment.paymentDate).toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+      <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 32px 24px; text-align: center; color: #ffffff;">
+        <h1 style="margin: 0; font-size: 24px; font-weight: 700;">${school.name}</h1>
+        <p style="margin: 8px 0 0; font-size: 14px; opacity: 0.9;">Fee Payment Receipt</p>
+      </div>
+      <div style="padding: 32px 24px; color: #1e293b;">
+        <p style="margin: 0 0 16px; font-size: 16px;">Dear <strong>${student.firstName} ${student.lastName || ''}</strong> (ID: ${student.studentId}),</p>
+        <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #475569;">
+          We have successfully received your fee payment. Below are the details of your transaction:
+        </p>
+        
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 24px;">
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 0; color: #64748b; font-weight: 500;">Receipt No:</td>
+            <td style="padding: 10px 0; font-weight: 600; color: #0f172a; text-align: right;">${receipt.receiptNumber}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 0; color: #64748b; font-weight: 500;">Payment Date:</td>
+            <td style="padding: 10px 0; font-weight: 600; color: #0f172a; text-align: right;">${dateFormatted}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 0; color: #64748b; font-weight: 500;">Amount Paid:</td>
+            <td style="padding: 10px 0; font-weight: 700; color: #10b981; text-align: right; font-size: 16px;">${amountFormatted}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 0; color: #64748b; font-weight: 500;">Payment Method:</td>
+            <td style="padding: 10px 0; font-weight: 600; color: #0f172a; text-align: right;">${payment.paymentMethod}</td>
+          </tr>
+          ${payment.transactionId ? `
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 0; color: #64748b; font-weight: 500;">Transaction ID:</td>
+            <td style="padding: 10px 0; font-weight: 600; color: #0f172a; text-align: right;">${payment.transactionId}</td>
+          </tr>
+          ` : ''}
+          <tr>
+            <td style="padding: 10px 0; color: #64748b; font-weight: 500;">Class:</td>
+            <td style="padding: 10px 0; font-weight: 600; color: #0f172a; text-align: right;">${student.class?.name || 'N/A'} ${student.class?.section ? `(${student.class.section})` : ''}</td>
+          </tr>
+        </table>
+        
+        <p style="margin: 0 0 16px; font-size: 13px; color: #64748b;">
+          If you have any questions about this receipt, please contact the administration office.
+        </p>
+        <p style="margin: 24px 0 0; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 16px; text-align: center;">
+          This is an automated message from ${school.name}. Please do not reply to this email.
+        </p>
+      </div>
+    </div>
+  `;
+
+  const attachments = [];
+  if (pdfBuffer) {
+    const safeReceiptNo = receipt.receiptNumber ? receipt.receiptNumber.replace(/[\/\\]/g, '-') : 'Receipt';
+    attachments.push({
+      filename: `${safeReceiptNo}.pdf`,
+      content: pdfBuffer,
+      contentType: 'application/pdf'
+    });
+  }
+
+  return sendEmail({
+    to,
+    subject: `Fee Payment Receipt - ${school.name}`,
+    html,
+    attachments
+  });
+}

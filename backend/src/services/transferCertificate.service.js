@@ -96,8 +96,10 @@ export async function listTransferCertificates(query = {}, actor = null) {
 export async function getTransferCertificate(id, actor = null) {
   const tc = await prisma.transferCertificate.findFirst({
     where: {
-      OR: [{ id }, { tcNumber: id }],
-      ...notDeleted(),
+      AND: [
+        notDeleted(),
+        { OR: [{ id }, { tcNumber: id }] },
+      ],
     },
     include: DEFAULT_INCLUDE,
   });

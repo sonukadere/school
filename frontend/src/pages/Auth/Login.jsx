@@ -180,7 +180,7 @@ function Login() {
               <button
                 type="button"
                 onClick={() => {
-                  setEmail('aarav.sharma@student.com')
+                  setEmail('student@school.com')
                   setPassword('student123')
                   setErrors({})
                 }}

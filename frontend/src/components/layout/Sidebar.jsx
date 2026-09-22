@@ -37,6 +37,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
               '/study-material',
               '/exams',
               '/marks',
+              '/fees',
               '/calendar',
               '/leave',
               '/notices',
@@ -64,6 +65,12 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           return true
         })
         .map((item) => {
+          if ((user?.role === 'Student' || user?.isStudent) && item.path === '/fees') {
+            return { ...item, label: 'My Fees' }
+          }
+          if ((user?.role === 'Parent' || user?.isParent) && item.path === '/fees') {
+            return { ...item, label: 'Fee Payments' }
+          }
           if ((user?.role === 'Student' || user?.isStudent) && item.path === '/marks') {
             return { ...item, label: 'My Results', path: '/marks/results' }
           }

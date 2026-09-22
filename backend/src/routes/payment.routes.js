@@ -84,6 +84,18 @@ router.post('/assign-student', canManagePayments, paymentController.assignFeeToS
 router.get('/schools', canManagePayments, paymentController.listSchools);
 
 // --- Payment Transactions ---
+router.post(
+  '/razorpay/order',
+  canViewPayments,
+  paymentController.createRazorpayOrder
+);
+
+router.post(
+  '/razorpay/verify',
+  canViewPayments,
+  paymentController.verifyRazorpayPayment
+);
+
 router.get(
   '/',
   canViewPayments,

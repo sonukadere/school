@@ -12,6 +12,7 @@ import {
   getEffectiveSchoolId,
   assertSchoolAccess,
   assertPaymentVisible,
+  assertStudentVisible,
   getVisibleStudentIds,
 } from '../utils/access.js';
 
@@ -464,6 +465,25 @@ export async function recordPayment(data, actor) {
     console.warn('[Payment] Notification dispatch skipped:', err.message);
   }
 
+  // Dispatch fee payment email
+  try {
+    const { sendFeePaymentEmail } = await import('./email.service.js');
+    const { generateFeeReceiptPDF } = await import('./pdf.service.js');
+    const pdfBuffer = await generateFeeReceiptPDF({ student, receipt, payment, school });
+
+    await sendFeePaymentEmail({
+      student,
+      parent: student.parent,
+      receipt,
+      payment,
+      school,
+      pdfBuffer
+    });
+  } catch (err) {
+    console.warn('[Payment] Fee payment email dispatch skipped:', err.message);
+  }
+
+
   return {
     payment,
     receipt: {
@@ -584,8 +604,10 @@ export async function listPayments(query = {}, actor) {
 export async function getPayment(id, actor) {
   const payment = await prisma.payment.findFirst({
     where: {
-      OR: [{ id }, { receiptNumber: id }],
-      ...notDeleted(),
+      AND: [
+        notDeleted(),
+        { OR: [{ id }, { receiptNumber: id }] },
+      ],
     },
     include: {
       student: {
@@ -1089,12 +1111,16 @@ export async function getPaymentReports(query = {}, actor) {
 export async function getStudentFeeLedger(studentId, actor) {
   const student = await prisma.student.findFirst({
     where: {
-      OR: [
-        { id: studentId },
-        { studentId: studentId },
-        { userId: studentId },
+      AND: [
+        notDeleted(),
+        {
+          OR: [
+            { id: studentId },
+            { studentId: studentId },
+            { userId: studentId },
+          ],
+        },
       ],
-      ...notDeleted(),
     },
     include: {
       class: { select: { id: true, name: true, section: true } },
@@ -1107,8 +1133,15 @@ export async function getStudentFeeLedger(studentId, actor) {
   }
 
   // Access validation: student/parent can only see their own
-  if (actor.role === 'STUDENT' && actor.student?.id !== student.id && actor.id !== student.userId) {
-    throw ApiError.forbidden('You can only view your own fee records.');
+  if (actor.role === 'STUDENT') {
+    const isSelf =
+      // matched by student record ID
+      (actor.student?.id && actor.student.id === student.id) ||
+      // matched by the user account ID on the student record
+      (student.userId && actor.id === student.userId);
+    if (!isSelf) {
+      throw ApiError.forbidden('You can only view your own fee records.');
+    }
   }
   if (actor.role === 'PARENT') {
     const childIds = await getVisibleStudentIds(actor);
@@ -1124,59 +1157,72 @@ export async function getStudentFeeLedger(studentId, actor) {
 
   // REAL-TIME DYNAMIC SYNC:
   // Automatically generate active fee structure invoices for student's class if not already issued
-  if (student.classId) {
-    const activeStructures = await prisma.feeStructure.findMany({
-      where: {
-        OR: [
-          { classId: student.classId },
-          { classId: null },
-        ],
-        status: 'ACTIVE',
-        ...notDeleted(),
-      },
-    });
-
-    for (const struct of activeStructures) {
-      const targetYear = struct.academicYear || '2026-2027';
-      const existing = await prisma.feeInvoice.findFirst({
+  // Wrapped in try/catch so a failed write does not prevent the ledger from loading
+  try {
+    if (student.classId) {
+      const activeStructures = await prisma.feeStructure.findMany({
         where: {
-          studentId: student.id,
           OR: [
-            { feeStructureId: struct.id },
-            { feeType: struct.feeType, academicYear: targetYear },
+            { classId: student.classId },
+            { classId: null },
           ],
+          status: 'ACTIVE',
           ...notDeleted(),
         },
       });
 
-      if (!existing) {
-        const school = await getSchoolInfo(struct.schoolId || student.schoolId || 'SCH001');
-        const invoiceNumber = await generateInvoiceNumber(school?.code || 'SCH001');
-        const totalFee = struct.totalFee;
-        const targetDueDate = struct.dueDate;
-        const isPastDue = isInvoicePastDue(targetDueDate);
-        const applicableLateFee = isPastDue ? (struct.lateFee || 0) : 0;
-        const finalAmount = Math.max(totalFee + applicableLateFee, 0);
-
-        await prisma.feeInvoice.create({
-          data: {
-            invoiceNumber,
-            studentId: student.id,
-            feeStructureId: struct.id,
-            feeType: struct.feeType,
-            academicYear: targetYear,
-            totalFee,
-            lateFee: applicableLateFee,
-            discount: 0,
-            finalAmount,
-            paidAmount: 0,
-            pendingAmount: finalAmount,
-            dueDate: targetDueDate,
-            status: 'PENDING',
+      for (const struct of activeStructures) {
+        const targetYear = struct.academicYear || '2026-2027';
+        const existing = await prisma.feeInvoice.findFirst({
+          where: {
+            AND: [
+              notDeleted(),
+              {
+                studentId: student.id,
+                OR: [
+                  { feeStructureId: struct.id },
+                  { feeType: struct.feeType, academicYear: targetYear },
+                ],
+              },
+            ],
           },
         });
+
+        if (!existing) {
+          try {
+            const school = await getSchoolInfo(struct.schoolId || student.schoolId || 'SCH001');
+            const invoiceNumber = await generateInvoiceNumber(school?.code || 'SCH001');
+            const totalFee = struct.totalFee;
+            const targetDueDate = struct.dueDate;
+            const isPastDue = isInvoicePastDue(targetDueDate);
+            const applicableLateFee = isPastDue ? (struct.lateFee || 0) : 0;
+            const finalAmount = Math.max(totalFee + applicableLateFee, 0);
+
+            await prisma.feeInvoice.create({
+              data: {
+                invoiceNumber,
+                studentId: student.id,
+                feeStructureId: struct.id,
+                feeType: struct.feeType,
+                academicYear: targetYear,
+                totalFee,
+                lateFee: applicableLateFee,
+                discount: 0,
+                finalAmount,
+                paidAmount: 0,
+                pendingAmount: finalAmount,
+                dueDate: targetDueDate,
+                status: 'PENDING',
+              },
+            });
+          } catch (invoiceErr) {
+            console.warn('[getStudentFeeLedger] Auto-invoice creation failed (non-fatal):', invoiceErr?.message);
+          }
+        }
       }
     }
+  } catch (syncErr) {
+    console.warn('[getStudentFeeLedger] Auto-invoice sync failed (non-fatal):', syncErr?.message);
   }
 
   const [rawInvoices, payments, receipts, legacyFees] = await Promise.all([
@@ -1705,3 +1751,121 @@ export async function getFinanceSummary(query = {}, actor) {
   };
 }
 
+/**
+ * RAZORPAY INTEGRATION
+ */
+
+export async function createRazorpayOrder(invoiceId, amount, actor) {
+  const Razorpay = (await import('razorpay')).default;
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    throw ApiError.internal('Razorpay keys not configured in server environment.');
+  }
+
+  const rzp = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+
+  const invoice = await prisma.feeInvoice.findFirst({
+    where: { id: invoiceId, deletedAt: null },
+    include: { student: true },
+  });
+
+  if (!invoice) throw ApiError.notFound('Invoice not found');
+
+  // Role-based ownership: students/parents may only create orders for their own invoices
+  if (actor && (actor.role === 'STUDENT' || actor.role === 'PARENT')) {
+    await assertStudentVisible(actor, invoice.studentId);
+  }
+
+  if (amount > invoice.pendingAmount) {
+    throw ApiError.badRequest('Amount cannot exceed pending balance.');
+  }
+
+  const options = {
+    amount: Math.round(amount * 100), // amount in paise
+    currency: 'INR',
+    receipt: `inv_${invoiceId.slice(-6)}`,
+    notes: {
+      invoiceId,
+      studentId: invoice.studentId,
+    },
+  };
+
+  try {
+    const order = await rzp.orders.create(options);
+    return {
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      keyId: process.env.RAZORPAY_KEY_ID,
+    };
+  } catch (error) {
+    throw ApiError.internal(`Failed to create Razorpay order: ${error.message}`);
+  }
+}
+
+export async function verifyRazorpayPayment(data, actor) {
+  const {
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+    invoiceId,
+    studentId,
+    amount,
+  } = data;
+
+  if (!process.env.RAZORPAY_KEY_SECRET) {
+    throw ApiError.internal('Razorpay key secret not configured.');
+  }
+
+  const crypto = await import('crypto');
+  const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
+  hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
+  const generatedSignature = hmac.digest('hex');
+
+  if (generatedSignature !== razorpay_signature) {
+    throw ApiError.badRequest('Payment verification failed. Invalid signature.');
+  }
+
+  // Idempotency guard: retrying a previously processed Razorpay order/payment
+  // must not create a duplicate Payment + Receipt in the database.
+  const existingGatewayPayment = await prisma.payment.findFirst({
+    where: {
+      AND: [
+        notDeleted(),
+        {
+          OR: [
+            { gatewayPaymentId: razorpay_payment_id },
+            { gatewayOrderId: razorpay_order_id },
+          ],
+        },
+      ],
+    },
+    include: { receipts: { where: notDeleted(), orderBy: { createdAt: 'desc' } } },
+  });
+
+  if (existingGatewayPayment) {
+    const existingReceipt = existingGatewayPayment.receipts?.[0] || null;
+    return {
+      payment: existingGatewayPayment,
+      receipt: existingReceipt,
+      duplicate: true,
+    };
+  }
+
+  // If verified, record the payment
+  const paymentRecord = await recordPayment({
+    studentId,
+    invoiceId,
+    amount,
+    paymentMethod: 'ONLINE',
+    transactionId: razorpay_payment_id,
+    gateway: 'RAZORPAY',
+    gatewayOrderId: razorpay_order_id,
+    gatewayPaymentId: razorpay_payment_id,
+    notes: `Online payment via Razorpay. Order ID: ${razorpay_order_id}`,
+  }, actor);
+
+  return paymentRecord;
+}

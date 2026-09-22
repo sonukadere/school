@@ -65,10 +65,10 @@ function TimetablePage() {
     setLoading(true)
 
     Promise.all([
-      api.getClasses(),
-      api.getTeachers(),
-      api.getSubjects(),
-      api.getPeriods(),
+      !isStudent ? api.getClasses().catch(() => []) : Promise.resolve([]),
+      !isStudent ? api.getTeachers().catch(() => []) : Promise.resolve([]),
+      !isStudent ? api.getSubjects().catch(() => []) : Promise.resolve([]),
+      api.getPeriods().catch(() => []),
     ])
       .then(([classList, teacherList, subjectList, periodList]) => {
         if (!isMounted) return
@@ -88,7 +88,7 @@ function TimetablePage() {
           }
         } else if (isStudent) {
           setViewMode('class')
-          const myClassId = user?.student?.classId
+          const myClassId = user?.classId || user?.student?.classId
           if (myClassId) {
             setSelectedClassId(myClassId)
           } else if (classList?.length) {
@@ -106,7 +106,6 @@ function TimetablePage() {
       })
       .catch((err) => {
         console.error('[TimetablePage] Error loading base metadata:', err)
-        showToast('Failed to load classes or teachers', 'error')
       })
       .finally(() => {
         if (isMounted) setLoading(false)

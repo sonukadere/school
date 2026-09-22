@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Printer, Download, CheckCircle2, ShieldCheck, X, School, User, Calendar, CreditCard, Building2 } from 'lucide-react'
 import Button from '../common/Button'
 import Badge from '../common/Badge'
@@ -52,11 +53,18 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
     window.print()
   }
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-sm p-3 sm:p-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] print:p-0 print:bg-white animate-fade-in flex justify-center items-center">
-      <div className="relative w-full max-w-2xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[min(90vh,860px)] rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden flex flex-col print:m-0 print:border-none print:shadow-none print:w-full print:max-w-none">
+  const modalContent = (
+    <div className="receipt-modal-root fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 print:static print:block print:p-0 print:bg-white print:overflow-visible">
+      <style>{`
+        @media print {
+          body > :not(.receipt-modal-root) {
+            display: none !important;
+          }
+        }
+      `}</style>
+      <div className="relative w-full max-w-2xl max-h-[90vh] rounded-2xl bg-white shadow-2xl border border-slate-200 flex flex-col overflow-hidden print:m-0 print:border-none print:shadow-none print:w-full print:max-w-none print:h-auto print:max-h-none print:overflow-visible print:block">
         {/* Modal Toolbar - Hidden during print */}
-        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-100 bg-white/95 backdrop-blur-md px-3.5 sm:px-6 py-3 sm:py-4 print:hidden shrink-0">
+        <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-100 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-3 sm:py-4 print:hidden shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 shrink-0">
               <ShieldCheck size={18} />
@@ -88,7 +96,7 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
         </div>
 
         {/* Modal Body / Printable Receipt Area */}
-        <div className="p-3 sm:p-6 md:p-8 overflow-y-auto flex-1 min-h-0 touch-scroll overscroll-contain print:max-h-none print:overflow-visible print:p-0" ref={printRef}>
+        <div className="p-4 sm:p-6 md:p-8 overflow-y-auto flex-1 min-h-0 print:block print:overflow-visible print:p-0 print:max-h-none print:h-auto" ref={printRef}>
           {loading ? (
             <div className="py-16 flex flex-col items-center justify-center">
               <Loader label="Loading official receipt details..." />
@@ -280,4 +288,6 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
       </div>
     </div>
   )
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent
 }
