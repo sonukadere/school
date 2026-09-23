@@ -99,17 +99,17 @@ function TeacherDetails() {
           { label: teacher.name },
         ]}
         actions={
-          <>
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <Link to="/teachers">
-              <Button variant="outline" leftIcon={ArrowLeft}>Back</Button>
+              <Button variant="outline" size="sm" leftIcon={ArrowLeft}>Back</Button>
             </Link>
             <Link to={`/teachers/edit/${id}`}>
-              <Button variant="outline" leftIcon={Pencil}>Edit</Button>
+              <Button variant="outline" size="sm" leftIcon={Pencil}>Edit</Button>
             </Link>
-            <Button variant="danger" leftIcon={Trash2} onClick={() => setDeleteOpen(true)}>
+            <Button variant="danger" size="sm" leftIcon={Trash2} onClick={() => setDeleteOpen(true)}>
               Delete
             </Button>
-          </>
+          </div>
         }
       />
 

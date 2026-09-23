@@ -177,30 +177,32 @@ function StudentDetails() {
           { label: student.fullName },
         ]}
         actions={
-          <>
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <Link to="/students">
-              <Button variant="outline" leftIcon={ArrowLeft}>
+              <Button variant="outline" size="sm" leftIcon={ArrowLeft}>
                 Back
               </Button>
             </Link>
-            <Button variant="primary" leftIcon={Printer} onClick={() => setAdmissionModalOpen(true)}>
-              Print Admission Form (प्रवेश फार्म)
+            <Button variant="primary" size="sm" leftIcon={Printer} onClick={() => setAdmissionModalOpen(true)}>
+              <span className="hidden sm:inline">Print Admission Form (प्रवेश फार्म)</span>
+              <span className="sm:hidden">Admission Form</span>
             </Button>
-            <Button variant="outline" leftIcon={GraduationCap} onClick={handleOpenMarksheet}>
+            <Button variant="outline" size="sm" leftIcon={GraduationCap} onClick={handleOpenMarksheet}>
               Marksheet
             </Button>
-            <Button variant="outline" leftIcon={FileText} onClick={handleOpenTc}>
-              Transfer Certificate
+            <Button variant="outline" size="sm" leftIcon={FileText} onClick={handleOpenTc}>
+              <span className="hidden sm:inline">Transfer Certificate</span>
+              <span className="sm:hidden">TC</span>
             </Button>
             <Link to={`/students/edit/${id}`}>
-              <Button variant="outline" leftIcon={Pencil}>
+              <Button variant="outline" size="sm" leftIcon={Pencil}>
                 Edit
               </Button>
             </Link>
-            <Button variant="danger" leftIcon={Trash2} onClick={() => setDeleteOpen(true)}>
+            <Button variant="danger" size="sm" leftIcon={Trash2} onClick={() => setDeleteOpen(true)}>
               Delete
             </Button>
-          </>
+          </div>
         }
       />
 

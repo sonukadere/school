@@ -243,23 +243,23 @@ export default function ParentList() {
 
       {/* Add Parent Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl animate-fade-in">
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-3 sm:p-4 backdrop-blur-xs">
+          <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl animate-fade-in max-h-[calc(100dvh-2rem)] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 sm:px-6 py-3.5 sm:py-4 sticky top-0 bg-white z-10">
               <div>
-                <h3 className="text-lg font-bold text-slate-800">Add Parent Profile</h3>
+                <h3 className="text-base sm:text-lg font-bold text-slate-800">Add Parent Profile</h3>
                 <p className="text-xs text-slate-500">Register parent or legal guardian details</p>
               </div>
               <button
                 onClick={() => setModalOpen(false)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateParent} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleCreateParent} className="p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <Input
                   label="First Name *"
                   placeholder="e.g. Ramesh"
@@ -276,7 +276,7 @@ export default function ParentList() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <Input
                   label="Contact Phone *"
                   placeholder="9876543210"
@@ -311,15 +311,15 @@ export default function ParentList() {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+                  className="w-full sm:w-auto rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
                 >
                   Cancel
                 </button>
-                <Button type="submit" loading={submitting}>
+                <Button type="submit" loading={submitting} className="w-full sm:w-auto">
                   Save Parent
                 </Button>
               </div>

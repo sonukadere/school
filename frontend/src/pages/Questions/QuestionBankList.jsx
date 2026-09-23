@@ -268,7 +268,7 @@ export default function QuestionBankList() {
       {/* Edit / Create Question Modal */}
       {editModalOpen && editingQuestion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-xs">
-          <div className="relative max-h-[90vh] w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl overflow-y-auto">
+          <div className="relative max-h-[90vh] w-full max-w-2xl rounded-2xl bg-white p-4 sm:p-6 shadow-2xl overflow-y-auto">
             <h3 className="text-base font-bold text-slate-900 mb-4">
               {editingQuestion.id ? 'Edit Question' : 'Create New Question'}
             </h3>
@@ -286,7 +286,7 @@ export default function QuestionBankList() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Input
                   label="Subject"
                   required
@@ -308,7 +308,7 @@ export default function QuestionBankList() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Input
                   label="Chapter"
                   value={editingQuestion.chapter || ''}
@@ -323,7 +323,7 @@ export default function QuestionBankList() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Select
                   label="Question Type"
                   value={editingQuestion.type || 'SHORT_ANSWER'}
@@ -378,10 +378,11 @@ export default function QuestionBankList() {
                 />
               </div>
 
-              <div className="mt-4 flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="mt-4 flex flex-col-reverse sm:flex-row justify-end gap-2 pt-3 border-t border-slate-100">
                 <Button
                   type="button"
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={() => {
                     setEditModalOpen(false)
                     setEditingQuestion(null)
@@ -389,7 +390,7 @@ export default function QuestionBankList() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" loading={saving}>
+                <Button type="submit" loading={saving} className="w-full sm:w-auto">
                   Save Question
                 </Button>
               </div>

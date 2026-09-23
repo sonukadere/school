@@ -101,19 +101,19 @@ function TeacherAttendance() {
           className="overflow-hidden"
           bodyClassName="p-0"
         >
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto touch-scroll">
             <table className="min-w-[500px] w-full divide-y divide-slate-200 text-left">
               <thead className="bg-slate-50">
                 <tr>
                   {['Teacher', 'Subject', 'Status'].map((header) => (
-                    <th key={header} className="px-5 py-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">{header}</th>
+                    <th key={header} className="px-4 sm:px-5 py-3 text-xs font-semibold tracking-wide text-slate-500 uppercase whitespace-nowrap">{header}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {teachers.map((teacher) => (
                   <tr key={teacher.id} className="transition-colors hover:bg-slate-50/60">
-                    <td className="px-5 py-3">
+                    <td className="px-4 sm:px-5 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar name={teacher.name} size="sm" />
                         <div className="min-w-0">
@@ -132,8 +132,8 @@ function TeacherAttendance() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-sm text-slate-600">{teacher.subject}</td>
-                    <td className="px-5 py-3">
+                    <td className="px-4 sm:px-5 py-3 text-sm text-slate-600 whitespace-nowrap">{teacher.subject}</td>
+                    <td className="px-4 sm:px-5 py-3 whitespace-nowrap">
                       <div className="inline-flex gap-1.5">
                         {ATTENDANCE_STATUS.map((status) => (
                           <button
@@ -141,7 +141,7 @@ function TeacherAttendance() {
                             type="button"
                             onClick={() => updateStatus(teacher.id, status)}
                             className={cn(
-                              'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all duration-150',
+                              'rounded-lg border px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold transition-all duration-150 cursor-pointer',
                               records[teacher.id] === status
                                 ? STATUS_ACTIVE_STYLES[status]
                                 : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50',
@@ -157,8 +157,8 @@ function TeacherAttendance() {
               </tbody>
             </table>
           </div>
-          <div className="flex justify-end border-t border-slate-100 p-4">
-            <Button onClick={handleSave} loading={saving} leftIcon={Save}>Save Attendance</Button>
+          <div className="flex flex-col sm:flex-row justify-end border-t border-slate-100 p-3.5 sm:p-4">
+            <Button onClick={handleSave} loading={saving} leftIcon={Save} className="w-full sm:w-auto">Save Attendance</Button>
           </div>
         </Card>
       )}

@@ -94,50 +94,87 @@ function ForgotPassword() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 p-4">
+    <div className="flex min-h-screen min-h-[100dvh] items-center justify-center bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 p-4 py-8">
       <div className="animate-fade-in w-full max-w-md">
-        <div className="mb-8 flex flex-col items-center text-center">
+        <div className="mb-6 sm:mb-8 flex flex-col items-center text-center">
           <img
             src={settings?.schoolLogo || '/logo.svg'}
             alt={`${schoolName} logo`}
-            className="h-16 w-16 rounded-2xl object-cover shadow-lg"
+            className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl object-cover shadow-lg"
           />
-          <h1 className="mt-4 text-2xl font-bold text-white">{schoolName}</h1>
-          <p className="mt-1 text-sm text-indigo-200">School Management System</p>
+          <h1 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-white">{schoolName}</h1>
+          <p className="mt-1 text-xs sm:text-sm text-indigo-200">School Management System</p>
         </div>
 
-        <div className="rounded-2xl bg-white p-8 shadow-2xl">
+        <div className="rounded-2xl bg-white p-5 sm:p-8 shadow-2xl">
           <Link
             to="/login"
-            className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-indigo-600"
+            className="mb-4 sm:mb-5 inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-500 transition hover:text-indigo-600"
           >
             <ArrowLeft size={16} /> Back to login
           </Link>
 
-          {submitted ? (
+          {step === 'success' ? (
             <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-                <Mail size={28} className="text-emerald-600" />
+              <div className="mx-auto flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-emerald-100">
+                <CheckCircle size={28} className="text-emerald-600" />
               </div>
-              <h2 className="mt-4 text-xl font-bold text-slate-900">Check your inbox</h2>
-              <p className="mt-2 text-sm text-slate-500">
-                We have sent a password reset link to <strong>{email}</strong>. Please check your
-                email and follow the instructions to reset your password.
+              <h2 className="mt-4 text-lg sm:text-xl font-bold text-slate-900">Password Reset Successful!</h2>
+              <p className="mt-2 text-xs sm:text-sm text-slate-500">
+                Your password has been changed successfully. You can now sign in with your new password.
               </p>
               <Link to="/login" className="mt-6 block">
-                <Button variant="outline" className="w-full">
+                <Button variant="primary" className="w-full">
                   Return to Sign In
                 </Button>
               </Link>
             </div>
+          ) : step === 'reset' ? (
+            <>
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">Set New Password</h2>
+              <p className="mt-1 text-xs sm:text-sm text-slate-500">
+                Enter your reset token and your new account password.
+              </p>
+              <form onSubmit={handleResetSubmit} className="mt-5 space-y-4" noValidate>
+                <Input
+                  label="Reset Token"
+                  type="text"
+                  value={resetToken}
+                  onChange={(event) => setResetToken(event.target.value)}
+                  placeholder="Paste reset token here"
+                  icon={KeyRound}
+                  required
+                />
+                <Input
+                  label="New Password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  placeholder="Minimum 6 characters"
+                  required
+                />
+                <Input
+                  label="Confirm Password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="Re-enter new password"
+                  required
+                />
+                {error && <p className="text-xs text-rose-500">{error}</p>}
+                <Button type="submit" size="lg" loading={submitting} className="w-full">
+                  Reset Password
+                </Button>
+              </form>
+            </>
           ) : (
             <>
-              <h2 className="text-xl font-bold text-slate-900">Forgot your password?</h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">Forgot your password?</h2>
+              <p className="mt-1 text-xs sm:text-sm text-slate-500">
                 Enter your registered email address and we will send you a link to reset your
                 password.
               </p>
-              <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate>
+              <form onSubmit={handleForgotSubmit} className="mt-5 sm:mt-6 space-y-4" noValidate>
                 <Input
                   label="Email Address"
                   type="email"

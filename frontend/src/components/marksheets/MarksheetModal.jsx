@@ -92,7 +92,7 @@ export default function MarksheetModal({ open, onClose, studentId, examId, initi
               Official statement of examination performance • Daily Day Academy
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Button
               variant="primary"
               size="sm"
@@ -101,12 +101,13 @@ export default function MarksheetModal({ open, onClose, studentId, examId, initi
               disabled={loading || Boolean(error)}
               className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm"
             >
-              Print / Save PDF
+              <span className="hidden sm:inline">Print / Save PDF</span>
+              <span className="sm:hidden">Print</span>
             </Button>
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-xl transition-colors"
+              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
               aria-label="Close modal"
               title="Close modal"
             >
@@ -136,16 +137,16 @@ export default function MarksheetModal({ open, onClose, studentId, examId, initi
             ) : (
               <>
                 <MarksheetDocument marksheet={marksheet} />
-                <div className="flex items-center justify-center gap-3 pt-6 pb-2 print:hidden">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 pt-6 pb-2 print:hidden w-full">
                   <Button
                     variant="primary"
                     leftIcon={Printer}
                     onClick={handlePrint}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md"
+                    className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md"
                   >
                     Print / Save PDF
                   </Button>
-                  <Button variant="outline" onClick={onClose} className="bg-white">
+                  <Button variant="outline" onClick={onClose} className="w-full sm:w-auto bg-white">
                     Close
                   </Button>
                 </div>

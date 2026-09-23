@@ -66,14 +66,14 @@ function ProfilePage() {
         description="View your account information and academic records"
         breadcrumb={[{ label: 'Profile' }]}
         actions={
-          <>
+          <div className="flex flex-wrap items-center gap-2">
             <Link to="/profile/change-password">
-              <Button variant="outline" leftIcon={KeyRound}>Change Password</Button>
+              <Button variant="outline" size="sm" leftIcon={KeyRound}>Change Password</Button>
             </Link>
             <Link to="/profile/edit">
-              <Button leftIcon={Pencil}>Edit Profile</Button>
+              <Button size="sm" leftIcon={Pencil}>Edit Profile</Button>
             </Link>
-          </>
+          </div>
         }
       />
 

@@ -186,7 +186,7 @@ export default function Login() {
     'bg-white hover:bg-slate-50 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200'
 
   return (
-    <div className="h-screen h-[100dvh] max-h-screen w-full bg-[#f4f8fd] bg-gradient-to-br from-[#eff5fc] via-[#f4f8fd] to-[#eaf2fb] text-slate-800 dark:bg-[#0b1220] dark:from-[#0b1220] dark:via-[#0f172a] dark:to-[#0b1220] dark:text-slate-200 flex flex-col justify-between relative overflow-hidden font-sans selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen min-h-[100dvh] w-full bg-[#f4f8fd] bg-gradient-to-br from-[#eff5fc] via-[#f4f8fd] to-[#eaf2fb] text-slate-800 dark:bg-[#0b1220] dark:from-[#0b1220] dark:via-[#0f172a] dark:to-[#0b1220] dark:text-slate-200 flex flex-col justify-between relative overflow-x-hidden overflow-y-auto font-sans selection:bg-indigo-500 selection:text-white">
       {/* Decorative ambient background accents */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-blue-200/30 dark:bg-blue-600/10 rounded-full blur-3xl" />
@@ -195,7 +195,7 @@ export default function Login() {
       </div>
 
       {/* Top Header Bar */}
-      <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-1 sm:pb-2 flex items-center justify-between shrink-0">
+      <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-2 flex items-center justify-between shrink-0">
         {/* Brand Logo */}
         <div className="flex items-center gap-2.5 sm:gap-3">
           <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
@@ -271,7 +271,7 @@ export default function Login() {
       </header>
 
       {/* Main Content Area (Split Grid) */}
-      <main className="relative z-10 flex-1 min-h-0 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-1 sm:py-2 flex items-center">
+      <main className="relative z-10 flex-1 min-h-0 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-6 flex items-center">
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
 
           {/* Left Column: Hero Narrative, Feature Tiles & Campus Graphic */}
@@ -575,7 +575,7 @@ export default function Login() {
                 <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 text-center mb-1.5">
                   {t('demoHint')}
                 </p>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                   {/* Super Admin */}
                   <button
                     type="button"

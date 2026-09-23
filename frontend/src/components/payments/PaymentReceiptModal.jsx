@@ -186,10 +186,10 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
               </div>
 
               {/* 3. Payment Particulars Table */}
-              <div className="mt-6">
-                <table className="w-full border-collapse text-left">
+              <div className="mt-6 overflow-x-auto touch-scroll">
+                <table className="w-full min-w-[500px] border-collapse text-left">
                   <thead>
-                    <tr className="border-b-2 border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider bg-slate-100/70">
+                    <tr className="border-b-2 border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider bg-slate-100/70 whitespace-nowrap">
                       <th className="py-2.5 px-3">Description / Fee Head</th>
                       <th className="py-2.5 px-3">Payment Method</th>
                       <th className="py-2.5 px-3">Transaction / Ref ID</th>
@@ -198,16 +198,16 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs">
                     <tr>
-                      <td className="py-3.5 px-3 font-semibold text-slate-900">
+                      <td className="py-3.5 px-3 font-semibold text-slate-900 whitespace-nowrap">
                         {payment.feeType || 'Tuition Fee'}
                       </td>
-                      <td className="py-3.5 px-3 font-medium text-slate-700">
+                      <td className="py-3.5 px-3 font-medium text-slate-700 whitespace-nowrap">
                         {payment.paymentMethod || 'CASH'}
                       </td>
-                      <td className="py-3.5 px-3 font-mono text-slate-500">
+                      <td className="py-3.5 px-3 font-mono text-slate-500 whitespace-nowrap">
                         {payment.transactionId || 'N/A'}
                       </td>
-                      <td className="py-3.5 px-3 font-mono font-bold text-emerald-700 text-sm text-right">
+                      <td className="py-3.5 px-3 font-mono font-bold text-emerald-700 text-sm text-right whitespace-nowrap">
                         {formatCurrency(payment.amount || 0)}
                       </td>
                     </tr>
@@ -246,9 +246,9 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
               </div>
 
               {/* 5. Signatures & Authorization */}
-              <div className="mt-8 pt-6 border-t-2 border-dashed border-slate-200 grid grid-cols-2 gap-6 text-center text-xs">
+              <div className="mt-8 pt-6 border-t-2 border-dashed border-slate-200 grid grid-cols-2 gap-4 sm:gap-6 text-center text-xs">
                 <div className="flex flex-col items-center justify-end">
-                  <div className="w-36 border-b border-slate-400 pb-1 font-signature text-sm text-slate-700 font-semibold">
+                  <div className="w-28 sm:w-36 border-b border-slate-400 pb-1 font-signature text-sm text-slate-700 font-semibold truncate">
                     {authorized.generatedBy || 'Accounts Desk'}
                   </div>
                   <span className="text-[10px] uppercase tracking-wider text-slate-400 mt-1 font-medium">
@@ -261,9 +261,9 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
                       <CheckCircle2 size={13} /> Official Seal
                     </span>
                   </div>
-                  <div className="w-40 border-b border-slate-400 pb-1"></div>
+                  <div className="w-28 sm:w-40 border-b border-slate-400 pb-1"></div>
                   <span className="text-[10px] uppercase tracking-wider text-slate-500 mt-1 font-medium">
-                    {authorized.signatureLabel || 'Authorized Bursar / Cashier'}
+                    {authorized.signatureLabel || 'Authorized Bursar'}
                   </span>
                 </div>
               </div>
@@ -277,12 +277,13 @@ export default function PaymentReceiptModal({ open, onClose, receiptNumberOrId }
         </div>
 
         {/* Modal Footer - Hidden during print */}
-        <div className="sticky bottom-0 z-20 flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/95 backdrop-blur-md px-6 py-4 print:hidden shrink-0">
-          <Button variant="outline" onClick={onClose}>
+        <div className="sticky bottom-0 z-20 flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3 border-t border-slate-100 bg-slate-50/95 backdrop-blur-md px-4 sm:px-6 py-3 sm:py-4 print:hidden shrink-0">
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
             Close
           </Button>
-          <Button variant="primary" leftIcon={Printer} onClick={handlePrint} disabled={loading || !receiptData}>
-            Print / Save as PDF
+          <Button variant="primary" leftIcon={Printer} onClick={handlePrint} disabled={loading || !receiptData} className="w-full sm:w-auto">
+            <span className="hidden sm:inline">Print / Save as PDF</span>
+            <span className="sm:hidden">Print Receipt</span>
           </Button>
         </div>
       </div>

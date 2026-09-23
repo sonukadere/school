@@ -405,7 +405,7 @@ function MarksEntry() {
           title={`Batch Marks Entry — ${selectedSubject?.name || 'Subject'}`}
           subtitle={`${selectedExam.name} • ${selectedExam.className} • ${examStudents.length} Students`}
           actions={
-            <Button onClick={handleSaveBatch} loading={saving} leftIcon={Save}>
+            <Button onClick={handleSaveBatch} loading={saving} leftIcon={Save} className="w-full sm:w-auto">
               Save All Marks
             </Button>
           }
@@ -417,26 +417,26 @@ function MarksEntry() {
               icon={Users}
             />
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto touch-scroll">
               <table className="min-w-[620px] w-full divide-y divide-slate-200/80 text-left">
                 <thead className="bg-slate-50/75">
                   <tr>
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <th className="px-4 sm:px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
                       Roll No
                     </th>
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <th className="px-4 sm:px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
                       Student
                     </th>
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <th className="px-4 sm:px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
                       Marks (out of {maxMarks})
                     </th>
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <th className="px-4 sm:px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
                       Percentage
                     </th>
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <th className="px-4 sm:px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
                       Grade
                     </th>
-                    <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <th className="px-4 sm:px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
                       Status
                     </th>
                   </tr>
@@ -540,7 +540,7 @@ function MarksEntry() {
             subtitle={`${selectedExam.name} • ${selectedExam.className}`}
           >
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <Avatar name={selectedStudent.fullName} size="lg" />
                 <div>
                   <p className="text-lg font-bold text-slate-900">{selectedStudent.fullName}</p>
@@ -548,7 +548,7 @@ function MarksEntry() {
                     Student ID: {selectedStudent.studentId || selectedStudent.id.slice(-6)} &bull; Roll: #
                     {selectedStudent.rollNumber ?? 'N/A'}
                   </p>
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
                     <Badge variant="primary">{selectedStudent.className || selectedExam.className}</Badge>
                     <Badge variant="info">Section {selectedStudent.section || 'A'}</Badge>
                     {existingRecord && (
@@ -560,7 +560,7 @@ function MarksEntry() {
                 </div>
               </div>
 
-              <div className="w-full max-w-sm space-y-4">
+              <div className="w-full lg:max-w-sm space-y-4">
                 <Input
                   label={`Marks Obtained (out of ${maxMarks})`}
                   type="number"

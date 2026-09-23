@@ -97,12 +97,12 @@ export default function ReportsPage() {
         <PageHeader
           title="Institutional Reports & Audit Center"
           description="Consolidated analytical reports across fees, admissions funnel, staff payroll, and student demographics"
-          action={
+          actions={
             <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
                 onClick={handlePrint}
-                icon={Printer}
+                leftIcon={Printer}
               >
                 Print Report
               </Button>
@@ -111,7 +111,7 @@ export default function ReportsPage() {
         />
 
         {/* Tab Navigator */}
-        <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-px">
+        <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto touch-scroll pb-px">
           {[
             { id: 'fees', label: 'Fee Collections & Dues', icon: Wallet },
             { id: 'payroll', label: 'Teacher Salary & Payroll', icon: CreditCard },
@@ -123,13 +123,13 @@ export default function ReportsPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold whitespace-nowrap transition ${
+                className={`flex items-center gap-2 border-b-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold whitespace-nowrap transition cursor-pointer ${
                   isActive
                     ? 'border-indigo-600 text-indigo-600'
                     : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
               >
-                <Icon size={17} />
+                <Icon size={16} />
                 {tab.label}
               </button>
             )
@@ -165,13 +165,14 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-xs">
-            <div className="flex items-center justify-between mb-4 print:hidden">
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 print:hidden">
               <h4 className="text-base font-bold text-slate-800">Fee Invoices Breakdown</h4>
               <Button
                 size="sm"
                 variant="secondary"
-                icon={Download}
+                leftIcon={Download}
+                className="self-start sm:self-auto"
                 onClick={() =>
                   exportToCsv(
                     'fee_collection_report',
@@ -193,10 +194,10 @@ export default function ReportsPage() {
               </Button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
+            <div className="overflow-x-auto touch-scroll">
+              <table className="min-w-[680px] w-full text-left text-sm text-slate-600">
                 <thead className="border-b border-slate-100 bg-slate-50/75 text-xs uppercase font-semibold text-slate-500">
-                  <tr>
+                  <tr className="whitespace-nowrap">
                     <th className="px-4 py-3">Invoice No</th>
                     <th className="px-4 py-3">Student Name</th>
                     <th className="px-4 py-3">Class</th>
@@ -210,16 +211,16 @@ export default function ReportsPage() {
                 <tbody className="divide-y divide-slate-100">
                   {feeInvoices.slice(0, 50).map((inv) => (
                     <tr key={inv.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-mono font-bold text-xs text-indigo-600">{inv.invoiceNumber}</td>
-                      <td className="px-4 py-3 font-semibold text-slate-800">
+                      <td className="px-4 py-3 font-mono font-bold text-xs text-indigo-600 whitespace-nowrap">{inv.invoiceNumber}</td>
+                      <td className="px-4 py-3 font-semibold text-slate-800 whitespace-nowrap">
                         {inv.student?.firstName} {inv.student?.lastName}
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-600">{inv.student?.class?.name}</td>
-                      <td className="px-4 py-3 text-xs text-slate-500">{new Date(inv.dueDate).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 font-bold text-slate-800">₹{Number(inv.finalAmount).toLocaleString('en-IN')}</td>
-                      <td className="px-4 py-3 font-bold text-emerald-600">₹{Number(inv.paidAmount).toLocaleString('en-IN')}</td>
-                      <td className="px-4 py-3 font-bold text-amber-600">₹{Number(inv.pendingAmount).toLocaleString('en-IN')}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">{inv.student?.class?.name}</td>
+                      <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{new Date(inv.dueDate).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 font-bold text-slate-800 whitespace-nowrap">₹{Number(inv.finalAmount).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3 font-bold text-emerald-600 whitespace-nowrap">₹{Number(inv.paidAmount).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3 font-bold text-amber-600 whitespace-nowrap">₹{Number(inv.pendingAmount).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
                           {inv.status}
                         </span>
@@ -247,13 +248,14 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-xs">
-            <div className="flex items-center justify-between mb-4 print:hidden">
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 print:hidden">
               <h4 className="text-base font-bold text-slate-800">Faculty Payroll Register</h4>
               <Button
                 size="sm"
                 variant="secondary"
-                icon={Download}
+                leftIcon={Download}
+                className="self-start sm:self-auto"
                 onClick={() =>
                   exportToCsv(
                     'teacher_payroll_report',
@@ -275,10 +277,10 @@ export default function ReportsPage() {
               </Button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
+            <div className="overflow-x-auto touch-scroll">
+              <table className="min-w-[640px] w-full text-left text-sm text-slate-600">
                 <thead className="border-b border-slate-100 bg-slate-50/75 text-xs uppercase font-semibold text-slate-500">
-                  <tr>
+                  <tr className="whitespace-nowrap">
                     <th className="px-4 py-3">Payroll ID</th>
                     <th className="px-4 py-3">Teacher Name</th>
                     <th className="px-4 py-3">Month/Year</th>
@@ -291,13 +293,13 @@ export default function ReportsPage() {
                 <tbody className="divide-y divide-slate-100">
                   {payrollRecords.slice(0, 50).map((p) => (
                     <tr key={p.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-mono font-bold text-xs text-indigo-600">{p.payrollNumber || p.id.slice(-6)}</td>
-                      <td className="px-4 py-3 font-semibold text-slate-800">{p.teacher?.name}</td>
-                      <td className="px-4 py-3 text-xs text-slate-600">{p.month} {p.year}</td>
-                      <td className="px-4 py-3 font-medium text-slate-700">₹{Number(p.basicSalary).toLocaleString('en-IN')}</td>
-                      <td className="px-4 py-3 font-medium text-red-500">-₹{Number(p.deductions).toLocaleString('en-IN')}</td>
-                      <td className="px-4 py-3 font-bold text-emerald-600">₹{Number(p.netSalary).toLocaleString('en-IN')}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 font-mono font-bold text-xs text-indigo-600 whitespace-nowrap">{p.payrollNumber || p.id.slice(-6)}</td>
+                      <td className="px-4 py-3 font-semibold text-slate-800 whitespace-nowrap">{p.teacher?.name}</td>
+                      <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">{p.month} {p.year}</td>
+                      <td className="px-4 py-3 font-medium text-slate-700 whitespace-nowrap">₹{Number(p.basicSalary).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3 font-medium text-red-500 whitespace-nowrap">-₹{Number(p.deductions).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3 font-bold text-emerald-600 whitespace-nowrap">₹{Number(p.netSalary).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
                           {p.paymentStatus}
                         </span>
@@ -312,13 +314,14 @@ export default function ReportsPage() {
       ) : (
         /* ================== STUDENTS DEMOGRAPHICS ================== */
         <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-xs">
-            <div className="flex items-center justify-between mb-4 print:hidden">
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 print:hidden">
               <h4 className="text-base font-bold text-slate-800">Student Enrollment Register ({studentsList.length})</h4>
               <Button
                 size="sm"
                 variant="secondary"
-                icon={Download}
+                leftIcon={Download}
+                className="self-start sm:self-auto"
                 onClick={() =>
                   exportToCsv(
                     'students_enrollment_report',
@@ -340,10 +343,10 @@ export default function ReportsPage() {
               </Button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
+            <div className="overflow-x-auto touch-scroll">
+              <table className="min-w-[620px] w-full text-left text-sm text-slate-600">
                 <thead className="border-b border-slate-100 bg-slate-50/75 text-xs uppercase font-semibold text-slate-500">
-                  <tr>
+                  <tr className="whitespace-nowrap">
                     <th className="px-4 py-3">Student ID</th>
                     <th className="px-4 py-3">Full Name</th>
                     <th className="px-4 py-3">Class</th>
@@ -356,15 +359,15 @@ export default function ReportsPage() {
                 <tbody className="divide-y divide-slate-100">
                   {studentsList.slice(0, 50).map((s) => (
                     <tr key={s.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-mono font-bold text-xs text-indigo-600">{s.studentId}</td>
-                      <td className="px-4 py-3 font-semibold text-slate-800">
+                      <td className="px-4 py-3 font-mono font-bold text-xs text-indigo-600 whitespace-nowrap">{s.studentId}</td>
+                      <td className="px-4 py-3 font-semibold text-slate-800 whitespace-nowrap">
                         {s.firstName} {s.lastName}
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-600">{s.className || s.class?.name}</td>
-                      <td className="px-4 py-3 text-xs text-slate-700">{s.rollNumber || '-'}</td>
-                      <td className="px-4 py-3 text-xs text-slate-600">{s.gender}</td>
-                      <td className="px-4 py-3 text-xs text-slate-600">{s.phone || '-'}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">{s.className || s.class?.name}</td>
+                      <td className="px-4 py-3 text-xs text-slate-700 whitespace-nowrap">{s.rollNumber || '-'}</td>
+                      <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">{s.gender}</td>
+                      <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">{s.phone || '-'}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700">
                           {s.status}
                         </span>

@@ -246,13 +246,13 @@ function TimetablePage() {
       {/* Control / Filter Bar */}
       <Card className="p-4 sm:p-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 w-full md:w-auto">
             {isAdmin && (
-              <div className="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200 shrink-0">
+              <div className="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200 shrink-0 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setViewMode('class')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                     viewMode === 'class'
                       ? 'bg-white text-indigo-600 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -263,7 +263,7 @@ function TimetablePage() {
                 <button
                   type="button"
                   onClick={() => setViewMode('teacher')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                     viewMode === 'teacher'
                       ? 'bg-white text-indigo-600 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -276,7 +276,7 @@ function TimetablePage() {
 
             {/* Class Selector */}
             {viewMode === 'class' && (
-              <div className="w-64">
+              <div className="w-full sm:w-64">
                 <Select
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
@@ -293,7 +293,7 @@ function TimetablePage() {
 
             {/* Teacher Selector */}
             {viewMode === 'teacher' && (
-              <div className="w-64">
+              <div className="w-full sm:w-64">
                 <Select
                   value={selectedTeacherId}
                   onChange={(e) => setSelectedTeacherId(e.target.value)}

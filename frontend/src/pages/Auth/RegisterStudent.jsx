@@ -142,28 +142,28 @@ Portal URL: ${window.location.origin}/login`
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-700 via-indigo-800 to-slate-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-3xl w-full">
         {/* Header Branding */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center p-3 bg-white/10 backdrop-blur-md rounded-2xl shadow-inner mb-3">
-            <GraduationCap className="h-10 w-10 text-white" />
+        <div className="mb-6 sm:mb-8 text-center">
+          <div className="inline-flex items-center justify-center p-2.5 sm:p-3 bg-white/10 backdrop-blur-md rounded-2xl shadow-inner mb-2.5 sm:mb-3">
+            <GraduationCap className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">{schoolName}</h1>
-          <p className="mt-2 text-sm text-indigo-200">Online Student Admission & Portal Registration</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{schoolName}</h1>
+          <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-indigo-200">Online Student Admission & Portal Registration</p>
         </div>
 
         {/* Card Container */}
-        <div className="rounded-3xl bg-white p-6 sm:p-10 shadow-2xl border border-white/20 backdrop-blur-xl">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-5 mb-6">
+        <div className="rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-8 lg:p-10 shadow-2xl border border-white/20 backdrop-blur-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 sm:pb-5 mb-5 sm:mb-6">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Student Registration Form</h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">Student Registration Form</h2>
+              <p className="text-xs text-slate-500 mt-0.5 sm:mt-1">
                 Enter admission details and set your Login ID & Password for the student portal.
               </p>
             </div>
             <Link
               to="/login"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition"
+              className="inline-flex items-center self-start sm:self-auto gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition"
             >
               <ArrowLeft size={14} /> Back to Sign In
             </Link>
@@ -208,7 +208,7 @@ Portal URL: ${window.location.origin}/login`
                   error={errors.dob}
                   required
                 />
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Select
                     label="Admission Class"
                     name="className"
@@ -287,16 +287,16 @@ Portal URL: ${window.location.origin}/login`
             </div>
 
             {/* 3. Portal Credentials Setup */}
-            <div className="space-y-4 pt-4 border-t border-slate-100 rounded-2xl bg-indigo-50/50 p-5 border border-indigo-100/70">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4 pt-4 border-t border-slate-100 rounded-2xl bg-indigo-50/50 p-4 sm:p-5 border border-indigo-100/70">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-2">
-                  <KeyRound size={16} className="text-indigo-600" />
+                  <KeyRound size={16} className="text-indigo-600 shrink-0" />
                   3. Student Portal Login Credentials
                 </h3>
                 <button
                   type="button"
                   onClick={generatePassword}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 shadow-2xs transition"
+                  className="inline-flex items-center self-start sm:self-auto gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 shadow-2xs transition cursor-pointer"
                 >
                   <Sparkles size={13} className="text-amber-500" /> Auto-Generate Password
                 </button>
@@ -329,7 +329,7 @@ Portal URL: ${window.location.origin}/login`
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute top-[38px] right-3 text-slate-400 hover:text-slate-600"
+                    className="absolute top-[38px] right-3 text-slate-400 hover:text-slate-600 cursor-pointer"
                     aria-label="Toggle password"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -351,11 +351,11 @@ Portal URL: ${window.location.origin}/login`
             </div>
 
             {/* Submission */}
-            <div className="pt-2 flex items-center justify-between">
-              <Link to="/login" className="text-sm font-semibold text-slate-600 hover:text-slate-900">
+            <div className="pt-2 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
+              <Link to="/login" className="w-full sm:w-auto text-center text-sm font-semibold text-slate-600 hover:text-slate-900 py-2 sm:py-0">
                 Cancel
               </Link>
-              <Button type="submit" size="lg" loading={submitting} className="min-w-[180px]">
+              <Button type="submit" size="lg" loading={submitting} className="w-full sm:w-auto min-w-[180px]">
                 Submit Registration
               </Button>
             </div>
