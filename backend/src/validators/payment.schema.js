@@ -18,9 +18,6 @@ export const recordPaymentSchema = z.object({
   transactionId: z.string().trim().optional().nullable(),
   referenceNumber: z.string().trim().optional().nullable(),
   notes: z.string().trim().max(500).optional().nullable(),
-  gateway: z.string().trim().optional().nullable(),
-  gatewayOrderId: z.string().trim().optional().nullable(),
-  gatewayPaymentId: z.string().trim().optional().nullable(),
   schoolId: z.string().trim().optional(),
 });
 

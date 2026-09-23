@@ -588,6 +588,11 @@ export const api = {
     return apiClient.delete(`/classes/${id}`)
   },
 
+  rebalanceSections: async (className = null) => {
+    const res = await apiClient.post('/classes/rebalance-sections', { className })
+    return res?.data || res
+  },
+
   // --- Subjects ---
   getSubjects: async (params = {}) => {
     const res = await apiClient.get('/subjects', { limit: 100, ...params })
@@ -1171,6 +1176,10 @@ export const api = {
 // -------------------------------------------------------------
 
 export const attendanceApi = {
+  getMyAttendance: async () => {
+    return apiClient.get('/me/attendance')
+  },
+
   getStudentAttendance: async ({ date, className, section, classId }) => {
     try {
       let targetClassId = classId
@@ -1404,19 +1413,6 @@ export const attendanceApi = {
       data: Array.isArray(res) ? res : (res?.data || []),
       pagination: res?.pagination || null,
     }
-  },
-
-  // -------------------------------------------------------------
-  // Razorpay Integration
-  // -------------------------------------------------------------
-  createRazorpayOrder: async (invoiceId, amount) => {
-    const res = await apiClient.post('/payments/razorpay/order', { invoiceId, amount })
-    return res?.data || res
-  },
-
-  verifyRazorpayPayment: async (paymentData) => {
-    const res = await apiClient.post('/payments/razorpay/verify', paymentData)
-    return res?.data || res
   },
 }
 

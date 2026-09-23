@@ -12,7 +12,6 @@ import {
   getEffectiveSchoolId,
   assertSchoolAccess,
   assertPaymentVisible,
-  assertStudentVisible,
   getVisibleStudentIds,
 } from '../utils/access.js';
 
@@ -338,9 +337,6 @@ export async function recordPayment(data, actor) {
       transactionId: data.transactionId || null,
       referenceNumber: data.referenceNumber || null,
       notes: data.notes || null,
-      gateway: data.gateway || 'MANUAL',
-      gatewayOrderId: data.gatewayOrderId || null,
-      gatewayPaymentId: data.gatewayPaymentId || null,
       ...(actor?.id ? { createdBy: { connect: { id: actor.id } } } : {}),
       deletedAt: null,
     },
@@ -1001,11 +997,8 @@ export async function getPaymentReports(query = {}, actor) {
   // Method breakdowns
   const methodMap = {
     CASH: 0,
-    UPI: 0,
-    CARD: 0,
     BANK_TRANSFER: 0,
     CHEQUE: 0,
-    ONLINE: 0,
   };
 
   for (const p of allPayments) {
@@ -1087,10 +1080,8 @@ export async function getPaymentReports(query = {}, actor) {
       totalInvoiced,
       totalTransactions,
       cashCollection: methodMap.CASH || 0,
-      upiCollection: methodMap.UPI || 0,
-      cardCollection: methodMap.CARD || 0,
       bankTransferCollection: methodMap.BANK_TRANSFER || 0,
-      onlineCollection: (methodMap.ONLINE || 0) + (methodMap.CHEQUE || 0),
+      chequeCollection: methodMap.CHEQUE || 0,
     },
     methodBreakdown: Object.entries(methodMap).map(([method, amount]) => ({
       method,
@@ -1749,123 +1740,4 @@ export async function getFinanceSummary(query = {}, actor) {
       netBalance,
     },
   };
-}
-
-/**
- * RAZORPAY INTEGRATION
- */
-
-export async function createRazorpayOrder(invoiceId, amount, actor) {
-  const Razorpay = (await import('razorpay')).default;
-  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-    throw ApiError.internal('Razorpay keys not configured in server environment.');
-  }
-
-  const rzp = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-  });
-
-  const invoice = await prisma.feeInvoice.findFirst({
-    where: { id: invoiceId, deletedAt: null },
-    include: { student: true },
-  });
-
-  if (!invoice) throw ApiError.notFound('Invoice not found');
-
-  // Role-based ownership: students/parents may only create orders for their own invoices
-  if (actor && (actor.role === 'STUDENT' || actor.role === 'PARENT')) {
-    await assertStudentVisible(actor, invoice.studentId);
-  }
-
-  if (amount > invoice.pendingAmount) {
-    throw ApiError.badRequest('Amount cannot exceed pending balance.');
-  }
-
-  const options = {
-    amount: Math.round(amount * 100), // amount in paise
-    currency: 'INR',
-    receipt: `inv_${invoiceId.slice(-6)}`,
-    notes: {
-      invoiceId,
-      studentId: invoice.studentId,
-    },
-  };
-
-  try {
-    const order = await rzp.orders.create(options);
-    return {
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      keyId: process.env.RAZORPAY_KEY_ID,
-    };
-  } catch (error) {
-    throw ApiError.internal(`Failed to create Razorpay order: ${error.message}`);
-  }
-}
-
-export async function verifyRazorpayPayment(data, actor) {
-  const {
-    razorpay_order_id,
-    razorpay_payment_id,
-    razorpay_signature,
-    invoiceId,
-    studentId,
-    amount,
-  } = data;
-
-  if (!process.env.RAZORPAY_KEY_SECRET) {
-    throw ApiError.internal('Razorpay key secret not configured.');
-  }
-
-  const crypto = await import('crypto');
-  const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
-  hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
-  const generatedSignature = hmac.digest('hex');
-
-  if (generatedSignature !== razorpay_signature) {
-    throw ApiError.badRequest('Payment verification failed. Invalid signature.');
-  }
-
-  // Idempotency guard: retrying a previously processed Razorpay order/payment
-  // must not create a duplicate Payment + Receipt in the database.
-  const existingGatewayPayment = await prisma.payment.findFirst({
-    where: {
-      AND: [
-        notDeleted(),
-        {
-          OR: [
-            { gatewayPaymentId: razorpay_payment_id },
-            { gatewayOrderId: razorpay_order_id },
-          ],
-        },
-      ],
-    },
-    include: { receipts: { where: notDeleted(), orderBy: { createdAt: 'desc' } } },
-  });
-
-  if (existingGatewayPayment) {
-    const existingReceipt = existingGatewayPayment.receipts?.[0] || null;
-    return {
-      payment: existingGatewayPayment,
-      receipt: existingReceipt,
-      duplicate: true,
-    };
-  }
-
-  // If verified, record the payment
-  const paymentRecord = await recordPayment({
-    studentId,
-    invoiceId,
-    amount,
-    paymentMethod: 'ONLINE',
-    transactionId: razorpay_payment_id,
-    gateway: 'RAZORPAY',
-    gatewayOrderId: razorpay_order_id,
-    gatewayPaymentId: razorpay_payment_id,
-    notes: `Online payment via Razorpay. Order ID: ${razorpay_order_id}`,
-  }, actor);
-
-  return paymentRecord;
 }

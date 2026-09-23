@@ -28,7 +28,6 @@ function sanitizeMetadata(data) {
     'token',
     'refreshToken',
     'secret',
-    'razorpayKeySecret',
     'jwtSecret',
     'authorization',
   ]);

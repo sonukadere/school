@@ -40,7 +40,6 @@ const PaymentReceiptModal = lazy(() => import('../../components/payments/Payment
 const AssignFeeModal = lazy(() => import('../../components/payments/AssignFeeModal'))
 
 import { api } from '../../services/api'
-import { apiClient } from '../../services/apiClient'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { formatDate, formatCurrency, cn } from '../../utils/helpers'
@@ -329,97 +328,6 @@ export default function FeeList() {
     },
   ]
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      if (window.Razorpay) {
-        resolve(true)
-        return
-      }
-      const script = document.createElement('script')
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.body.appendChild(script)
-    })
-  }
-
-  const handlePayOnline = async (invoice) => {
-    if (invoice.pendingAmount <= 0) return
-
-    try {
-      setLoading(true)
-      const isLoaded = await loadRazorpayScript()
-      if (!isLoaded) {
-        showToast('Failed to load Razorpay SDK', 'error')
-        setLoading(false)
-        return
-      }
-
-      // Create Order
-      if (typeof api.createRazorpayOrder !== 'function') {
-        showToast('Online payment is not available in this build. Please refresh the app or redeploy the latest version.', 'error')
-        console.error('[Razorpay] api.createRazorpayOrder is missing from the api client (stale build).')
-        setLoading(false)
-        return
-      }
-      const orderData = await api.createRazorpayOrder(invoice.id, invoice.pendingAmount)
-      setLoading(false)
-
-      if (!orderData || !orderData.orderId) {
-        showToast('Failed to create Razorpay order', 'error')
-        return
-      }
-
-      const options = {
-        key: orderData.keyId,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'School Management System',
-        description: `Fee Payment: ${invoice.feeType}`,
-        order_id: orderData.orderId,
-        handler: async function (response) {
-          try {
-            setLoading(true)
-            const verifyData = {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              invoiceId: invoice.id,
-              studentId: user?.studentId || user?.student?.id || user?.id,
-              amount: invoice.pendingAmount,
-            }
-            const result = await api.verifyRazorpayPayment(verifyData)
-            showToast('Payment successful!', 'success')
-            loadFeeData()
-            const receiptNumber = result?.receipt?.receiptNumber || result?.receiptNumber
-            if (receiptNumber) {
-              handleOpenReceipt(receiptNumber)
-            }
-          } catch (err) {
-            console.error(err)
-            showToast(err?.response?.data?.message || 'Payment verification failed', 'error')
-          } finally {
-            setLoading(false)
-          }
-        },
-        prefill: {
-          name: user?.name || user?.fullName || '',
-          email: user?.email || '',
-        },
-        theme: {
-          color: '#4f46e5', // Indigo-600
-        },
-      }
-
-      const paymentObject = new window.Razorpay(options)
-      paymentObject.open()
-    } catch (err) {
-      console.error(err)
-      setLoading(false)
-      showToast(err?.response?.data?.message || 'Error initializing payment', 'error')
-    }
-  }
-
   // If viewing as Student or Parent, render clean personal ledger view
   if (isStudentOrParent) {
     const personalLedger = studentLedger?.ledger || {}
@@ -529,14 +437,9 @@ export default function FeeList() {
                           </td>
                           <td className="py-3 px-4 text-right">
                             {inv.pendingAmount > 0 && (
-                              <Button
-                                size="sm"
-                                variant="primary"
-                                onClick={() => handlePayOnline(inv)}
-                                loading={loading}
-                              >
-                                Pay Online
-                              </Button>
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+                                Pay at office counter
+                              </span>
                             )}
                           </td>
                         </tr>

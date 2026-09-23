@@ -4,6 +4,90 @@ import { apiClient, tokenStorage } from '../services/apiClient'
 
 const AuthContext = createContext(null)
 
+export const DEFAULT_ROLE_PERMISSIONS = {
+  SUPER_ADMIN: [
+    'dashboard.view', 'profile.view', 'profile.update', 'users.manage', 'roles.manage',
+    'settings.manage', 'reports.view', 'students.view', 'students.create', 'students.update',
+    'students.delete', 'students.manage', 'promotion.manage', 'teachers.view', 'teachers.create',
+    'teachers.update', 'teachers.delete', 'teachers.manage', 'classes.view', 'classes.create',
+    'classes.update', 'classes.delete', 'classes.manage', 'subjects.view', 'subjects.create',
+    'subjects.update', 'subjects.delete', 'subjects.manage', 'attendance.view', 'attendance.mark',
+    'attendance.update', 'attendance.manage', 'teacherAttendance.view', 'teacherAttendance.manage',
+    'fees.view', 'fees.create', 'fees.update', 'fees.delete', 'fees.manage', 'payments.view',
+    'payments.create', 'payments.update', 'payments.delete', 'payments.manage', 'receipts.view',
+    'receipts.generate', 'receipts.download', 'reports.fees.view', 'payroll.view', 'payroll.manage',
+    'salary.view', 'salary.manage', 'exams.view', 'exams.create', 'exams.manage', 'marks.view',
+    'marks.create', 'marks.update', 'marks.manage', 'results.view', 'marksheets.view',
+    'marksheets.generate', 'questions.view', 'questions.create', 'questions.manage',
+    'timetables.view', 'timetables.manage', 'homework.view', 'homework.create', 'homework.manage',
+    'assignments.view', 'assignments.create', 'assignments.manage', 'documents.view',
+    'documents.upload', 'tc.view', 'tc.generate', 'tc.approve', 'tc.manage', 'notices.view',
+    'notices.manage', 'events.view', 'events.manage', 'holidays.view', 'holidays.manage',
+    'notifications.view', 'leave.view', 'leave.create', 'leave.manage'
+  ],
+  ADMIN: [
+    'dashboard.view', 'profile.view', 'profile.update', 'users.manage', 'roles.manage',
+    'settings.manage', 'reports.view', 'students.view', 'students.create', 'students.update',
+    'students.delete', 'students.manage', 'promotion.manage', 'teachers.view', 'teachers.create',
+    'teachers.update', 'teachers.delete', 'teachers.manage', 'classes.view', 'classes.create',
+    'classes.update', 'classes.delete', 'classes.manage', 'subjects.view', 'subjects.create',
+    'subjects.update', 'subjects.delete', 'subjects.manage', 'attendance.view', 'attendance.mark',
+    'attendance.update', 'attendance.manage', 'teacherAttendance.view', 'teacherAttendance.manage',
+    'fees.view', 'fees.create', 'fees.update', 'fees.delete', 'fees.manage', 'payments.view',
+    'payments.create', 'payments.update', 'payments.delete', 'payments.manage', 'receipts.view',
+    'receipts.generate', 'receipts.download', 'reports.fees.view', 'payroll.view', 'payroll.manage',
+    'salary.view', 'salary.manage', 'exams.view', 'exams.create', 'exams.manage', 'marks.view',
+    'marks.create', 'marks.update', 'marks.manage', 'results.view', 'marksheets.view',
+    'marksheets.generate', 'questions.view', 'questions.create', 'questions.manage',
+    'timetables.view', 'timetables.manage', 'homework.view', 'homework.create', 'homework.manage',
+    'assignments.view', 'assignments.create', 'assignments.manage', 'documents.view',
+    'documents.upload', 'tc.view', 'tc.generate', 'tc.approve', 'tc.manage', 'notices.view',
+    'notices.manage', 'events.view', 'events.manage', 'holidays.view', 'holidays.manage',
+    'notifications.view', 'leave.view', 'leave.create', 'leave.manage'
+  ],
+  TEACHER: [
+    'dashboard.view', 'profile.view', 'profile.update', 'students.view', 'classes.view',
+    'subjects.view', 'attendance.view', 'attendance.mark', 'attendance.update', 'attendance.manage',
+    'timetables.view', 'homework.view', 'homework.create', 'homework.update', 'homework.delete',
+    'homework.manage', 'assignments.view', 'assignments.create', 'assignments.update',
+    'assignments.grade', 'assignments.manage', 'documents.view', 'documents.upload',
+    'leave.view', 'leave.create', 'events.view', 'holidays.view', 'exams.view', 'questions.view',
+    'questions.create', 'marks.view', 'marks.create', 'marks.update', 'marks.manage',
+    'results.view', 'marksheets.view', 'marksheets.generate', 'notices.view', 'notifications.view'
+  ],
+  STUDENT: [
+    'dashboard.view', 'profile.view', 'profile.update', 'own.view', 'subjects.view',
+    'timetables.view', 'attendance.view', 'fees.view', 'payments.view', 'payments.download',
+    'receipts.view', 'receipts.download', 'homework.view', 'assignments.view', 'documents.view',
+    'exams.view', 'exams.digital.attempt', 'results.view', 'marks.view', 'notices.view',
+    'events.view', 'notifications.view'
+  ],
+  PARENT: [
+    'dashboard.view', 'profile.view', 'profile.update', 'own.view', 'fees.view',
+    'payments.view', 'payments.download', 'receipts.view', 'receipts.download',
+    'homework.view', 'assignments.view', 'exams.view', 'results.view', 'notices.view',
+    'events.view', 'notifications.view'
+  ],
+  ACCOUNTANT: [
+    'dashboard.view', 'profile.view', 'profile.update', 'students.view', 'classes.view',
+    'fees.view', 'fees.manage', 'fees.create', 'fees.update', 'fees.delete', 'payments.view',
+    'payments.create', 'payments.update', 'payments.delete', 'payments.download', 'payments.export',
+    'receipts.view', 'receipts.generate', 'receipts.download', 'reports.fees.view',
+    'reports.fees.export', 'reports.view', 'notices.view', 'events.view', 'holidays.view',
+    'notifications.view'
+  ],
+  RECEPTIONIST: [
+    'dashboard.view', 'profile.view', 'profile.update', 'crm.view', 'crm.manage',
+    'crm.create', 'crm.update', 'crm.delete', 'crm.convert', 'students.view',
+    'students.manage', 'parents.view', 'parents.manage', 'classes.view', 'notices.view',
+    'events.view', 'holidays.view', 'notifications.view'
+  ],
+  STAFF: [
+    'dashboard.view', 'profile.view', 'profile.update', 'notices.view', 'events.view',
+    'notifications.view'
+  ],
+}
+
 /**
  * Normalize backend user payload into standard frontend session format
  */
@@ -49,6 +133,9 @@ export function normalizeUser(rawUser) {
     staffId: rawUser.staff?.id || rawUser.staffId || null,
     classId: rawUser.student?.classId || null,
     mustChangePassword: Boolean(rawUser.mustChangePassword),
+    permissions: Array.isArray(rawUser.permissions) && rawUser.permissions.length > 0
+      ? rawUser.permissions
+      : (DEFAULT_ROLE_PERMISSIONS[(rawUser.role || '').toUpperCase().replace(/\s+/g, '_')] || []),
   }
 }
 
@@ -204,6 +291,27 @@ export function AuthProvider({ children }) {
     }
   }, [setUser, setUserState])
 
+  const hasPermission = useCallback((permission) => {
+    if (!permission) return true
+    if (!user) return false
+    const perms = user.permissions || []
+    return perms.includes(permission)
+  }, [user])
+
+  const hasAnyPermission = useCallback((permissions = []) => {
+    if (!permissions || permissions.length === 0) return true
+    if (!user) return false
+    const perms = user.permissions || []
+    return permissions.some((p) => perms.includes(p))
+  }, [user])
+
+  const hasAllPermissions = useCallback((permissions = []) => {
+    if (!permissions || permissions.length === 0) return true
+    if (!user) return false
+    const perms = user.permissions || []
+    return permissions.every((p) => perms.includes(p))
+  }, [user])
+
   const contextValue = useMemo(
     () => ({
       user,
@@ -214,9 +322,12 @@ export function AuthProvider({ children }) {
       logout,
       changePassword,
       updateProfile,
+      hasPermission,
+      hasAnyPermission,
+      hasAllPermissions,
       isAuthenticated: Boolean(user && tokenStorage.get()),
     }),
-    [user, setUser, loading, initializing, login, logout, changePassword, updateProfile]
+    [user, setUser, loading, initializing, login, logout, changePassword, updateProfile, hasPermission, hasAnyPermission, hasAllPermissions]
   )
 
   return (

@@ -8,7 +8,7 @@ import ApiError from './ApiError.js';
  */
 export function getPagination(query = {}) {
   const page = Math.max(parseInt(query.page, 10) || 1, 1);
-  const limit = Math.min(Math.max(parseInt(query.limit, 10) || 10, 1), 100);
+  const limit = Math.min(Math.max(parseInt(query.limit, 10) || 10, 1), 500);
   const skip = (page - 1) * limit;
   return { page, limit, skip };
 }
@@ -109,13 +109,21 @@ export function extractBearerToken(authHeader) {
   return authHeader.slice(7).trim();
 }
 
+import { permissionsForRole, expandPermissions } from '../constants/permissions.js';
+
 /**
- * Serialize a user object for safe API responses (strip secrets).
+ * Serialize a user object for safe API responses (strip secrets, attach resolved permissions).
  */
 export function serializeUser(user) {
   if (!user) return null;
   const { password, ...rest } = user;
-  return rest;
+  const permissions = Array.isArray(user.permissions) && user.permissions.length > 0
+    ? expandPermissions(user.permissions)
+    : permissionsForRole(user.role);
+  return {
+    ...rest,
+    permissions,
+  };
 }
 
 /**

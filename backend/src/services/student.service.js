@@ -10,6 +10,7 @@ import {
 } from '../utils/helpers.js';
 import { assertStudentVisible, getVisibleStudentIds } from '../utils/access.js';
 import { generateNextSequenceId, generateTemporaryPassword } from '../utils/sequence.js';
+import { resolveTargetSectionForAdmission } from './sectionManager.service.js';
 
 const SORTABLE_FIELDS = new Set([
   'studentId',
@@ -152,27 +153,37 @@ export async function createStudent(data) {
       throw ApiError.conflict('A student with this ID or email already exists.');
     }
 
+    let assignedClassId = studentFields.classId;
     if (studentFields.classId) {
-      const cls = await tx.class.findFirst({
-        where: { id: studentFields.classId, ...notDeleted() },
-      });
-      if (!cls) {
-        throw ApiError.badRequest('The selected class does not exist.');
-      }
+      // Auto-scale sections: if section exceeds 50, automatically create and assign to next section (B, C...)
+      const targetSec = await resolveTargetSectionForAdmission(tx, studentFields.classId);
+      assignedClassId = targetSec.id;
+      studentFields.classId = assignedClassId;
 
       if (studentFields.rollNumber) {
         const existingRoll = await tx.student.findFirst({
           where: {
             ...notDeleted(),
-            classId: studentFields.classId,
+            classId: assignedClassId,
             rollNumber: Number(studentFields.rollNumber),
           },
         });
         if (existingRoll) {
-          throw ApiError.conflict(
-            `Roll number ${studentFields.rollNumber} is already assigned in this class.`
-          );
+          // Auto-assign next roll number in this section
+          const highestRoll = await tx.student.findFirst({
+            where: { classId: assignedClassId, ...notDeleted() },
+            orderBy: { rollNumber: 'desc' },
+            select: { rollNumber: true },
+          });
+          studentFields.rollNumber = (highestRoll?.rollNumber || 0) + 1;
         }
+      } else {
+        const highestRoll = await tx.student.findFirst({
+          where: { classId: assignedClassId, ...notDeleted() },
+          orderBy: { rollNumber: 'desc' },
+          select: { rollNumber: true },
+        });
+        studentFields.rollNumber = (highestRoll?.rollNumber || 0) + 1;
       }
     }
 

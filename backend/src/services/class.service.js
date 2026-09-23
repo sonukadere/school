@@ -87,8 +87,13 @@ export async function listClasses(query = {}, actor = null) {
       active: cls._count?.students ?? 0,
       inactive: 0,
     };
+    const maxCapacity = 50;
     return {
       ...cls,
+      capacity: maxCapacity,
+      maxSectionLimit: maxCapacity,
+      isFull: counts.total >= maxCapacity,
+      isDefaultSection: cls.section?.toUpperCase() === 'A',
       studentCount: counts.total,
       activeStudentCount: counts.active,
       inactiveStudentCount: counts.inactive,
@@ -189,3 +194,12 @@ export async function deleteClass(id) {
     data: { deletedAt: new Date() },
   });
 }
+
+export async function rebalanceSections(className = null) {
+  const { rebalanceGradeSections, rebalanceAllSchoolSections } = await import('./sectionManager.service.js');
+  if (className) {
+    return rebalanceGradeSections(prisma, className);
+  }
+  return rebalanceAllSchoolSections();
+}
+

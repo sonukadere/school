@@ -9,6 +9,7 @@ function Select({
   placeholder = 'Select an option',
   className,
   id,
+  leftIcon: LeftIcon = null,
   ...props
 }) {
   const selectId = id || props.name || `select-${label?.toLowerCase().replace(/\s+/g, '-')}`
@@ -24,11 +25,18 @@ function Select({
         </label>
       )}
       <div className="relative">
+        {LeftIcon && (
+          <LeftIcon
+            size={18}
+            className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400"
+          />
+        )}
         <select
           id={selectId}
           className={cn(
             'w-full h-11 cursor-pointer appearance-none rounded-xl border bg-slate-50/40 px-3.5 pr-10 text-sm text-slate-900 transition-all duration-200',
             'focus:bg-white focus:outline-none focus:ring-4',
+            LeftIcon ? 'pl-10' : '',
             error
               ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-500/10'
               : 'border-slate-200 hover:border-slate-300 focus:border-indigo-500 focus:ring-indigo-500/10',

@@ -57,11 +57,8 @@ enum PaymentStatus {
 
 enum PaymentMethod {
   CASH
-  CARD
   BANK_TRANSFER
-  ONLINE
   CHEQUE
-  UPI
 }
 
 enum DayOfWeek {
@@ -975,12 +972,8 @@ model Payment {
   paymentMethod    PaymentMethod @default(CASH)
   paymentStatus    PaymentStatus @default(PAID)
 
-  // Online gateway readiness fields
-  gateway          String?       // "MANUAL", "RAZORPAY", "STRIPE"
   transactionId    String?
   referenceNumber  String?
-  gatewayOrderId   String?
-  gatewayPaymentId String?
   notes            String?
 
   createdById      String?

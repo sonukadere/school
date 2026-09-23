@@ -86,10 +86,10 @@ async function runEndToEndVerification() {
     studentId: student.id,
     feeInvoiceId: invoice.id,
     amount: 1100,
-    paymentMethod: 'UPI',
-    transactionId: 'UPI-TXN-' + Date.now(),
+    paymentMethod: 'CHEQUE',
+    transactionId: 'CHQ-TXN-' + Date.now(),
     paymentDate: new Date().toISOString(),
-    remarks: 'First installment payment via UPI',
+    remarks: 'First installment payment via cheque',
   }, actor);
 
   const paymentRecord1 = payment1.payment;

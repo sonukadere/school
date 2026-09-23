@@ -62,20 +62,6 @@ export const listFeeStructures = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, 'Fee structures retrieved successfully.', result.data, result.pagination));
 });
 
-export const createRazorpayOrder = asyncHandler(async (req, res) => {
-  const { invoiceId, amount } = req.body;
-  if (!invoiceId || !amount) {
-    throw new ApiError(400, 'Invoice ID and amount are required.');
-  }
-  const orderDetails = await paymentService.createRazorpayOrder(invoiceId, amount, req.user);
-  res.status(200).json(new ApiResponse(200, 'Razorpay order created successfully.', orderDetails));
-});
-
-export const verifyRazorpayPayment = asyncHandler(async (req, res) => {
-  const paymentRecord = await paymentService.verifyRazorpayPayment(req.body, req.user);
-  res.status(200).json(new ApiResponse(200, 'Payment verified and recorded successfully.', paymentRecord));
-});
-
 export const createFeeStructure = asyncHandler(async (req, res) => {
   const created = await paymentService.createFeeStructure(req.body, req.user);
   res.status(201).json(new ApiResponse(201, 'Fee structure created successfully.', created));

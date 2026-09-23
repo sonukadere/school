@@ -38,12 +38,6 @@ const env = {
     name: process.env.ADMIN_NAME || 'System Administrator',
   },
 
-  // Payment gateway secrets (Backend only - NEVER exposed to frontend)
-  razorpay: {
-    keyId: process.env.RAZORPAY_KEY_ID || '',
-    keySecret: process.env.RAZORPAY_KEY_SECRET || '',
-  },
-
   // SMTP Email configuration defaults
   smtp: {
     host: process.env.SMTP_HOST || '',

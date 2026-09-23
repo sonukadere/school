@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import authenticate from '../middleware/auth.js';
-import authorize from '../middleware/authorize.js';
+import { requirePermission } from '../middleware/authorize.js';
+import { PERMISSIONS } from '../constants/permissions.js';
 import validate from '../middleware/validate.js';
-import { ROLES } from '../constants/index.js';
 import * as payrollController from '../controllers/payroll.controller.js';
 import {
   saveSalaryStructureSchema,
@@ -18,8 +18,8 @@ const router = Router();
 router.use(authenticate);
 
 // RBAC Middleware
-const canManagePayroll = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT);
-const canViewPayroll = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.TEACHER);
+const canManagePayroll = requirePermission(PERMISSIONS.PAYROLL_MANAGE);
+const canViewPayroll = requirePermission(PERMISSIONS.PAYROLL_VIEW);
 
 // --- Teacher Salary Structures ---
 router.get('/structures', canManagePayroll, payrollController.listSalaryStructures);

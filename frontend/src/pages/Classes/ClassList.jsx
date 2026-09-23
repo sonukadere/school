@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Pencil, Trash2, School, Users, UserCheck, UserX, Eye, BookOpen } from 'lucide-react'
+import { Plus, Pencil, Trash2, School, Users, UserCheck, UserX, Eye, BookOpen, RefreshCw } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import DataTable from '../../components/common/DataTable'
 import Button from '../../components/common/Button'
@@ -20,7 +20,21 @@ function ClassList() {
   const [loading, setLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [rebalancing, setRebalancing] = useState(false)
   const [selectedClassForModal, setSelectedClassForModal] = useState(null)
+
+  const handleRebalance = async () => {
+    setRebalancing(true)
+    try {
+      await api.rebalanceSections()
+      showToast('Class sections rebalanced successfully (max 50 per section).', 'success')
+      await loadClasses()
+    } catch (err) {
+      showToast(err?.message || 'Failed to rebalance sections', 'error')
+    } finally {
+      setRebalancing(false)
+    }
+  }
 
   const loadClasses = async () => {
     setLoading(true)
@@ -108,11 +122,25 @@ function ClassList() {
     {
       key: 'section',
       header: 'Section',
-      render: (item) => (
-        <Badge variant="primary" className="font-semibold">
-          Section {item.section}
-        </Badge>
-      ),
+      render: (item) => {
+        const isDefault = item.section?.toUpperCase() === 'A'
+        return (
+          <div className="flex items-center gap-1.5">
+            <Badge variant={isDefault ? 'primary' : 'warning'} className="font-semibold">
+              Section {item.section}
+            </Badge>
+            {isDefault ? (
+              <span className="text-[10px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-md px-1.5 py-0.5">
+                Default (1–50)
+              </span>
+            ) : (
+              <span className="text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-1.5 py-0.5">
+                Auto-Scale
+              </span>
+            )}
+          </div>
+        )
+      },
     },
     {
       key: 'classTeacher',
@@ -145,19 +173,38 @@ function ClassList() {
     },
     {
       key: 'studentCount',
-      header: 'Total Students',
+      header: 'Capacity (Max 50)',
       render: (item) => {
         const count = item.studentCount ?? (item._count?.students ?? 0)
+        const maxCap = item.capacity || 50
+        const percent = Math.min(100, Math.round((count / maxCap) * 100))
+        const isFull = count >= maxCap
+
         return (
-          <button
-            type="button"
-            onClick={() => setSelectedClassForModal(item)}
-            title="Click to view enrolled students"
-            className="group inline-flex items-center gap-1.5 rounded-lg border border-indigo-100 bg-indigo-50/70 px-2.5 py-1 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100 hover:border-indigo-300 shadow-2xs cursor-pointer"
-          >
-            <Users size={12} className="text-indigo-600 transition-transform group-hover:scale-110" />
-            <span>{count} {count === 1 ? 'Student' : 'Students'}</span>
-          </button>
+          <div className="space-y-1.5 min-w-[130px]">
+            <div className="flex items-center justify-between text-xs">
+              <button
+                type="button"
+                onClick={() => setSelectedClassForModal(item)}
+                title="Click to view enrolled students"
+                className="font-semibold text-slate-800 hover:text-indigo-600 transition flex items-center gap-1 cursor-pointer"
+              >
+                <Users size={12} className="text-slate-400" />
+                <span>{count} / {maxCap}</span>
+              </button>
+              <span className={`text-[10px] font-medium ${isFull ? 'text-amber-600 font-bold' : 'text-slate-400'}`}>
+                {isFull ? 'FULL' : `${percent}%`}
+              </span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${
+                  isFull ? 'bg-amber-500' : count > 35 ? 'bg-blue-500' : 'bg-indigo-600'
+                }`}
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
         )
       },
     },
@@ -247,12 +294,38 @@ function ClassList() {
         breadcrumb={[{ label: 'Classes' }]}
         actions={
           canManage ? (
-            <Link to="/classes/add">
-              <Button leftIcon={Plus}>Add Class</Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                leftIcon={RefreshCw}
+                onClick={handleRebalance}
+                loading={rebalancing}
+                title="Rebalance all sections to 50 students per section"
+              >
+                Rebalance Sections
+              </Button>
+              <Link to="/classes/add">
+                <Button leftIcon={Plus}>Add Class</Button>
+              </Link>
+            </div>
           ) : null
         }
       />
+
+      {/* Auto-Section Rule Notice Banner */}
+      <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/90 via-blue-50/40 to-white p-4 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white font-black text-sm shadow-xs">
+            50
+          </div>
+          <div>
+            <p className="font-bold text-slate-900 text-sm">Automated Section Scaling Rule Active</p>
+            <p className="text-slate-600 text-xs mt-0.5">
+              1–50 students &rarr; <strong>Section A (Default)</strong> &bull; 51–100 students &rarr; <strong>Sections A + B</strong> &bull; 101–150 students &rarr; <strong>Sections A + B + C</strong>. Extra sections auto-create only when student count exceeds 50 increments.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* KPI Metric Cards */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">

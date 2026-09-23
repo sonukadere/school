@@ -771,6 +771,7 @@ function StudentForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
                       required
                       options={sectionOptions}
                       placeholder="Select section"
+                      helper="Section A (1–50 students). Sections B, C auto-scale when count exceeds 50."
                     />
                     <Input
                       label="Roll Number (रोल नंबर)"
@@ -1266,7 +1267,7 @@ function StudentForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
                           <KeyRound size={16} className="text-indigo-600" /> Student Portal Login Credentials
                         </h4>
                         <p className="text-xs text-slate-500 mt-0.5">
-                          Create an instant student portal login for marks, timetable, attendance and online fees.
+                          Create an instant student portal login for marks, timetable, attendance and fee payments.
                         </p>
                       </div>
                       <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-indigo-200 shadow-2xs hover:bg-indigo-50/50 transition">

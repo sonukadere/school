@@ -67,7 +67,7 @@ export default function AccountantDashboardView({ data, user }) {
               <TrendingUp size={24} />
             </div>
           </div>
-          <p className="mt-3 text-xs text-slate-600">Collected today at cash counter & online</p>
+          <p className="mt-3 text-xs text-slate-600">Collected today at the fee counter</p>
         </div>
 
         <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-xs transition hover:shadow-md">

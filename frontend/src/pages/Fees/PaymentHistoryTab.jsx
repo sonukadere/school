@@ -14,11 +14,8 @@ import { formatCurrency, formatDate } from '../../utils/helpers'
 const PAYMENT_METHODS = [
   { value: '', label: 'All Methods' },
   { value: 'CASH', label: 'Cash' },
-  { value: 'UPI', label: 'UPI' },
-  { value: 'CARD', label: 'Card' },
   { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
   { value: 'CHEQUE', label: 'Cheque' },
-  { value: 'ONLINE', label: 'Online' },
 ]
 
 export default function PaymentHistoryTab({ onViewReceipt }) {

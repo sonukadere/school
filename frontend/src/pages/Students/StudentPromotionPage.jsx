@@ -68,11 +68,12 @@ export default function StudentPromotionPage() {
     try {
       setLoadingStudents(true)
       const res = await api.getStudents({ classId: clsId, limit: 200 })
-      const list = res?.data || []
+      const list = Array.isArray(res) ? res : (res?.data || [])
       setStudents(list)
       // Select all by default
       setSelectedStudentIds(new Set(list.map((s) => s.id)))
     } catch (err) {
+      console.error('Failed to fetch class students:', err)
       showToast('Failed to fetch class students', 'error')
     } finally {
       setLoadingStudents(false)
@@ -90,8 +91,10 @@ export default function StudentPromotionPage() {
     try {
       setLoadingHistory(true)
       const res = await api.getPromotionHistory({ limit: 100 })
-      setHistory(res?.data || [])
+      const list = Array.isArray(res) ? res : (res?.data || [])
+      setHistory(list)
     } catch (err) {
+      console.error('Failed to load promotion history:', err)
       showToast('Failed to load promotion history', 'error')
     } finally {
       setLoadingHistory(false)
@@ -217,7 +220,7 @@ export default function StudentPromotionPage() {
                 >
                   {classes.map((cls) => (
                     <option key={cls.id} value={cls.id}>
-                      {cls.name} {cls.section ? `(${cls.section})` : ''}
+                      {cls.name} {cls.section ? `(${cls.section})` : ''} {typeof cls.studentCount === 'number' ? `(${cls.studentCount} students)` : ''}
                     </option>
                   ))}
                 </select>
@@ -247,7 +250,7 @@ export default function StudentPromotionPage() {
                     <option value="">Select Next Class</option>
                     {classes.map((cls) => (
                       <option key={cls.id} value={cls.id}>
-                        {cls.name} {cls.section ? `(${cls.section})` : ''}
+                        {cls.name} {cls.section ? `(${cls.section})` : ''} {typeof cls.studentCount === 'number' ? `(${cls.studentCount} students)` : ''}
                       </option>
                     ))}
                   </select>

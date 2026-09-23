@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { CalendarCheck, Users, ArrowRight, ClipboardList } from 'lucide-react'
+import { CalendarCheck, Users, ArrowRight, ClipboardList, Sparkles } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import { useAuth } from '../../context/AuthContext'
 
@@ -20,22 +20,36 @@ const OPTIONS = [
   },
 ]
 
+const MY_ATTENDANCE_OPTION = {
+  title: 'My Attendance',
+  description: 'View your personal attendance history, daily status and overall attendance percentage.',
+  to: '/attendance/my',
+  icon: Sparkles,
+  color: 'bg-sky-50 text-sky-600',
+}
+
 function Attendance() {
   const { user } = useAuth()
-  const filteredOptions = OPTIONS.filter((option) => {
-    if (user?.role === 'Teacher') {
-      return option.to !== '/attendance/teachers'
-    }
-    return true
-  })
+  const isStudent = user?.role?.toUpperCase() === 'STUDENT'
+
+  // Students only see their own attendance view, never the marking tools
+  const filteredOptions = isStudent
+    ? [MY_ATTENDANCE_OPTION]
+    : OPTIONS.filter((option) => {
+        if (user?.role === 'Teacher') {
+          return option.to !== '/attendance/teachers'
+        }
+        return true
+      })
+
+  const pageTitle = isStudent ? 'My Attendance' : 'Attendance'
+  const pageDesc = isStudent
+    ? 'See your attendance history, recent status and overall performance'
+    : 'Mark and manage student and teacher attendance'
 
   return (
     <div>
-      <PageHeader
-        title="Attendance"
-        description="Mark and manage student and teacher attendance"
-        breadcrumb={[{ label: 'Attendance' }]}
-      />
+      <PageHeader title={pageTitle} description={pageDesc} breadcrumb={[{ label: pageTitle }]} />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {filteredOptions.map((option) => {
           const Icon = option.icon

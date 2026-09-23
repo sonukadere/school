@@ -106,10 +106,15 @@ export default function StudentDashboardView({ data, user }) {
       {/* 4 Core Student Stat Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Attendance */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:shadow-md">
+        <Link
+          to="/attendance/my"
+          className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition hover:border-sky-300 hover:shadow-md block"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">My Attendance</span>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-sky-600 transition">
+              My Attendance
+            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600 group-hover:scale-110 transition">
               <CalendarCheck size={20} />
             </div>
           </div>
@@ -120,7 +125,7 @@ export default function StudentDashboardView({ data, user }) {
               {attendancePct >= 75 ? 'Satisfactory' : 'Needs Improvement'}
             </span>
           </div>
-        </div>
+        </Link>
 
         {/* Subjects */}
         <Link

@@ -93,7 +93,7 @@ export const studentUpdateSchema = z.object({
 
 export const studentQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),
-  limit: z.coerce.number().int().positive().max(100).optional(),
+  limit: z.coerce.number().int().positive().max(500).optional(),
   search: z.string().trim().max(200).optional(),
   classId: z.string().optional(),
   section: z.string().trim().optional(),

@@ -340,7 +340,6 @@ export default function SalaryStructureTab() {
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     options={[
                       { value: 'BANK_TRANSFER', label: 'Bank Transfer / Direct Credit' },
-                      { value: 'UPI', label: 'UPI' },
                       { value: 'CHEQUE', label: 'Cheque' },
                       { value: 'CASH', label: 'Cash' },
                     ]}

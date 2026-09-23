@@ -180,22 +180,6 @@ export default function PaymentReportsTab() {
 
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
               <div className="flex items-center gap-2.5">
-                <span className="h-3 w-3 rounded-full bg-indigo-500" />
-                <span className="text-sm font-semibold text-slate-800">UPI Collection</span>
-              </div>
-              <span className="font-mono font-bold text-slate-900">{formatCurrency(summary.upiCollection || 0)}</span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <span className="h-3 w-3 rounded-full bg-blue-500" />
-                <span className="text-sm font-semibold text-slate-800">Card Payments</span>
-              </div>
-              <span className="font-mono font-bold text-slate-900">{formatCurrency(summary.cardCollection || 0)}</span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="flex items-center gap-2.5">
                 <span className="h-3 w-3 rounded-full bg-purple-500" />
                 <span className="text-sm font-semibold text-slate-800">Bank Transfer</span>
               </div>
@@ -205,9 +189,9 @@ export default function PaymentReportsTab() {
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
               <div className="flex items-center gap-2.5">
                 <span className="h-3 w-3 rounded-full bg-amber-500" />
-                <span className="text-sm font-semibold text-slate-800">Online / Cheque</span>
+                <span className="text-sm font-semibold text-slate-800">Cheque Collection</span>
               </div>
-              <span className="font-mono font-bold text-slate-900">{formatCurrency(summary.onlineCollection || 0)}</span>
+              <span className="font-mono font-bold text-slate-900">{formatCurrency(summary.chequeCollection || 0)}</span>
             </div>
           </div>
         </Card>

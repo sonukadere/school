@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import authenticate from '../middleware/auth.js';
-import authorize from '../middleware/authorize.js';
+import { requirePermission } from '../middleware/authorize.js';
+import { PERMISSIONS } from '../constants/permissions.js';
 import validate from '../middleware/validate.js';
-import { ROLES } from '../constants/index.js';
 import * as subjectController from '../controllers/subject.controller.js';
 import {
   subjectCreateSchema,
@@ -15,18 +15,15 @@ const router = Router();
 
 router.use(authenticate);
 
-const canRead = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT, ROLES.PARENT);
-const canWrite = authorize(ROLES.SUPER_ADMIN, ROLES.ADMIN);
-
-router.get('/', canRead, validate({ query: subjectQuerySchema }), subjectController.listSubjects);
-router.get('/:id', canRead, validate({ params: idParamSchema }), subjectController.getSubject);
-router.post('/', canWrite, validate({ body: subjectCreateSchema }), subjectController.createSubject);
+router.get('/', requirePermission(PERMISSIONS.SUBJECTS_VIEW), validate({ query: subjectQuerySchema }), subjectController.listSubjects);
+router.get('/:id', requirePermission(PERMISSIONS.SUBJECTS_VIEW), validate({ params: idParamSchema }), subjectController.getSubject);
+router.post('/', requirePermission(PERMISSIONS.SUBJECTS_CREATE), validate({ body: subjectCreateSchema }), subjectController.createSubject);
 router.put(
   '/:id',
-  canWrite,
+  requirePermission(PERMISSIONS.SUBJECTS_UPDATE),
   validate({ params: idParamSchema, body: subjectUpdateSchema }),
   subjectController.updateSubject
 );
-router.delete('/:id', canWrite, validate({ params: idParamSchema }), subjectController.deleteSubject);
+router.delete('/:id', requirePermission(PERMISSIONS.SUBJECTS_DELETE), validate({ params: idParamSchema }), subjectController.deleteSubject);
 
 export default router;

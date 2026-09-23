@@ -240,7 +240,7 @@ export default function ParentDashboardView({ data, user }) {
       {/* Fee Status & Teacher Contact Details */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Fee Payment Status */}
-        <Card title="Fee Status & Online Payment" className="lg:col-span-2">
+        <Card title="Fee Status & Payments" className="lg:col-span-2">
           <div className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 text-center">
               <div>

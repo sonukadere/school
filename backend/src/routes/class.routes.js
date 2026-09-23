@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import authenticate from '../middleware/auth.js';
-import authorize from '../middleware/authorize.js';
+import { requirePermission } from '../middleware/authorize.js';
+import { PERMISSIONS } from '../constants/permissions.js';
 import validate from '../middleware/validate.js';
-import { ROLES } from '../constants/index.js';
 import * as classController from '../controllers/class.controller.js';
 import { classCreateSchema, classUpdateSchema, classQuerySchema } from '../validators/class.schema.js';
 import { idParamSchema } from '../validators/common.js';
@@ -11,18 +11,16 @@ const router = Router();
 
 router.use(authenticate);
 
-const canRead = authorize(ROLES.ADMIN, ROLES.TEACHER);
-const canWrite = authorize(ROLES.ADMIN);
-
-router.get('/', canRead, validate({ query: classQuerySchema }), classController.listClasses);
-router.get('/:id', canRead, validate({ params: idParamSchema }), classController.getClass);
-router.post('/', canWrite, validate({ body: classCreateSchema }), classController.createClass);
+router.get('/', requirePermission(PERMISSIONS.CLASSES_VIEW), validate({ query: classQuerySchema }), classController.listClasses);
+router.post('/rebalance-sections', requirePermission(PERMISSIONS.CLASSES_UPDATE), classController.rebalanceSections);
+router.get('/:id', requirePermission(PERMISSIONS.CLASSES_VIEW), validate({ params: idParamSchema }), classController.getClass);
+router.post('/', requirePermission(PERMISSIONS.CLASSES_CREATE), validate({ body: classCreateSchema }), classController.createClass);
 router.put(
   '/:id',
-  canWrite,
+  requirePermission(PERMISSIONS.CLASSES_UPDATE),
   validate({ params: idParamSchema, body: classUpdateSchema }),
   classController.updateClass
 );
-router.delete('/:id', canWrite, validate({ params: idParamSchema }), classController.deleteClass);
+router.delete('/:id', requirePermission(PERMISSIONS.CLASSES_DELETE), validate({ params: idParamSchema }), classController.deleteClass);
 
 export default router;

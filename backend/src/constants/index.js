@@ -44,11 +44,8 @@ export const PAYMENT_STATUSES = Object.freeze([
 
 export const PAYMENT_METHODS = Object.freeze([
   'CASH',
-  'CARD',
   'BANK_TRANSFER',
-  'ONLINE',
   'CHEQUE',
-  'UPI',
 ]);
 
 export const DAYS_OF_WEEK = Object.freeze([

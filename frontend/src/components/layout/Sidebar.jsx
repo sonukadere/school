@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { LogOut, X } from 'lucide-react'
 import { MENU_ITEMS } from '../../utils/constants'
 import { useAuth } from '../../context/AuthContext'
@@ -7,90 +7,76 @@ import { useSettings } from '../../context/SettingsContext'
 import { cn } from '../../utils/helpers'
 
 function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
-  const { user, logout } = useAuth()
+  const { user, logout, hasPermission, hasAnyPermission, initializing } = useAuth()
   const { settings } = useSettings()
 
   const filteredMenuItems = useMemo(() => {
+    if (!user) return []
+
     return MENU_ITEMS.map((group) => {
       const items = group.items
-        .filter((item) => {
-          const roleUpper = (user?.role || '').toUpperCase()
-          if (roleUpper === 'ACCOUNTANT' || user?.isAccountant) {
-            const allowed = ['/dashboard', '/fees', '/payroll', '/reports', '/crm', '/notices', '/profile', '/settings']
-            return allowed.some((path) => item.path === path || item.path.startsWith(path))
-          }
-          if (roleUpper === 'RECEPTIONIST' || user?.isReceptionist) {
-            const allowed = ['/dashboard', '/crm', '/parents', '/students', '/staff', '/attendance', '/calendar', '/notices', '/profile']
-            return allowed.some((path) => item.path === path || item.path.startsWith(path))
-          }
-          if (roleUpper === 'TEACHER') {
-            const forbidden = ['/teachers', '/staff', '/fees', '/payroll', '/settings', '/crm', '/students/promote', '/reports']
-            return !forbidden.some((path) => item.path.startsWith(path))
-          }
-          if (user?.role === 'Student' || user?.isStudent || roleUpper === 'STUDENT') {
-            const allowed = [
-              '/dashboard',
-              '/subjects',
-              '/timetable',
-              '/homework',
-              '/assignments',
-              '/study-material',
-              '/exams',
-              '/marks',
-              '/fees',
-              '/calendar',
-              '/leave',
-              '/notices',
-              '/profile',
-            ]
-            return allowed.some((path) => item.path === path || item.path.startsWith(path))
-          }
-          if (user?.role === 'Parent' || user?.isParent || roleUpper === 'PARENT') {
-            const allowed = [
-              '/dashboard',
-              '/timetable',
-              '/homework',
-              '/marks',
-              '/fees',
-              '/calendar',
-              '/notices',
-              '/profile',
-            ]
-            return allowed.some((path) => item.path === path || item.path.startsWith(path))
-          }
-          if (roleUpper === 'STAFF' || user?.isStaff) {
-            const allowed = ['/dashboard', '/leave', '/calendar', '/notices', '/profile']
-            return allowed.some((path) => item.path === path || item.path.startsWith(path))
-          }
-          return true
-        })
         .map((item) => {
-          if ((user?.role === 'Student' || user?.isStudent) && item.path === '/fees') {
-            return { ...item, label: 'My Fees' }
+          // If item has children/subitems, filter children by permission
+          let authorizedChildren = null
+          if (item.children && item.children.length > 0) {
+            authorizedChildren = item.children.filter((child) => {
+              if (child.permission) return hasPermission(child.permission)
+              if (child.anyPermissions) return hasAnyPermission(child.anyPermissions)
+              return true
+            })
+            // If item has children defined and user has 0 child permissions, hide parent
+            if (authorizedChildren.length === 0) {
+              return null
+            }
           }
-          if ((user?.role === 'Parent' || user?.isParent) && item.path === '/fees') {
-            return { ...item, label: 'Fee Payments' }
+
+          // Check required permission
+          if (item.permission && !hasPermission(item.permission)) {
+            return null
           }
-          if ((user?.role === 'Student' || user?.isStudent) && item.path === '/marks') {
-            return { ...item, label: 'My Results', path: '/marks/results' }
+
+          // Check anyPermissions if defined
+          if (item.anyPermissions && item.anyPermissions.length > 0 && !hasAnyPermission(item.anyPermissions)) {
+            return null
           }
-          if ((user?.role === 'Parent' || user?.isParent) && item.path === '/marks') {
-            return { ...item, label: 'Child Results', path: '/marks/results' }
+
+          // Check role exclusions
+          if (item.excludeRoles && item.excludeRoles.length > 0) {
+            const roleUpper = (user?.role || '').toUpperCase().replace(/\s+/g, '_')
+            if (item.excludeRoles.includes(roleUpper) || (user?.isStudent && item.excludeRoles.includes('STUDENT'))) {
+              return null
+            }
           }
-          if ((user?.role === 'Student' || user?.isStudent) && item.path === '/subjects') {
-            return { ...item, label: 'My Subjects' }
+
+          // Check allowed roles if specified
+          if (item.roles && item.roles.length > 0) {
+            const roleUpper = (user?.role || '').toUpperCase().replace(/\s+/g, '_')
+            if (!item.roles.includes(roleUpper)) return null
           }
-          if ((user?.role === 'Student' || user?.isStudent) && item.path === '/timetable') {
-            return { ...item, label: 'My Timetable' }
+
+          // Dynamic friendly label for Student / Parent
+          let label = item.label
+          let path = item.path
+          if (user?.role === 'Student' || user?.isStudent) {
+            if (item.path === '/fees') label = 'My Fees'
+            if (item.path === '/marks') { label = 'My Results'; path = '/marks/results' }
+            if (item.path === '/subjects') label = 'My Subjects'
+            if (item.path === '/timetable') label = 'My Timetable'
+            if (item.path === '/attendance') label = 'My Attendance'
+            if (item.path === '/exams') label = 'My Exams'
+          } else if (user?.role === 'Parent' || user?.isParent) {
+            if (item.path === '/fees') label = 'Fee Payments'
+            if (item.path === '/marks') { label = 'Child Results'; path = '/marks/results' }
+            if (item.path === '/timetable') label = 'Class Timetable'
           }
-          if ((user?.role === 'Parent' || user?.isParent) && item.path === '/timetable') {
-            return { ...item, label: 'Class Timetable' }
-          }
-          return item
+
+          return { ...item, label, path, children: authorizedChildren }
         })
+        .filter(Boolean)
+
       return { ...group, items }
     }).filter((group) => group.items.length > 0)
-  }, [user?.role, user?.isStudent, user?.isParent, user?.isStaff, user?.isTeacher, user?.isAccountant, user?.isReceptionist])
+  }, [user, hasPermission, hasAnyPermission])
 
   const { activeStyle, indicatorColor } = useMemo(() => {
     const roleUpper = (user?.role || '').toUpperCase()
@@ -123,47 +109,57 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
     return { activeStyle: style, indicatorColor: color }
   }, [user?.role, user?.isSuperAdmin, user?.isAccountant, user?.isReceptionist, user?.isTeacher, user?.isStudent, user?.isParent, user?.isStaff])
 
+  const location = useLocation()
+  const currentPath = location.pathname
+
+  const allPaths = useMemo(() => {
+    return filteredMenuItems.flatMap((group) => group.items.map((item) => item.path))
+  }, [filteredMenuItems])
+
+  const activePath = useMemo(() => {
+    const matchingPaths = allPaths.filter(
+      (path) => currentPath === path || currentPath.startsWith(`${path}/`)
+    )
+    if (matchingPaths.length === 0) return null
+    return [...matchingPaths].sort((a, b) => b.length - a.length)[0]
+  }, [allPaths, currentPath])
+
   const renderLink = (item) => {
     const Icon = item.icon
+    const isActive = activePath === item.path
     return (
       <NavLink
         key={item.path}
         to={item.path}
         onClick={onCloseMobile}
         aria-label={item.label}
-        className={({ isActive }) =>
-          cn(
-            'group relative flex items-center gap-3 py-2.5 text-sm font-medium transition-all duration-150',
-            collapsed && !mobileOpen ? 'justify-center px-0 w-11 h-11 mx-auto rounded-xl' : 'px-3.5 rounded-xl',
-            isActive
-              ? activeStyle
-              : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-100',
-          )
-        }
+        className={cn(
+          'group relative flex items-center gap-3 py-2.5 text-sm font-medium transition-all duration-150',
+          collapsed && !mobileOpen ? 'justify-center px-0 w-11 h-11 mx-auto rounded-xl' : 'px-3.5 rounded-xl',
+          isActive
+            ? activeStyle
+            : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-100',
+        )}
         title={collapsed && !mobileOpen ? item.label : undefined}
       >
-        {({ isActive }) => (
-          <>
-            {isActive && (!collapsed || mobileOpen) && (
-              <span
-                className={cn(
-                  'absolute left-0 top-2 bottom-2 w-1 rounded-r-full shadow-xs',
-                  indicatorColor,
-                )}
-              />
+        {isActive && (!collapsed || mobileOpen) && (
+          <span
+            className={cn(
+              'absolute left-0 top-2 bottom-2 w-1 rounded-r-full shadow-xs',
+              indicatorColor,
             )}
-            <Icon
-              size={18}
-              className={cn(
-                'shrink-0 transition-transform duration-150 group-hover:scale-105',
-                collapsed && !mobileOpen && 'mx-auto',
-                isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200',
-              )}
-            />
-            {(!collapsed || mobileOpen) && (
-              <span className="truncate text-xs font-medium tracking-tight">{item.label}</span>
-            )}
-          </>
+          />
+        )}
+        <Icon
+          size={18}
+          className={cn(
+            'shrink-0 transition-transform duration-150 group-hover:scale-105',
+            collapsed && !mobileOpen && 'mx-auto',
+            isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200',
+          )}
+        />
+        {(!collapsed || mobileOpen) && (
+          <span className="truncate text-xs font-medium tracking-tight">{item.label}</span>
         )}
       </NavLink>
     )
@@ -219,18 +215,29 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           </button>
         </div>
 
-        <nav className={cn('flex-1 overflow-y-auto py-4 touch-scroll', collapsed && !mobileOpen ? 'px-2' : 'px-3')}>
-          {filteredMenuItems.map((group) => (
-            <div key={group.heading} className={cn(collapsed && !mobileOpen ? 'mb-2' : 'mb-4')}>
-              {(!collapsed || mobileOpen) && (
-                <p className="mb-2 px-3 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
-                  {group.heading}
-                </p>
-              )}
-              <div className="flex flex-col gap-1">{group.items.map(renderLink)}</div>
-            </div>
-          ))}
-        </nav>
+        {initializing || !user ? (
+          <div className="flex-1 space-y-3 p-4 animate-pulse">
+            <div className="h-2.5 w-16 bg-slate-800 rounded mb-2" />
+            <div className="h-9 w-full bg-slate-800/50 rounded-xl" />
+            <div className="h-2.5 w-24 bg-slate-800 rounded mt-4 mb-2" />
+            <div className="h-9 w-full bg-slate-800/50 rounded-xl" />
+            <div className="h-9 w-full bg-slate-800/50 rounded-xl" />
+            <div className="h-9 w-full bg-slate-800/50 rounded-xl" />
+          </div>
+        ) : (
+          <nav className={cn('flex-1 overflow-y-auto py-4 touch-scroll', collapsed && !mobileOpen ? 'px-2' : 'px-3')}>
+            {filteredMenuItems.map((group) => (
+              <div key={group.heading} className={cn(collapsed && !mobileOpen ? 'mb-2' : 'mb-4')}>
+                {(!collapsed || mobileOpen) && (
+                  <p className="mb-2 px-3 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
+                    {group.heading}
+                  </p>
+                )}
+                <div className="flex flex-col gap-1">{group.items.map(renderLink)}</div>
+              </div>
+            ))}
+          </nav>
+        )}
 
         <div className={cn('shrink-0 border-t border-slate-800 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2', collapsed && !mobileOpen ? 'p-2' : 'p-3')}>
           <button

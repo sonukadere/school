@@ -454,10 +454,8 @@ export default function PayrollTab() {
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   options={[
                     { value: 'BANK_TRANSFER', label: 'Bank Transfer / NEFT' },
-                    { value: 'UPI', label: 'UPI Direct' },
                     { value: 'CHEQUE', label: 'Cheque' },
                     { value: 'CASH', label: 'Cash' },
-                    { value: 'ONLINE', label: 'Online Payment' },
                   ]}
                 />
               </div>

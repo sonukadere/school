@@ -28,3 +28,9 @@ export const deleteClass = asyncHandler(async (req, res) => {
   await classService.deleteClass(req.params.id);
   res.status(200).json(new ApiResponse(200, 'Class deleted successfully.', null));
 });
+
+export const rebalanceSections = asyncHandler(async (req, res) => {
+  const result = await classService.rebalanceSections(req.body?.className);
+  res.status(200).json(new ApiResponse(200, 'Class sections rebalanced successfully.', result));
+});
+

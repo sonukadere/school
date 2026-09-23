@@ -33,7 +33,7 @@ function TimetableSlotModal({
   const { showToast } = useToast()
   const [submitting, setSubmitting] = useState(false)
   const [conflictError, setConflictError] = useState(null)
-
+  const [fieldErrors, setFieldErrors] = useState({})
   const [values, setValues] = useState({
     classId: '',
     day: 'MONDAY',
@@ -49,6 +49,7 @@ function TimetableSlotModal({
   useEffect(() => {
     if (!open) {
       setConflictError(null)
+      setFieldErrors({})
       return
     }
 
@@ -79,6 +80,7 @@ function TimetableSlotModal({
       })
     }
     setConflictError(null)
+    setFieldErrors({})
   }, [open, initialSlot, preselectedClassId, preselectedDay, preselectedPeriodId, classes, periods])
 
   // Filter subjects for the selected class if classId is set
@@ -102,6 +104,7 @@ function TimetableSlotModal({
       teacherId: '',
     }))
     setConflictError(null)
+    setFieldErrors((prev) => ({ ...prev, classId: null, subjectId: null }))
   }
 
   // When period changes, sync start & end time
@@ -127,6 +130,7 @@ function TimetableSlotModal({
       teacherId: subj?.teacherId || prev.teacherId,
     }))
     setConflictError(null)
+    setFieldErrors((prev) => ({ ...prev, subjectId: null }))
   }
 
   const handleChange = (e) => {
@@ -139,14 +143,19 @@ function TimetableSlotModal({
     e.preventDefault()
     setConflictError(null)
 
+    const errors = {}
     if (!values.classId) {
-      setConflictError('Please select a class.')
-      return
+      errors.classId = 'Please select a class.'
     }
     if (!values.subjectId) {
-      setConflictError('Please select a subject.')
+      errors.subjectId = 'Please select a subject.'
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
       return
     }
+    setFieldErrors({})
 
     setSubmitting(true)
     try {
@@ -256,6 +265,7 @@ function TimetableSlotModal({
             options={classOptions}
             placeholder="Select Class..."
             leftIcon={School}
+            error={fieldErrors.classId}
             required
           />
 
@@ -310,16 +320,24 @@ function TimetableSlotModal({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Select
-            label="Subject"
-            name="subjectId"
-            value={values.subjectId}
-            onChange={handleSubjectChange}
-            options={subjectOptions}
-            placeholder="Select Subject..."
-            leftIcon={BookOpen}
-            required
-          />
+          <div>
+            <Select
+              label="Subject"
+              name="subjectId"
+              value={values.subjectId}
+              onChange={handleSubjectChange}
+              options={subjectOptions}
+              placeholder={classSubjects.length === 0 ? 'No subjects in this class' : 'Select Subject...'}
+              leftIcon={BookOpen}
+              error={fieldErrors.subjectId}
+              required
+            />
+            {values.classId && classSubjects.length === 0 && (
+              <p className="mt-1 text-xs text-amber-600 font-medium">
+                No subjects found for this class. Please add subjects first.
+              </p>
+            )}
+          </div>
 
           <Select
             label="Teacher"

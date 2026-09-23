@@ -15,26 +15,52 @@ export const PERMISSIONS = Object.freeze({
   OWN_VIEW: 'own.view',
 
   // Admin & System (Teacher DENIED)
+  USERS_VIEW: 'users.view',
+  USERS_CREATE: 'users.create',
   USERS_MANAGE: 'users.manage',
+  ROLES_VIEW: 'roles.view',
   ROLES_MANAGE: 'roles.manage',
   BACKUP_MANAGE: 'backup.manage',
   REPORTS_VIEW: 'reports.view',
+  SETTINGS_VIEW: 'settings.view',
+  SETTINGS_UPDATE: 'settings.update',
   SETTINGS_MANAGE: 'settings.manage',
 
   // Academic Entities
   STUDENTS_VIEW: 'students.view',
+  STUDENTS_CREATE: 'students.create',
+  STUDENTS_UPDATE: 'students.update',
+  STUDENTS_DELETE: 'students.delete',
   STUDENTS_MANAGE: 'students.manage',
+
   TEACHERS_VIEW: 'teachers.view',
+  TEACHERS_CREATE: 'teachers.create',
+  TEACHERS_UPDATE: 'teachers.update',
+  TEACHERS_DELETE: 'teachers.delete',
   TEACHERS_MANAGE: 'teachers.manage',
+
   PARENTS_VIEW: 'parents.view',
   PARENTS_MANAGE: 'parents.manage',
   STAFF_VIEW: 'staff.view',
   STAFF_MANAGE: 'staff.manage',
 
   CLASSES_VIEW: 'classes.view',
+  CLASSES_CREATE: 'classes.create',
+  CLASSES_UPDATE: 'classes.update',
+  CLASSES_DELETE: 'classes.delete',
   CLASSES_MANAGE: 'classes.manage',
+
   SUBJECTS_VIEW: 'subjects.view',
+  SUBJECTS_CREATE: 'subjects.create',
+  SUBJECTS_UPDATE: 'subjects.update',
+  SUBJECTS_DELETE: 'subjects.delete',
   SUBJECTS_MANAGE: 'subjects.manage',
+
+  // Salary & Payroll
+  SALARY_VIEW: 'salary.view',
+  SALARY_MANAGE: 'salary.manage',
+  PAYROLL_VIEW: 'payroll.view',
+  PAYROLL_MANAGE: 'payroll.manage',
 
   // Attendance
   ATTENDANCE_VIEW: 'attendance.view',
@@ -223,6 +249,9 @@ export const ROLE_PERMISSIONS = Object.freeze({
     PERMISSIONS.PROFILE_VIEW,
     PERMISSIONS.PROFILE_UPDATE,
     PERMISSIONS.OWN_VIEW,
+    PERMISSIONS.SUBJECTS_VIEW,
+    PERMISSIONS.TIMETABLES_VIEW,
+    PERMISSIONS.ATTENDANCE_VIEW,
     PERMISSIONS.FEES_VIEW,
     PERMISSIONS.PAYMENTS_VIEW,
     PERMISSIONS.PAYMENTS_DOWNLOAD,
@@ -230,9 +259,11 @@ export const ROLE_PERMISSIONS = Object.freeze({
     PERMISSIONS.RECEIPTS_DOWNLOAD,
     PERMISSIONS.HOMEWORK_VIEW,
     PERMISSIONS.ASSIGNMENTS_VIEW,
+    PERMISSIONS.DOCUMENTS_VIEW,
     PERMISSIONS.EXAMS_VIEW,
     PERMISSIONS.EXAMS_DIGITAL_ATTEMPT,
     PERMISSIONS.RESULTS_VIEW,
+    PERMISSIONS.MARKS_VIEW,
     PERMISSIONS.NOTICES_VIEW,
     PERMISSIONS.EVENTS_VIEW,
     PERMISSIONS.NOTIFICATIONS_VIEW,
@@ -318,10 +349,57 @@ export const ROLE_PERMISSIONS = Object.freeze({
 });
 
 /**
+ * Hierarchical mapping: possessing a manage permission implies granular permissions.
+ */
+export const PERMISSION_HIERARCHY = Object.freeze({
+  'students.manage': ['students.view', 'students.create', 'students.update', 'students.delete', 'promotion.manage'],
+  'teachers.manage': ['teachers.view', 'teachers.create', 'teachers.update', 'teachers.delete'],
+  'classes.manage': ['classes.view', 'classes.create', 'classes.update', 'classes.delete'],
+  'subjects.manage': ['subjects.view', 'subjects.create', 'subjects.update', 'subjects.delete'],
+  'fees.manage': ['fees.view', 'fees.create', 'fees.update', 'fees.delete'],
+  'payments.manage': ['payments.view', 'payments.create', 'payments.update', 'payments.delete', 'receipts.view', 'receipts.generate', 'receipts.download'],
+  'payroll.manage': ['payroll.view', 'salary.view', 'salary.manage'],
+  'salary.manage': ['salary.view'],
+  'attendance.manage': ['attendance.view', 'attendance.mark', 'attendance.update'],
+  'marks.manage': ['marks.view', 'marks.create', 'marks.update', 'results.view', 'marksheets.view', 'marksheets.generate'],
+  'exams.manage': ['exams.view', 'exams.create'],
+  'questions.manage': ['questions.view', 'questions.create', 'questions.update', 'questions.delete', 'questions.match'],
+  'homework.manage': ['homework.view', 'homework.create', 'homework.update', 'homework.delete'],
+  'assignments.manage': ['assignments.view', 'assignments.create', 'assignments.update', 'assignments.grade'],
+  'notices.manage': ['notices.view'],
+  'events.manage': ['events.view'],
+  'holidays.manage': ['holidays.view'],
+  'leave.manage': ['leave.view', 'leave.create'],
+  'tc.manage': ['tc.view', 'tc.generate', 'tc.approve'],
+  'settings.manage': ['settings.view', 'settings.update'],
+  'users.manage': ['users.view', 'users.create'],
+  'roles.manage': ['roles.view'],
+});
+
+/**
+ * Expand a list of permissions to include all implied permissions from the hierarchy.
+ */
+export function expandPermissions(permissions) {
+  if (!Array.isArray(permissions)) return [];
+  const set = new Set(permissions);
+  for (const perm of permissions) {
+    const implied = PERMISSION_HIERARCHY[perm];
+    if (implied) {
+      for (const p of implied) {
+        set.add(p);
+      }
+    }
+  }
+  return Array.from(set);
+}
+
+/**
  * Return the list of permissions granted to a role.
  */
 export function permissionsForRole(role) {
-  return ROLE_PERMISSIONS[role] || [];
+  const base = ROLE_PERMISSIONS[role] || [];
+  return expandPermissions(base);
 }
 
 export default PERMISSIONS;
+

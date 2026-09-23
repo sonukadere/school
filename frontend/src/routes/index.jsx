@@ -46,6 +46,7 @@ const AddSubject = lazyRetry(() => import('../pages/Subjects/AddSubject'), 'add_
 const Attendance = lazyRetry(() => import('../pages/Attendance/Attendance'), 'attendance')
 const StudentAttendance = lazyRetry(() => import('../pages/Attendance/StudentAttendance'), 'student_attendance')
 const TeacherAttendance = lazyRetry(() => import('../pages/Attendance/TeacherAttendance'), 'teacher_attendance')
+const MyAttendance = lazyRetry(() => import('../pages/Attendance/MyAttendance'), 'my_attendance')
 const FeeList = lazyRetry(() => import('../pages/Fees/FeeList'), 'fee_list')
 const ExamList = lazyRetry(() => import('../pages/Exams/ExamList'), 'exam_list')
 const CreateExam = lazyRetry(() => import('../pages/Exams/CreateExam'), 'create_exam')
@@ -86,8 +87,78 @@ function ForbiddenRedirect() {
   return <Navigate to="/dashboard" replace />
 }
 
+export const ROUTE_PERMISSIONS = [
+  // Dashboard & Profile
+  { prefix: '/dashboard', permission: 'dashboard.view' },
+  { prefix: '/profile', permission: 'profile.view' },
+  { prefix: '/change-password', permission: 'profile.update' },
+
+  // Students & Promotion
+  { path: '/students/add', permission: 'students.create' },
+  { path: '/students/promote', permission: 'promotion.manage' },
+  { prefix: '/students/edit/', permission: 'students.update' },
+  { prefix: '/students/', permission: 'students.view', excludeRoles: ['STUDENT'] },
+  { path: '/students', permission: 'students.view', excludeRoles: ['STUDENT'] },
+
+  // Teachers
+  { path: '/teachers/add', permission: 'teachers.create' },
+  { prefix: '/teachers/edit/', permission: 'teachers.update' },
+  { prefix: '/teachers', permission: 'teachers.view' },
+
+  // Staff & Parents
+  { prefix: '/staff', permission: 'staff.view' },
+  { prefix: '/parents', permission: 'parents.view' },
+
+  // Classes & Subjects
+  { path: '/classes/add', permission: 'classes.create' },
+  { prefix: '/classes/edit/', permission: 'classes.update' },
+  { prefix: '/classes', permission: 'classes.view' },
+
+  { path: '/subjects/add', permission: 'subjects.create' },
+  { prefix: '/subjects/edit/', permission: 'subjects.update' },
+  { prefix: '/subjects', permission: 'subjects.view' },
+
+  // Attendance
+  { path: '/attendance/teachers', permission: 'teacherAttendance.view' },
+  { path: '/attendance/students', permission: 'attendance.mark', excludeRoles: ['STUDENT'] },
+  { path: '/attendance/my', permission: 'attendance.view' },
+  { prefix: '/attendance', permission: 'attendance.view' },
+
+  // Academics
+  { prefix: '/timetable', permission: 'timetables.view' },
+  { prefix: '/study-material', permission: 'documents.view' },
+  { prefix: '/leave', permission: 'leave.view' },
+  { prefix: '/calendar', permission: 'events.view' },
+
+  // Exams, Questions & Marks
+  { path: '/exams/create', permission: 'exams.create' },
+  { prefix: '/exams', permission: 'exams.view' },
+  { prefix: '/questions', permission: 'questions.view' },
+  { path: '/marks/entry', permission: 'marks.create' },
+  { path: '/marks/generate', permission: 'marksheets.generate' },
+  { prefix: '/marks', anyPermissions: ['marks.view', 'results.view'] },
+
+  // Certificates
+  { prefix: '/certificates', permission: 'tc.view' },
+
+  // Fees & Payroll
+  { prefix: '/fees', permission: 'fees.view' },
+  { prefix: '/payroll', permission: 'payroll.view' },
+
+  // Reports
+  { prefix: '/reports', permission: 'reports.view' },
+
+  // Notices
+  { path: '/notices/create', permission: 'notices.manage' },
+  { prefix: '/notices', permission: 'notices.view' },
+
+  // Settings & CRM
+  { prefix: '/settings', permission: 'settings.manage' },
+  { prefix: '/crm', permission: 'crm.view' },
+]
+
 function ProtectedRoute({ children }) {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user, hasPermission, hasAnyPermission } = useAuth()
   const location = useLocation()
 
   if (!isAuthenticated) return <Navigate to="/login" replace />
@@ -100,123 +171,32 @@ function ProtectedRoute({ children }) {
     return children
   }
 
-  const roleUpper = (user?.role || '').toUpperCase()
-
-  // 1. Accountant Role Guards
-  if (roleUpper === 'ACCOUNTANT' || user?.isAccountant) {
-    const allowed = ['/dashboard', '/fees', '/payroll', '/reports', '/crm', '/notices', '/profile', '/settings', '/change-password']
-    const isAllowed = allowed.some((prefix) => location.pathname === prefix || location.pathname.startsWith(prefix))
-    if (!isAllowed) return <ForbiddenRedirect />
+  // Super Admin bypasses path permissions
+  if (user?.isSuperAdmin || user?.role === 'SUPER_ADMIN' || user?.role === 'Super Admin') {
+    return children
   }
 
-  // 2. Receptionist Role Guards
-  if (roleUpper === 'RECEPTIONIST' || user?.isReceptionist) {
-    const allowed = ['/dashboard', '/crm', '/parents', '/students', '/staff', '/attendance', '/calendar', '/notices', '/profile', '/change-password']
-    const isAllowed = allowed.some((prefix) => location.pathname === prefix || location.pathname.startsWith(prefix))
-    if (!isAllowed) return <ForbiddenRedirect />
-  }
+  const roleUpper = (user?.role || '').toUpperCase().replace(/\s+/g, '_')
+  const path = location.pathname
 
-  // 3. Teacher Role Guards
-  if (roleUpper === 'TEACHER') {
-    const forbiddenPrefixes = [
-      '/students/add',
-      '/students/edit',
-      '/students/promote',
-      '/classes/add',
-      '/classes/edit',
-      '/subjects/add',
-      '/teachers',
-      '/staff',
-      '/attendance/teachers',
-      '/fees',
-      '/payroll',
-      '/notices/create',
-      '/settings',
-      '/crm',
-      '/reports',
-    ]
-    const isForbidden = forbiddenPrefixes.some((prefix) =>
-      location.pathname.startsWith(prefix)
-    )
-    if (isForbidden) {
+  // Find most specific route rule (exact path first, then longest matching prefix)
+  const exactRule = ROUTE_PERMISSIONS.find((r) => r.path && r.path === path)
+  const prefixRules = ROUTE_PERMISSIONS.filter((r) => r.prefix && (path === r.prefix || path.startsWith(r.prefix)))
+  const matchedRule = exactRule || (prefixRules.length > 0 ? prefixRules.sort((a, b) => b.prefix.length - a.prefix.length)[0] : null)
+
+  if (matchedRule) {
+    // Check role exclusion
+    if (matchedRule.excludeRoles && (matchedRule.excludeRoles.includes(roleUpper) || (user?.isStudent && matchedRule.excludeRoles.includes('STUDENT')))) {
       return <ForbiddenRedirect />
     }
-  }
 
-  // 4. Student Role Guards
-  if (user?.role === 'Student' || user?.isStudent || roleUpper === 'STUDENT') {
-    const forbiddenPrefixes = [
-      '/students',
-      '/teachers',
-      '/classes',
-      '/subjects/add',
-      '/attendance',
-      '/settings',
-      '/questions',
-      '/exams/create',
-      '/marks/entry',
-      '/notices/create',
-      '/payroll',
-      '/crm',
-      '/staff',
-      '/reports',
-    ]
-    const isForbidden = forbiddenPrefixes.some((prefix) =>
-      location.pathname.startsWith(prefix)
-    )
-    if (isForbidden) {
+    // Check specific permission
+    if (matchedRule.permission && !hasPermission(matchedRule.permission)) {
       return <ForbiddenRedirect />
     }
-  }
 
-  // 5. Parent Role Guards
-  if (user?.role === 'Parent' || user?.isParent || roleUpper === 'PARENT') {
-    const forbiddenPrefixes = [
-      '/students',
-      '/teachers',
-      '/classes',
-      '/subjects/add',
-      '/attendance',
-      '/settings',
-      '/questions',
-      '/exams/create',
-      '/marks/entry',
-      '/notices/create',
-      '/payroll',
-      '/crm',
-      '/staff',
-      '/reports',
-    ]
-    const isForbidden = forbiddenPrefixes.some((prefix) =>
-      location.pathname.startsWith(prefix)
-    )
-    if (isForbidden) {
-      return <ForbiddenRedirect />
-    }
-  }
-
-  // 6. Generic Staff Role Guards
-  if (roleUpper === 'STAFF' || user?.isStaff) {
-    const forbiddenPrefixes = [
-      '/students',
-      '/teachers',
-      '/classes',
-      '/subjects',
-      '/attendance',
-      '/settings',
-      '/questions',
-      '/exams',
-      '/marks',
-      '/certificates',
-      '/fees',
-      '/payroll',
-      '/crm',
-      '/reports',
-    ]
-    const isForbidden = forbiddenPrefixes.some((prefix) =>
-      location.pathname.startsWith(prefix)
-    )
-    if (isForbidden) {
+    // Check anyPermissions
+    if (matchedRule.anyPermissions && matchedRule.anyPermissions.length > 0 && !hasAnyPermission(matchedRule.anyPermissions)) {
       return <ForbiddenRedirect />
     }
   }
@@ -296,13 +276,16 @@ function AppRoutes() {
 
         {/* Attendance & Timetable */}
         <Route path="/attendance" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><Attendance /></Suspense>} />
+        <Route path="/attendance/my" element={<Suspense fallback={<Loader fullScreen label="Loading my attendance..." />}><MyAttendance /></Suspense>} />
         <Route path="/attendance/students" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><StudentAttendance /></Suspense>} />
         <Route path="/attendance/teachers" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><TeacherAttendance /></Suspense>} />
         <Route path="/timetable" element={<Suspense fallback={<Loader fullScreen label="Loading timetable..." />}><TimetablePage /></Suspense>} />
 
-        {/* Homework, Assignments, Study Material, Leave & Calendar */}
-        <Route path="/homework" element={<Suspense fallback={<Loader fullScreen label="Loading homework..." />}><HomeworkList /></Suspense>} />
-        <Route path="/assignments" element={<Suspense fallback={<Loader fullScreen label="Loading assignments..." />}><AssignmentList /></Suspense>} />
+        {/* Homework & Assignments (Removed features - redirect to dashboard) */}
+        <Route path="/homework" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/assignments" element={<Navigate to="/dashboard" replace />} />
+
+        {/* Study Material, Leave & Calendar */}
         <Route path="/study-material" element={<Suspense fallback={<Loader fullScreen label="Loading study materials..." />}><StudyMaterialList /></Suspense>} />
         <Route path="/leave" element={<Suspense fallback={<Loader fullScreen label="Loading leave requests..." />}><LeaveManagementPage /></Suspense>} />
         <Route path="/calendar" element={<Suspense fallback={<Loader fullScreen label="Loading calendar..." />}><SchoolCalendarPage /></Suspense>} />

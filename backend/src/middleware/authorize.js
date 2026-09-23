@@ -1,5 +1,5 @@
 import ApiError from '../utils/ApiError.js';
-import { permissionsForRole } from '../constants/permissions.js';
+import { permissionsForRole, expandPermissions } from '../constants/permissions.js';
 import { logAudit } from '../utils/auditLogger.js';
 import {
   assertTeacherAssignedToClass,
@@ -8,11 +8,22 @@ import {
 } from '../utils/teacherAccess.js';
 
 /**
+ * Return resolved list of permissions for a user (custom permissions or role default).
+ */
+export function getUserPermissions(user) {
+  if (!user) return [];
+  if (Array.isArray(user.permissions) && user.permissions.length > 0) {
+    return expandPermissions(user.permissions);
+  }
+  return permissionsForRole(user.role);
+}
+
+/**
  * Check whether a user holds a permission.
  */
 export function hasPermission(user, permission) {
   if (!user) return false;
-  return permissionsForRole(user.role).includes(permission);
+  return getUserPermissions(user).includes(permission);
 }
 
 /**
