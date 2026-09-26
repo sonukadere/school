@@ -15,7 +15,6 @@ import {
   Settings,
   PhoneCall,
   UserCheck,
-  Award,
   Layers,
   BarChart3,
 } from 'lucide-react'
@@ -43,22 +42,10 @@ export const MENU_ITEMS = [
         excludeRoles: ['STUDENT'],
       },
       {
-        label: 'Student Promotion',
-        path: '/students/promote',
-        icon: Award,
-        permission: 'promotion.manage',
-      },
-      {
         label: 'Teachers',
         path: '/teachers',
         icon: Users,
         permission: 'teachers.view',
-      },
-      {
-        label: 'Staff Directory',
-        path: '/staff',
-        icon: Users,
-        permission: 'staff.view',
       },
       {
         label: 'Classes',

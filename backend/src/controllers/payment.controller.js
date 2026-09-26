@@ -108,3 +108,15 @@ export const getFinanceSummary = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, 'Finance summary fetched successfully.', summary));
 });
 
+export const listStudentFeeRecords = asyncHandler(async (req, res) => {
+  const result = await paymentService.listStudentFeeRecords(req.query, req.user);
+  res.status(200).json(
+    new ApiResponse(200, 'Student fee records retrieved successfully.', {
+      records: result.data,
+      metrics: result.metrics,
+      pagination: result.pagination,
+    })
+  );
+});
+
+

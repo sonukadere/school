@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import PageHeader from '../../components/common/PageHeader'
 import SubjectForm from '../../components/subjects/SubjectForm'
@@ -10,7 +10,10 @@ import { useToast } from '../../context/ToastContext'
 function AddSubject() {
   const navigate = useNavigate()
   const { showToast } = useToast()
+  const [searchParams] = useSearchParams()
   const [submitting, setSubmitting] = useState(false)
+
+  const preselectClass = searchParams.get('class') || ''
 
   const handleSubmit = async (values) => {
     setSubmitting(true)
@@ -35,7 +38,12 @@ function AddSubject() {
           </Link>
         }
       />
-      <SubjectForm onSubmit={handleSubmit} submitting={submitting} submitLabel="Add Subject" />
+      <SubjectForm
+        onSubmit={handleSubmit}
+        submitting={submitting}
+        submitLabel="Add Subject"
+        initialValues={preselectClass ? { className: preselectClass } : {}}
+      />
     </div>
   )
 }

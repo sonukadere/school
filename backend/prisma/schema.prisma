@@ -59,6 +59,9 @@ enum PaymentMethod {
   CASH
   BANK_TRANSFER
   CHEQUE
+  UPI
+  CARD
+  ONLINE
 }
 
 enum DayOfWeek {

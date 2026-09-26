@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useNotifications } from '../../context/NotificationContext'
+import { useTranslation } from '../../i18n'
 import { PAGE_TITLES } from '../../utils/constants'
 import { cn } from '../../utils/helpers'
 
@@ -63,6 +64,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
   } = useNotifications()
   const location = useLocation()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [profileOpen, setProfileOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [quickActionsOpen, setQuickActionsOpen] = useState(false)
@@ -122,7 +124,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
     return 'Dashboard'
   }
 
-  const currentTitle = resolveTitle(location.pathname)
+  const currentTitle = t(resolveTitle(location.pathname))
 
   const filteredQuickActions = (user?.role === 'Student' || user?.isStudent)
     ? STUDENT_QUICK_ACTIONS
@@ -172,7 +174,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
           type="button"
           onClick={onToggleSidebar}
           className="hidden rounded-lg p-2.5 min-h-[42px] min-w-[42px] text-slate-700 transition hover:bg-slate-100 lg:inline-flex items-center justify-center"
-          aria-label="Toggle sidebar"
+          aria-label={t('Toggle sidebar')}
         >
           {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
         </button>
@@ -180,7 +182,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
           type="button"
           onClick={onToggleSidebar}
           className="rounded-lg p-2.5 min-h-[42px] min-w-[42px] text-slate-700 transition hover:bg-slate-100 lg:hidden flex items-center justify-center"
-          aria-label="Open navigation menu"
+          aria-label={t('Open navigation menu')}
         >
           <Menu size={20} />
         </button>
@@ -190,11 +192,11 @@ function Navbar({ collapsed, onToggleSidebar }) {
             type="button"
             onClick={handleBack}
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/90 bg-slate-50/90 px-3 py-2 min-h-[40px] text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-indigo-600 hover:border-indigo-200 shadow-2xs shrink-0"
-            title="Go back"
-            aria-label="Go back"
+            title={t('Go back')}
+            aria-label={t('Go back')}
           >
             <ArrowLeft size={15} />
-            <span className="hidden sm:inline">Back</span>
+            <span className="hidden sm:inline">{t('Back')}</span>
           </button>
         )}
 
@@ -214,16 +216,16 @@ function Navbar({ collapsed, onToggleSidebar }) {
               "relative flex items-center justify-center gap-1.5 rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 min-h-[40px] text-xs font-semibold text-slate-700 transition hover:bg-slate-100/80 hover:text-slate-900 shadow-2xs",
               quickActionsOpen && "bg-slate-100 ring-2 ring-indigo-500/20 border-indigo-300"
             )}
-            title="Quick Actions"
-            aria-label="Quick Actions"
+            title={t('Quick Actions')}
+            aria-label={t('Quick Actions')}
           >
             <Zap size={14} className={cn(quickActionsOpen ? "fill-amber-500 text-amber-500" : "text-amber-500")} />
-            <span className="hidden sm:inline">Quick Actions</span>
+            <span className="hidden sm:inline">{t('Quick Actions')}</span>
           </button>
           {quickActionsOpen && (
             <div className="animate-scale-in absolute right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl z-50">
               <div className="border-b border-slate-100 px-4 py-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Quick Actions</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('Quick Actions')}</p>
               </div>
               <div className="py-1">
                 {filteredQuickActions.map((action) => {
@@ -238,7 +240,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
                       <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg", action.color)}>
                         <Icon size={14} />
                       </span>
-                      <span className="font-medium text-slate-700">{action.label}</span>
+                      <span className="font-medium text-slate-700">{t(action.label)}</span>
                     </Link>
                   )
                 })}
@@ -252,7 +254,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
             type="button"
             onClick={toggleNotifications}
             className="relative flex items-center justify-center min-h-[42px] min-w-[42px] rounded-lg p-2.5 text-slate-700 transition hover:bg-slate-100"
-            aria-label="Notifications"
+            aria-label={t('Notifications')}
           >
             <Bell size={20} />
             {unreadCount > 0 && (
@@ -265,10 +267,10 @@ function Navbar({ collapsed, onToggleSidebar }) {
             <div className="animate-scale-in absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-sm sm:w-84 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl z-50">
               <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-slate-900">Notifications</p>
+                  <p className="text-sm font-bold text-slate-900">{t('Notifications')}</p>
                   {unreadCount > 0 && (
                     <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
-                      {unreadCount} new
+                      {unreadCount} {t('new')}
                     </span>
                   )}
                 </div>
@@ -277,9 +279,9 @@ function Navbar({ collapsed, onToggleSidebar }) {
                     type="button"
                     onClick={sendTestNotification}
                     className="rounded-lg bg-indigo-50 px-2 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-100 transition"
-                    title="Send a live test push notification"
+                    title={t('Send a live test push notification')}
                   >
-                    ⚡ Test Push
+                    ⚡ {t('Test Push')}
                   </button>
                   {unreadCount > 0 && (
                     <button
@@ -287,7 +289,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
                       onClick={markAllAsRead}
                       className="text-[11px] font-medium text-slate-500 hover:text-slate-800 transition"
                     >
-                      Clear
+                      {t('Clear')}
                     </button>
                   )}
                 </div>
@@ -295,13 +297,13 @@ function Navbar({ collapsed, onToggleSidebar }) {
 
               {permission !== 'granted' && (
                 <div className="border-b border-amber-100 bg-amber-50/80 px-4 py-2 text-xs text-amber-800 flex items-center justify-between">
-                  <span>Enable push alerts on this device?</span>
+                  <span>{t('Enable push alerts on this device?')}</span>
                   <button
                     type="button"
                     onClick={requestPermissionAndRegister}
                     className="rounded bg-amber-600 px-2 py-0.5 text-[11px] font-bold text-white hover:bg-amber-700"
                   >
-                    Enable
+                    {t('Enable')}
                   </button>
                 </div>
               )}
@@ -310,7 +312,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
                 {notifications.length === 0 ? (
                   <div className="py-8 text-center text-xs text-slate-400">
                     <Bell size={24} className="mx-auto mb-2 text-slate-300" />
-                    No notifications yet.
+                    {t('No notifications yet.')}
                   </div>
                 ) : (
                   notifications.map((n) => (
@@ -332,7 +334,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
                         <p className="text-xs font-semibold text-slate-800 line-clamp-1">{n.title}</p>
                         <p className="text-xs text-slate-600 line-clamp-2 mt-0.5">{n.body}</p>
                         <p className="mt-1 text-[10px] text-slate-400">
-                          {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                          {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : t('Just now')}
                         </p>
                       </div>
                     </div>
@@ -346,7 +348,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
                   onClick={() => setNotificationsOpen(false)}
                   className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition flex items-center justify-center gap-1.5"
                 >
-                  View all notifications <ArrowRight size={13} />
+                  {t('View all notifications')} <ArrowRight size={13} />
                 </Link>
               </div>
             </div>
@@ -381,7 +383,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
                 onClick={() => setProfileOpen(false)}
                 className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
               >
-                <UserCircle size={16} className="text-slate-400" /> My Profile
+                <UserCircle size={16} className="text-slate-400" /> {t('My Profile')}
               </Link>
               {['Super Admin', 'Admin', 'Administrator'].includes(user?.role) && (
                 <>
@@ -391,7 +393,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
                     className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-slate-700 transition hover:bg-slate-50 border-y border-slate-100"
                   >
                     <span className="flex items-center gap-3">
-                      <GraduationCap size={16} className="text-slate-400" /> Portal Switcher (Demo)
+                      <GraduationCap size={16} className="text-slate-400" /> {t('Portal Switcher (Demo)')}
                     </span>
                     <ChevronDown size={14} className={cn("text-slate-400 transition-transform duration-200", switcherOpen && "rotate-180")} />
                   </button>
@@ -406,7 +408,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
                           user?.role === 'Super Admin' ? "text-purple-600 font-bold bg-purple-50/50" : "text-slate-600"
                         )}
                       >
-                        🌟 Super Admin Portal
+                        🌟 {t('Super Admin Portal')}
                       </button>
                       <button
                         type="button"
@@ -416,7 +418,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
                           (user?.role === 'Admin' || user?.role === 'Administrator') ? "text-indigo-600 font-bold bg-indigo-50/50" : "text-slate-600"
                         )}
                       >
-                        👑 Admin Portal
+                        👑 {t('Admin Portal')}
                       </button>
                       <button
                         type="button"
@@ -426,7 +428,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
                           user?.role === 'Parent' ? "text-amber-600 font-bold bg-amber-50/50" : "text-slate-600"
                         )}
                       >
-                        👨‍👩‍👧 Parent Portal
+                        👨‍👩‍👧 {t('Parent Portal')}
                       </button>
                     </div>
                   )}
@@ -439,7 +441,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
                   onClick={() => setProfileOpen(false)}
                   className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
                 >
-                  <Settings size={16} className="text-slate-400" /> Settings
+                  <Settings size={16} className="text-slate-400" /> {t('Settings')}
                 </Link>
               )}
               <button
@@ -447,7 +449,7 @@ function Navbar({ collapsed, onToggleSidebar }) {
                 onClick={logout}
                 className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-rose-600 transition hover:bg-rose-50"
               >
-                <LogOut size={16} /> Logout
+                <LogOut size={16} /> {t('Logout')}
               </button>
             </div>
           )}

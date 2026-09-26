@@ -24,8 +24,10 @@ import {
   SECTION_OPTIONS,
   GENDER_OPTIONS,
 } from '../../utils/constants'
+import { useTranslation } from '../../i18n'
 
 function RegisterStudent() {
+  const { t } = useTranslation()
   const { settings } = useSettings()
   const { showToast } = useToast()
   const navigate = useNavigate()
@@ -81,28 +83,28 @@ function RegisterStudent() {
       password: generated,
       confirmPassword: generated,
     }))
-    showToast('Secure password generated!', 'info')
+    showToast(t('Secure password generated!'), 'info')
   }
 
   const validate = () => {
     const nextErrors = {}
-    if (!formData.fullName.trim()) nextErrors.fullName = 'Full name is required'
-    if (!formData.dob) nextErrors.dob = 'Date of birth is required'
+    if (!formData.fullName.trim()) nextErrors.fullName = t('Full name is required')
+    if (!formData.dob) nextErrors.dob = t('Date of birth is required')
     if (!formData.phone.trim()) {
-      nextErrors.phone = 'Contact number is required'
+      nextErrors.phone = t('Contact number is required')
     } else if (!/^\d{10}$/.test(formData.phone.trim())) {
-      nextErrors.phone = 'Phone number must be exactly 10 digits'
+      nextErrors.phone = t('Phone number must be exactly 10 digits')
     }
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      nextErrors.email = 'Enter a valid email address'
+      nextErrors.email = t('Enter a valid email address')
     }
     if (!formData.password) {
-      nextErrors.password = 'Password is required'
+      nextErrors.password = t('Password is required')
     } else if (formData.password.length < 6) {
-      nextErrors.password = 'Password must be at least 6 characters'
+      nextErrors.password = t('Password must be at least 6 characters')
     }
     if (formData.password !== formData.confirmPassword) {
-      nextErrors.confirmPassword = 'Passwords do not match'
+      nextErrors.confirmPassword = t('Passwords do not match')
     }
     return nextErrors
   }
@@ -117,26 +119,26 @@ function RegisterStudent() {
     try {
       const response = await api.registerStudent(formData)
       setSubmitting(false)
-      showToast('Registration successful! Welcome to the Academy.', 'success')
+      showToast(t('Registration successful! Welcome to the Academy.'), 'success')
       setRegisteredResult(response)
     } catch (err) {
       setSubmitting(false)
-      const errorMsg = err.message || 'Failed to complete registration'
+      const errorMsg = err.message || t('Failed to complete registration')
       showToast(errorMsg, 'error')
       setErrors({ form: errorMsg })
     }
   }
 
   const handleCopyCredentials = () => {
-    const text = `🎓 Daily Day Academy Student Portal Credentials:
-Student Name: ${formData.fullName}
-Student ID: ${registeredResult?.student?.studentId || 'Assigned'}
-Login ID: ${registeredResult?.credentials?.username || formData.username || registeredResult?.student?.studentId}
-Password: ${registeredResult?.credentials?.temporaryPassword || formData.password}
-Portal URL: ${window.location.origin}/login`
+    const text = `🎓 ${t('Student Portal Credentials:')}
+${t('Student Name:')} ${formData.fullName}
+${t('Student ID:')} ${registeredResult?.student?.studentId || t('Assigned')}
+${t('Login ID:')} ${registeredResult?.credentials?.username || formData.username || registeredResult?.student?.studentId}
+${t('Password:')} ${registeredResult?.credentials?.temporaryPassword || formData.password}
+${t('Portal URL:')} ${window.location.origin}/login`
     navigator.clipboard.writeText(text)
     setCopied(true)
-    showToast('Credentials copied to clipboard!', 'success')
+    showToast(t('Credentials copied to clipboard!'), 'success')
     setTimeout(() => setCopied(false), 3000)
   }
 
@@ -149,23 +151,23 @@ Portal URL: ${window.location.origin}/login`
             <GraduationCap className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">{schoolName}</h1>
-          <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-indigo-200">Online Student Admission & Portal Registration</p>
+          <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-indigo-200">{t('Online Student Admission & Portal Registration')}</p>
         </div>
 
         {/* Card Container */}
         <div className="rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-8 lg:p-10 shadow-2xl border border-white/20 backdrop-blur-xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 sm:pb-5 mb-5 sm:mb-6">
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-slate-900">Student Registration Form</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">{t('Student Registration Form')}</h2>
               <p className="text-xs text-slate-500 mt-0.5 sm:mt-1">
-                Enter admission details and set your Login ID & Password for the student portal.
+                {t('Enter admission details and set your Login ID & Password for the student portal.')}
               </p>
             </div>
             <Link
               to="/login"
               className="inline-flex items-center self-start sm:self-auto gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition"
             >
-              <ArrowLeft size={14} /> Back to Sign In
+              <ArrowLeft size={14} /> {t('Back to Sign In')}
             </Link>
           </div>
 
@@ -179,28 +181,28 @@ Portal URL: ${window.location.origin}/login`
             {/* 1. Personal Information */}
             <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-indigo-600"></span> 1. Personal Information
+                <span className="h-2 w-2 rounded-full bg-indigo-600"></span> {t('1. Personal Information')}
               </h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input
-                  label="Full Name"
+                  label={t('Full Name')}
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleChange}
                   error={errors.fullName}
                   required
-                  placeholder="e.g. Aryan Sharma"
+                  placeholder={t('e.g. Aryan Sharma')}
                 />
                 <Select
-                  label="Gender"
+                  label={t('Gender')}
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
-                  options={GENDER_OPTIONS}
+                  options={GENDER_OPTIONS.map((g) => ({ value: g, label: t(g) }))}
                   required
                 />
                 <Input
-                  label="Date of Birth"
+                  label={t('Date of Birth')}
                   type="date"
                   name="dob"
                   value={formData.dob}
@@ -210,19 +212,19 @@ Portal URL: ${window.location.origin}/login`
                 />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Select
-                    label="Admission Class"
+                    label={t('Admission Class')}
                     name="className"
                     value={formData.className}
                     onChange={handleChange}
-                    options={CLASS_OPTIONS}
+                    options={CLASS_OPTIONS.map((c) => ({ value: c, label: t(c) }))}
                     required
                   />
                   <Select
-                    label="Section"
+                    label={t('Section')}
                     name="section"
                     value={formData.section}
                     onChange={handleChange}
-                    options={SECTION_OPTIONS}
+                    options={SECTION_OPTIONS.map((s) => ({ value: s, label: t(s) }))}
                     required
                   />
                 </div>
@@ -232,11 +234,11 @@ Portal URL: ${window.location.origin}/login`
             {/* 2. Contact & Address */}
             <div className="space-y-4 pt-4 border-t border-slate-100">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-indigo-600"></span> 2. Contact & Guardian Details
+                <span className="h-2 w-2 rounded-full bg-indigo-600"></span> {t('2. Contact & Guardian Details')}
               </h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input
-                  label="Contact Phone"
+                  label={t('Contact Phone')}
                   name="phone"
                   type="tel"
                   inputMode="numeric"
@@ -245,41 +247,41 @@ Portal URL: ${window.location.origin}/login`
                   onChange={handleChange}
                   error={errors.phone}
                   required
-                  placeholder="e.g. 9876543210"
-                  helper="10 digits only"
+                  placeholder={t('e.g. 9876543210')}
+                  helper={t('10 digits only')}
                   icon={Phone}
                 />
                 <Input
-                  label="Email Address"
+                  label={t('Email Address')}
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
                   error={errors.email}
-                  placeholder="e.g. student@school.com"
+                  placeholder={t('e.g. student@school.com')}
                   icon={Mail}
                 />
                 <Input
-                  label="Father's Name"
+                  label={t("Father's Name")}
                   name="fatherName"
                   value={formData.fatherName}
                   onChange={handleChange}
-                  placeholder="Father's full name"
+                  placeholder={t("Father's full name")}
                 />
                 <Input
-                  label="Mother's Name"
+                  label={t("Mother's Name")}
                   name="motherName"
                   value={formData.motherName}
                   onChange={handleChange}
-                  placeholder="Mother's full name"
+                  placeholder={t("Mother's full name")}
                 />
                 <div className="sm:col-span-2">
                   <Input
-                    label="Residential Address"
+                    label={t('Residential Address')}
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
-                    placeholder="House / Street, City, State, PIN"
+                    placeholder={t('House / Street, City, State, PIN')}
                     icon={MapPin}
                   />
                 </div>
@@ -291,60 +293,60 @@ Portal URL: ${window.location.origin}/login`
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-2">
                   <KeyRound size={16} className="text-indigo-600 shrink-0" />
-                  3. Student Portal Login Credentials
+                  {t('3. Student Portal Login Credentials')}
                 </h3>
                 <button
                   type="button"
                   onClick={generatePassword}
                   className="inline-flex items-center self-start sm:self-auto gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 shadow-2xs transition cursor-pointer"
                 >
-                  <Sparkles size={13} className="text-amber-500" /> Auto-Generate Password
+                  <Sparkles size={13} className="text-amber-500" /> {t('Auto-Generate Password')}
                 </button>
               </div>
               <p className="text-xs text-indigo-700">
-                Create the Login ID (username) and Password you will use to log into your Student Portal. You can also sign in using your assigned Student ID.
+                {t('Create the Login ID (username) and Password you will use to log into your Student Portal. You can also sign in using your assigned Student ID.')}
               </p>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input
-                  label="Login ID / Username"
+                  label={t('Login ID / Username')}
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="e.g. aryan_2026 (or auto-generated from ID)"
-                  helper="Leave blank to use auto-assigned Student ID"
+                  placeholder={t('e.g. aryan_2026 (or auto-generated from ID)')}
+                  helper={t('Leave blank to use auto-assigned Student ID')}
                 />
                 <div className="relative">
                   <Input
-                    label="Password"
+                    label={t('Password')}
                     type={showPassword ? 'text' : 'password'}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
                     error={errors.password}
                     required
-                    placeholder="Minimum 6 characters"
+                    placeholder={t('Minimum 6 characters')}
                     className="pr-11"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute top-[38px] right-3 text-slate-400 hover:text-slate-600 cursor-pointer"
-                    aria-label="Toggle password"
+                    aria-label={t('Toggle password')}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
                 <div className="sm:col-span-2">
                   <Input
-                    label="Confirm Password"
+                    label={t('Confirm Password')}
                     type={showPassword ? 'text' : 'password'}
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     error={errors.confirmPassword}
                     required
-                    placeholder="Re-enter password to confirm"
+                    placeholder={t('Re-enter password to confirm')}
                   />
                 </div>
               </div>

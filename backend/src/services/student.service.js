@@ -10,7 +10,6 @@ import {
 } from '../utils/helpers.js';
 import { assertStudentVisible, getVisibleStudentIds } from '../utils/access.js';
 import { generateNextSequenceId, generateTemporaryPassword } from '../utils/sequence.js';
-import { resolveTargetSectionForAdmission } from './sectionManager.service.js';
 
 const SORTABLE_FIELDS = new Set([
   'studentId',
@@ -155,11 +154,6 @@ export async function createStudent(data) {
 
     let assignedClassId = studentFields.classId;
     if (studentFields.classId) {
-      // Auto-scale sections: if section exceeds 50, automatically create and assign to next section (B, C...)
-      const targetSec = await resolveTargetSectionForAdmission(tx, studentFields.classId);
-      assignedClassId = targetSec.id;
-      studentFields.classId = assignedClassId;
-
       if (studentFields.rollNumber) {
         const existingRoll = await tx.student.findFirst({
           where: {

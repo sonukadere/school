@@ -184,9 +184,54 @@ export function resolveInvoiceAmounts(invoice, feeStructure = null) {
 }
 
 /**
+ * UNIFIED FEE CALCULATION HELPER
+ * Source of truth: The student's actual assigned fee invoices & payments.
+ * totalAssignedFee = actual student's assigned fee
+ * totalPaid = sum of valid payments
+ * pendingAmount = max(totalAssignedFee - totalPaid, 0)
+ * maxPayableAmount = pendingAmount
+ */
+export function calculateStudentFeeMetrics(invoices = [], payments = []) {
+  const totalAssignedFee = (invoices || []).reduce(
+    (sum, inv) => sum + Number(inv.finalAmount || inv.totalFee || 0),
+    0
+  );
+
+  const validPayments = (payments || []).filter((p) => p.paymentStatus !== 'CANCELLED');
+  const paymentsSum = validPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+  // Invoices paidAmount sum fallback for pre-seeded records where payments table rows may not exist
+  const invoicesPaidSum = (invoices || []).reduce((sum, inv) => sum + Number(inv.paidAmount || 0), 0);
+  const totalPaid = paymentsSum > 0 ? paymentsSum : invoicesPaidSum;
+
+  const pendingAmount = Math.max(totalAssignedFee - totalPaid, 0);
+
+  let paymentStatus = 'PENDING';
+  if (pendingAmount === 0 && totalAssignedFee > 0) {
+    paymentStatus = 'PAID';
+  } else if (totalPaid > 0 && pendingAmount > 0) {
+    paymentStatus = 'PARTIAL';
+  } else {
+    paymentStatus = 'PENDING';
+  }
+
+  return {
+    totalAssignedFee,
+    totalFee: totalAssignedFee,
+    totalPaid,
+    paidAmount: totalPaid,
+    pendingAmount,
+    maxPayableAmount: pendingAmount,
+    paymentStatus,
+    status: paymentStatus === 'PAID' ? 'Paid' : paymentStatus === 'PARTIAL' ? 'Partial' : 'Pending',
+  };
+}
+
+/**
  * RECORD PAYMENT
- * Creates a real payment record, checks payable constraints, updates invoices,
- * generates unique receipt number, and prepares receipt snapshot.
+ * Uses student's ACTUAL ASSIGNED FEE as the source of truth.
+ * Validates: payAmount <= pendingAmount, payAmount > 0, pendingAmount > 0.
+ * Updates invoices, records transaction, and generates official receipt.
  */
 export async function recordPayment(data, actor) {
   if (actor.role === 'TEACHER') {
@@ -213,98 +258,45 @@ export async function recordPayment(data, actor) {
     throw ApiError.badRequest('Payment amount must be greater than zero.');
   }
 
-  // Find or determine the active FeeInvoice for this student & feeType
-  let invoice = null;
-  const targetInvoiceId = data.invoiceId || data.feeInvoiceId;
-  if (targetInvoiceId) {
-    invoice = await prisma.feeInvoice.findFirst({
-      where: { id: targetInvoiceId },
-    });
-    if (!invoice || invoice.deletedAt) {
-      throw ApiError.badRequest('The specified fee invoice was not found.');
-    }
-    if (invoice.studentId && invoice.studentId !== student.id) {
-      throw ApiError.badRequest('The specified invoice does not belong to the selected student.');
-    }
-  } else {
-    invoice = await prisma.feeInvoice.findFirst({
-      where: {
-        studentId: student.id,
-        feeType: data.feeType || 'Tuition Fee',
-        pendingAmount: { gt: 0 },
-        ...notDeleted(),
-      },
-      orderBy: { createdAt: 'asc' },
-    });
+  // 1. Fetch student's ACTUAL assigned fee invoices (source of truth)
+  const studentInvoices = await prisma.feeInvoice.findMany({
+    where: { studentId: student.id, ...notDeleted() },
+    include: { feeStructure: true },
+    orderBy: [{ dueDate: 'asc' }, { createdAt: 'asc' }],
+  });
+
+  if (studentInvoices.length === 0) {
+    throw ApiError.badRequest('No fee structure or invoices have been assigned to this student. Please assign fees first.');
   }
 
-  // If no invoice exists, check existing fee structure or create a default invoice
-  if (!invoice) {
-    let feeStructure = null;
-    if (data.feeStructureId) {
-      feeStructure = await prisma.feeStructure.findFirst({
-        where: { id: data.feeStructureId, ...notDeleted() },
-      });
-    } else if (student.classId) {
-      feeStructure = await prisma.feeStructure.findFirst({
-        where: {
-          classId: student.classId,
-          feeType: data.feeType || 'Tuition Fee',
-          status: 'ACTIVE',
-          ...notDeleted(),
-        },
-      });
-    }
+  // Resolve late fees/discounts on all assigned invoices
+  const resolvedInvoices = studentInvoices.map((inv) => resolveInvoiceAmounts(inv, inv.feeStructure));
 
-    const totalFee = feeStructure?.totalFee || 5000;
-    const invNumber = await generateInvoiceNumber(school.code || 'SCH001');
-    const targetDueDate = feeStructure?.dueDate || null;
-    const isPastDue = isInvoicePastDue(targetDueDate);
-    const applicableLateFee = isPastDue ? (feeStructure?.lateFee || 0) : 0;
-    const finalAmount = Math.max(totalFee + applicableLateFee, 0);
+  // 2. Fetch student's existing valid payments
+  const studentPayments = await prisma.payment.findMany({
+    where: { studentId: student.id, paymentStatus: { not: 'CANCELLED' }, ...notDeleted() },
+  });
 
-    invoice = await prisma.feeInvoice.create({
-      data: {
-        invoiceNumber: invNumber,
-        studentId: student.id,
-        academicYear: data.academicYear || school.academicYear || '2026-2027',
-        feeStructureId: feeStructure?.id || null,
-        feeType: data.feeType || feeStructure?.feeType || 'Tuition Fee',
-        totalFee,
-        paidAmount: 0,
-        pendingAmount: finalAmount,
-        discount: 0,
-        lateFee: applicableLateFee,
-        finalAmount,
-        dueDate: targetDueDate,
-        status: 'PENDING',
-        deletedAt: null,
-      },
-    });
+  // 3. Compute student's overall fee metrics
+  const metrics = calculateStudentFeeMetrics(resolvedInvoices, studentPayments);
+
+  // 4. MANDATORY BACKEND VALIDATION:
+  if (metrics.pendingAmount <= 0) {
+    throw ApiError.badRequest('All fees for this student have already been fully paid. Remaining balance is ₹0.');
   }
 
-  // Calculate current remaining payable amount
-  const remainingPayable = Number(invoice.pendingAmount);
-
-  // VALIDATION: check if invoice is already fully cleared
-  if (remainingPayable <= 0 && invoice.status === 'PAID') {
-    throw ApiError.badRequest('This fee invoice has already been fully cleared.');
-  }
-
-  // VALIDATION: payment amount cannot exceed remaining payable amount
-  if (payAmount > remainingPayable && remainingPayable > 0) {
+  if (payAmount > metrics.pendingAmount) {
     throw ApiError.badRequest(
-      `Payment amount (${payAmount}) cannot exceed the remaining payable amount (${remainingPayable}).`
+      `Payment amount (₹${payAmount.toLocaleString('en-IN')}) exceeds the remaining pending amount of ₹${metrics.pendingAmount.toLocaleString('en-IN')}. Maximum payable is ₹${metrics.pendingAmount.toLocaleString('en-IN')}.`
     );
   }
 
-  // DUPLICATE PAYMENT GUARD: prevent duplicate charge if identical payment was recorded in the last 15 seconds
+  // DUPLICATE PAYMENT GUARD: prevent duplicate charge if identical payment was recorded in the last 10 seconds
   const recentDuplicate = await prisma.payment.findFirst({
     where: {
       studentId: student.id,
       amount: payAmount,
-      invoiceId: invoice.id,
-      paymentDate: { gte: new Date(Date.now() - 15 * 1000) },
+      paymentDate: { gte: new Date(Date.now() - 10 * 1000) },
       ...notDeleted(),
     },
   });
@@ -312,10 +304,65 @@ export async function recordPayment(data, actor) {
     throw ApiError.badRequest('A payment with the same amount for this student was just recorded. Please wait a moment before submitting again.');
   }
 
-  const previousDue = remainingPayable;
-  const newRemainingDue = Math.max(remainingPayable - payAmount, 0);
-  const newPaidAmount = invoice.paidAmount + payAmount;
-  const newInvoiceStatus = newRemainingDue === 0 ? 'PAID' : newPaidAmount > 0 ? 'PARTIAL' : 'PENDING';
+  // 5. Target specific invoice if invoiceId provided, else apply across pending invoices
+  let primaryInvoice = null;
+  const targetInvoiceId = data.invoiceId || data.feeInvoiceId;
+
+  if (targetInvoiceId) {
+    primaryInvoice = resolvedInvoices.find((i) => i.id === targetInvoiceId);
+    if (!primaryInvoice) {
+      throw ApiError.badRequest('The specified fee invoice was not found for this student.');
+    }
+    if (primaryInvoice.pendingAmount <= 0) {
+      throw ApiError.badRequest(`Invoice ${primaryInvoice.invoiceNumber} has already been fully paid.`);
+    }
+    if (payAmount > primaryInvoice.pendingAmount) {
+      throw ApiError.badRequest(
+        `Payment amount (₹${payAmount.toLocaleString('en-IN')}) exceeds the remaining pending balance of ₹${primaryInvoice.pendingAmount.toLocaleString('en-IN')} for invoice ${primaryInvoice.invoiceNumber}.`
+      );
+    }
+
+    const updatedPaid = primaryInvoice.paidAmount + payAmount;
+    const updatedPending = Math.max(primaryInvoice.finalAmount - updatedPaid, 0);
+    const updatedStatus = updatedPending === 0 ? 'PAID' : 'PARTIAL';
+
+    await prisma.feeInvoice.update({
+      where: { id: primaryInvoice.id },
+      data: {
+        paidAmount: updatedPaid,
+        pendingAmount: updatedPending,
+        status: updatedStatus,
+      },
+    });
+  } else {
+    // Distribute payment across pending invoices in order of due date
+    const pendingInvoices = resolvedInvoices.filter((i) => (i.pendingAmount || 0) > 0);
+    primaryInvoice = pendingInvoices[0] || resolvedInvoices[0];
+
+    let remainingToDistribute = payAmount;
+    for (const inv of pendingInvoices) {
+      if (remainingToDistribute <= 0) break;
+      const applyAmount = Math.min(remainingToDistribute, inv.pendingAmount);
+      const updatedPaid = inv.paidAmount + applyAmount;
+      const updatedPending = Math.max(inv.finalAmount - updatedPaid, 0);
+      const updatedStatus = updatedPending === 0 ? 'PAID' : 'PARTIAL';
+
+      await prisma.feeInvoice.update({
+        where: { id: inv.id },
+        data: {
+          paidAmount: updatedPaid,
+          pendingAmount: updatedPending,
+          status: updatedStatus,
+        },
+      });
+
+      remainingToDistribute -= applyAmount;
+    }
+  }
+
+  const previousDue = metrics.pendingAmount;
+  const newRemainingDue = Math.max(metrics.pendingAmount - payAmount, 0);
+  const paymentStatus = newRemainingDue === 0 ? 'PAID' : 'PARTIAL';
 
   const receiptNumber = await generatePaymentReceiptNumber(school.code || 'SCH001');
   const paymentDate = data.paymentDate ? toDateOnly(data.paymentDate) : new Date();
@@ -325,15 +372,15 @@ export async function recordPayment(data, actor) {
     data: {
       receiptNumber,
       student: { connect: { id: student.id } },
-      academicYear: data.academicYear || invoice.academicYear || '2026-2027',
-      ...(invoice?.id ? { invoice: { connect: { id: invoice.id } } } : {}),
-      feeType: data.feeType || invoice.feeType || 'Tuition Fee',
+      academicYear: data.academicYear || primaryInvoice.academicYear || '2026-2027',
+      ...(primaryInvoice?.id ? { invoice: { connect: { id: primaryInvoice.id } } } : {}),
+      feeType: data.feeType || primaryInvoice.feeType || 'School Fee',
       amount: payAmount,
       previousDue,
       remainingDue: newRemainingDue,
       paymentDate,
       paymentMethod: data.paymentMethod || 'CASH',
-      paymentStatus: newInvoiceStatus,
+      paymentStatus,
       transactionId: data.transactionId || null,
       referenceNumber: data.referenceNumber || null,
       notes: data.notes || null,
@@ -358,17 +405,7 @@ export async function recordPayment(data, actor) {
     },
   });
 
-  // Update FeeInvoice
-  await prisma.feeInvoice.update({
-    where: { id: invoice.id },
-    data: {
-      paidAmount: newPaidAmount,
-      pendingAmount: newRemainingDue,
-      status: newInvoiceStatus,
-    },
-  });
-
-  // Sync / update legacy Fee record if one exists for student
+  // Sync / update legacy Fee record if one exists
   try {
     const existingLegacyFee = await prisma.fee.findFirst({
       where: { studentId: student.id, ...notDeleted() },
@@ -1146,76 +1183,6 @@ export async function getStudentFeeLedger(studentId, actor) {
 
   assertSchoolAccess(actor, student.schoolId);
 
-  // REAL-TIME DYNAMIC SYNC:
-  // Automatically generate active fee structure invoices for student's class if not already issued
-  // Wrapped in try/catch so a failed write does not prevent the ledger from loading
-  try {
-    if (student.classId) {
-      const activeStructures = await prisma.feeStructure.findMany({
-        where: {
-          OR: [
-            { classId: student.classId },
-            { classId: null },
-          ],
-          status: 'ACTIVE',
-          ...notDeleted(),
-        },
-      });
-
-      for (const struct of activeStructures) {
-        const targetYear = struct.academicYear || '2026-2027';
-        const existing = await prisma.feeInvoice.findFirst({
-          where: {
-            AND: [
-              notDeleted(),
-              {
-                studentId: student.id,
-                OR: [
-                  { feeStructureId: struct.id },
-                  { feeType: struct.feeType, academicYear: targetYear },
-                ],
-              },
-            ],
-          },
-        });
-
-        if (!existing) {
-          try {
-            const school = await getSchoolInfo(struct.schoolId || student.schoolId || 'SCH001');
-            const invoiceNumber = await generateInvoiceNumber(school?.code || 'SCH001');
-            const totalFee = struct.totalFee;
-            const targetDueDate = struct.dueDate;
-            const isPastDue = isInvoicePastDue(targetDueDate);
-            const applicableLateFee = isPastDue ? (struct.lateFee || 0) : 0;
-            const finalAmount = Math.max(totalFee + applicableLateFee, 0);
-
-            await prisma.feeInvoice.create({
-              data: {
-                invoiceNumber,
-                studentId: student.id,
-                feeStructureId: struct.id,
-                feeType: struct.feeType,
-                academicYear: targetYear,
-                totalFee,
-                lateFee: applicableLateFee,
-                discount: 0,
-                finalAmount,
-                paidAmount: 0,
-                pendingAmount: finalAmount,
-                dueDate: targetDueDate,
-                status: 'PENDING',
-              },
-            });
-          } catch (invoiceErr) {
-            console.warn('[getStudentFeeLedger] Auto-invoice creation failed (non-fatal):', invoiceErr?.message);
-          }
-        }
-      }
-    }
-  } catch (syncErr) {
-    console.warn('[getStudentFeeLedger] Auto-invoice sync failed (non-fatal):', syncErr?.message);
-  }
-
   const [rawInvoices, payments, receipts, legacyFees] = await Promise.all([
     prisma.feeInvoice.findMany({
       where: { studentId: student.id, ...notDeleted() },
@@ -1741,3 +1708,159 @@ export async function getFinanceSummary(query = {}, actor) {
     },
   };
 }
+
+/**
+ * STUDENT FEE RECORDS
+ * Consolidated student-wise fee tracking matching UI specs
+ */
+export async function listStudentFeeRecords(query = {}, actor) {
+  const { page = 1, limit = 10, search, classId, section, status } = query;
+  const numPage = Math.max(parseInt(page, 10) || 1, 1);
+  const numLimit = Math.max(parseInt(limit, 10) || 10, 1);
+
+  const schoolId = getEffectiveSchoolId(actor, query.schoolId);
+
+  const studentWhere = {
+    ...notDeleted(),
+    ...(schoolId ? { schoolId } : {}),
+    ...(classId ? { classId } : {}),
+  };
+
+  if (section) {
+    studentWhere.class = { section };
+  }
+
+  if (search && search.trim()) {
+    const q = search.trim();
+    const parts = q.split(/\s+/).filter(Boolean);
+    if (parts.length > 1) {
+      studentWhere.OR = [
+        {
+          AND: [
+            { firstName: { contains: parts[0], mode: 'insensitive' } },
+            { lastName: { contains: parts.slice(1).join(' '), mode: 'insensitive' } },
+          ],
+        },
+        { studentId: { contains: q, mode: 'insensitive' } },
+      ];
+    } else {
+      studentWhere.OR = [
+        { firstName: { contains: q, mode: 'insensitive' } },
+        { lastName: { contains: q, mode: 'insensitive' } },
+        { studentId: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+  }
+
+  const [students, invoices, payments] = await Promise.all([
+    prisma.student.findMany({
+      where: studentWhere,
+      include: {
+        class: { select: { id: true, name: true, section: true } },
+        feeInvoices: {
+          where: notDeleted(),
+          select: {
+            id: true,
+            invoiceNumber: true,
+            feeType: true,
+            totalFee: true,
+            discount: true,
+            lateFee: true,
+            finalAmount: true,
+            paidAmount: true,
+            pendingAmount: true,
+            status: true,
+            dueDate: true,
+            createdAt: true,
+          },
+        },
+        payments: {
+          where: { ...notDeleted(), paymentStatus: { not: 'CANCELLED' } },
+          select: {
+            id: true,
+            amount: true,
+            receiptNumber: true,
+            transactionId: true,
+            paymentMethod: true,
+            paymentDate: true,
+          },
+          orderBy: { paymentDate: 'desc' },
+        },
+      },
+      orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
+    }),
+    prisma.feeInvoice.findMany({
+      where: notDeleted(),
+      select: { finalAmount: true, totalFee: true, paidAmount: true, pendingAmount: true },
+    }),
+    prisma.payment.findMany({
+      where: { ...notDeleted(), paymentStatus: { not: 'CANCELLED' } },
+      select: { amount: true },
+    }),
+  ]);
+
+  const schoolTotalFees = invoices.reduce((sum, inv) => sum + (inv.finalAmount || inv.totalFee || 0), 0);
+  const schoolTotalCollected = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const schoolTotalPending = invoices.reduce((sum, inv) => sum + (inv.pendingAmount || 0), 0);
+
+  let mappedRecords = students.map((s) => {
+    const totalFee = s.feeInvoices.reduce((sum, inv) => sum + (inv.finalAmount || inv.totalFee || 0), 0);
+    const paid = s.payments.reduce((sum, p) => sum + (p.amount || 0), 0) || s.feeInvoices.reduce((sum, inv) => sum + (inv.paidAmount || 0), 0);
+    const pending = Math.max(totalFee - paid, 0);
+
+    let feeStatus = 'Pending';
+    if (pending === 0 && totalFee > 0) {
+      feeStatus = 'Paid';
+    } else if (paid > 0 && pending > 0) {
+      feeStatus = 'Partial';
+    } else {
+      feeStatus = 'Pending';
+    }
+
+    return {
+      id: s.id,
+      studentId: s.id,
+      admissionNo: s.studentId || `ADM-${s.rollNumber || '000'}`,
+      name: `${s.firstName} ${s.lastName || ''}`.trim(),
+      firstName: s.firstName,
+      lastName: s.lastName,
+      avatar: s.avatar || null,
+      class: `${s.class?.name || ''} ${s.class?.section || ''}`.trim(),
+      className: s.class?.name || 'Unassigned',
+      section: s.class?.section || 'A',
+      classId: s.class?.id || '',
+      totalFee,
+      paid,
+      pending,
+      status: feeStatus,
+      lastReceiptNumber: s.payments[0]?.receiptNumber || s.payments[0]?.transactionId || null,
+      invoices: s.feeInvoices,
+      payments: s.payments,
+    };
+  });
+
+  if (status && status !== 'All' && status !== 'ALL') {
+    mappedRecords = mappedRecords.filter((rec) => rec.status.toLowerCase() === status.toLowerCase());
+  }
+
+  const total = mappedRecords.length;
+  const totalPages = Math.ceil(total / numLimit) || 1;
+  const skip = (numPage - 1) * numLimit;
+  const paginatedData = mappedRecords.slice(skip, skip + numLimit);
+
+  return {
+    metrics: {
+      totalFees: schoolTotalFees,
+      totalCollected: schoolTotalCollected,
+      totalPending: schoolTotalPending,
+    },
+    data: paginatedData,
+    pagination: {
+      page: numPage,
+      limit: numLimit,
+      total,
+      totalPages,
+    },
+  };
+}
+

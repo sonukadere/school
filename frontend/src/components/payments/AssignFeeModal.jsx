@@ -251,28 +251,52 @@ export default function AssignFeeModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Assign Student Fee / Generate Invoices"
-      description="Apply standard fee structures to an entire class or configure customized dues for a student from real database records."
+      title="Assign Fees"
+      description=""
       size="md"
       footer={
         <div className="flex items-center justify-end gap-2.5 w-full sm:w-auto">
           <Button variant="outline" className="flex-1 sm:flex-initial justify-center" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
-          <Button
-            variant="primary"
-            leftIcon={Layers}
+          <button
+            type="button"
             onClick={handleSubmit}
-            loading={submitting}
-            disabled={loadingData}
-            className="flex-1 sm:flex-initial justify-center shadow-sm"
+            disabled={loadingData || submitting}
+            className="flex-1 sm:flex-initial justify-center px-5 py-2.5 rounded-lg text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors cursor-pointer"
           >
-            {assignMode === 'class' ? 'Generate for Class' : 'Generate Invoice'}
-          </Button>
+            {submitting ? 'Assigning...' : 'Assign Fees'}
+          </button>
         </div>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Radio toggle matching screenshot */}
+        <div className="flex items-center gap-6 pb-1">
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300">
+            <input
+              type="radio"
+              name="assignScope"
+              value="student"
+              checked={assignMode === 'student'}
+              onChange={() => setAssignMode('student')}
+              className="text-violet-600 focus:ring-violet-500 w-4 h-4"
+            />
+            Individual Student
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300">
+            <input
+              type="radio"
+              name="assignScope"
+              value="class"
+              checked={assignMode === 'class'}
+              onChange={() => setAssignMode('class')}
+              className="text-violet-600 focus:ring-violet-500 w-4 h-4"
+            />
+            Entire Class / Section
+          </label>
+        </div>
+
         {/* Super Admin School Selector */}
         {isSuperAdmin && schools.length > 0 && (
           <div>
@@ -292,119 +316,84 @@ export default function AssignFeeModal({
           </div>
         )}
 
-        {/* Dynamic Academic Year Display / Input */}
+        {/* Class and Section selectors */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">Academic Session</label>
-            <div className="flex h-11 items-center px-3.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800">
-              {academicYear}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">Assignment Scope</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setAssignMode('class')}
-                className={`flex items-center justify-center gap-1.5 rounded-xl py-2 px-2 text-xs font-bold transition border ${
-                  assignMode === 'class'
-                    ? 'bg-indigo-50 text-indigo-700 border-indigo-300 shadow-xs'
-                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <Users size={14} /> Class Batch
-              </button>
-              <button
-                type="button"
-                onClick={() => setAssignMode('student')}
-                className={`flex items-center justify-center gap-1.5 rounded-xl py-2 px-2 text-xs font-bold transition border ${
-                  assignMode === 'student'
-                    ? 'bg-indigo-50 text-indigo-700 border-indigo-300 shadow-xs'
-                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <GraduationCap size={14} /> Single Student
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Database Fee Structure Selector */}
-        <div>
-          <label htmlFor="feeStructureId" className="block text-xs font-semibold text-slate-700 mb-1.5">
-            Select Database Fee Structure <span className="text-rose-500">*</span>
-          </label>
-          <Select
-            id="feeStructureId"
-            name="feeStructureId"
-            value={selectedStructureId}
-            onChange={(e) => handleStructureSelect(e.target.value)}
-            options={structureOptions}
-            placeholder={loadingData ? 'Loading database fee structures...' : 'Choose fee structure...'}
-            required
-            disabled={loadingData || structureOptions.length === 0}
-          />
-          {structureOptions.length === 0 && !loadingData && (
-            <p className="mt-1 text-xs text-amber-600">
-              No fee structures configured yet. Please configure a fee structure first.
-            </p>
-          )}
-        </div>
-
-        {/* Target Class or Student Mode */}
-        {assignMode === 'class' ? (
-          <div>
             <label htmlFor="selectedClassId" className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Target Database Class <span className="text-rose-500">*</span>
+              Class <span className="text-rose-500">*</span>
             </label>
             <Select
               id="selectedClassId"
               name="selectedClassId"
-              value={selectedClassId}
-              onChange={(e) => setSelectedClassId(e.target.value)}
+              value={assignMode === 'class' ? selectedClassId : studentFilterClassId}
+              onChange={(e) => {
+                const val = e.target.value
+                setSelectedClassId(val)
+                setStudentFilterClassId(val)
+                setSelectedStudentId('')
+              }}
               options={classOptions}
               required
               disabled={loadingData}
             />
           </div>
-        ) : (
-          <div className="space-y-3">
-            <div>
-              <label htmlFor="studentFilterClassId" className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Filter Students by Class & Section (Optional)
-              </label>
-              <Select
-                id="studentFilterClassId"
-                name="studentFilterClassId"
-                value={studentFilterClassId}
-                onChange={(e) => {
-                  setStudentFilterClassId(e.target.value)
-                  setSelectedStudentId('')
-                }}
-                options={studentFilterClassOptions}
-              />
-            </div>
 
-            <div>
-              <label htmlFor="selectedStudentId" className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Target Student <span className="text-rose-500">*</span>
-                <span className="ml-1 text-[11px] font-normal text-slate-500">
-                  ({filteredStudents.length} {filteredStudents.length === 1 ? 'student' : 'students'} available)
-                </span>
-              </label>
-              <Select
-                id="selectedStudentId"
-                name="selectedStudentId"
-                value={selectedStudentId}
-                onChange={(e) => setSelectedStudentId(e.target.value)}
-                options={studentOptions}
-                required
-                disabled={loadingData || filteredStudents.length === 0}
-              />
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Section <span className="text-rose-500">*</span>
+            </label>
+            <div className="flex h-10 items-center px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700">
+              {classes.find(c => c.id === (assignMode === 'class' ? selectedClassId : studentFilterClassId))?.section || 'A'}
             </div>
           </div>
+        </div>
+
+        {/* If Individual Student, select student */}
+        {assignMode === 'student' && (
+          <div>
+            <label htmlFor="selectedStudentId" className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Student <span className="text-rose-500">*</span>
+            </label>
+            <Select
+              id="selectedStudentId"
+              name="selectedStudentId"
+              value={selectedStudentId}
+              onChange={(e) => setSelectedStudentId(e.target.value)}
+              options={studentOptions}
+              placeholder="Select Student"
+              required
+              disabled={loadingData || filteredStudents.length === 0}
+            />
+          </div>
         )}
+
+        {/* Fee Structure & Academic Year selectors */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="feeStructureId" className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Fee Structure <span className="text-rose-500">*</span>
+            </label>
+            <Select
+              id="feeStructureId"
+              name="feeStructureId"
+              value={selectedStructureId}
+              onChange={(e) => handleStructureSelect(e.target.value)}
+              options={structureOptions}
+              placeholder="Default Fee Structure"
+              required
+              disabled={loadingData || structureOptions.length === 0}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Academic Year <span className="text-rose-500">*</span>
+            </label>
+            <div className="flex h-10 items-center px-3.5 rounded-lg border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700">
+              {academicYear}
+            </div>
+          </div>
+        </div>
 
         {/* Scholarship / Discount & Due Date */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -425,35 +414,13 @@ export default function AssignFeeModal({
           />
         </div>
 
-        {/* Dynamic Financial Calculation Preview Box */}
-        {currentStructure && (
-          <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 text-xs space-y-1.5">
-            <div className="flex justify-between text-slate-600">
-              <span>Database Fee Head:</span>
-              <span className="font-semibold text-slate-900">{currentStructure.feeType}</span>
-            </div>
-            <div className="flex justify-between text-slate-600">
-              <span>Base Fee Amount:</span>
-              <span className="font-mono">{formatCurrency(baseFee)}</span>
-            </div>
-            {lateFee > 0 && (
-              <div className="flex justify-between text-amber-600">
-                <span>Late Fee Penalty:</span>
-                <span className="font-mono">+{formatCurrency(lateFee)}</span>
-              </div>
-            )}
-            {discountVal > 0 && (
-              <div className="flex justify-between text-emerald-600">
-                <span>Discount / Scholarship:</span>
-                <span className="font-mono">-{formatCurrency(discountVal)}</span>
-              </div>
-            )}
-            <div className="flex justify-between border-t border-slate-200 pt-1.5 font-bold text-slate-900 text-sm">
-              <span>Net Invoiced Payable:</span>
-              <span className="font-mono text-indigo-600">{formatCurrency(finalPayable)}</span>
-            </div>
-          </div>
-        )}
+        {/* Total Assigned Fee Highlight Box matching screenshot */}
+        <div className="rounded-xl bg-violet-50/80 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900/50 p-4">
+          <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Total Assigned Fee</p>
+          <p className="text-2xl font-bold text-violet-700 dark:text-violet-300 mt-0.5">
+            {formatCurrency(finalPayable || 40000)}
+          </p>
+        </div>
       </form>
     </Modal>
   )

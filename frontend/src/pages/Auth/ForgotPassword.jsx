@@ -6,12 +6,14 @@ import Button from '../../components/common/Button'
 import { useAuth } from '../../context/AuthContext'
 import { useSettings } from '../../context/SettingsContext'
 import { useToast } from '../../context/ToastContext'
+import { useTranslation } from '../../i18n'
 import { apiClient } from '../../services/apiClient'
 
 function ForgotPassword() {
   const { isAuthenticated } = useAuth()
   const { settings } = useSettings()
   const { showToast } = useToast()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const urlToken = searchParams.get('token')
@@ -37,11 +39,11 @@ function ForgotPassword() {
   const handleForgotSubmit = async (event) => {
     event.preventDefault()
     if (!email.trim()) {
-      setError('Email is required')
+      setError(t('Email is required'))
       return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Enter a valid email address')
+      setError(t('Enter a valid email address'))
       return
     }
     setError('')
@@ -49,30 +51,30 @@ function ForgotPassword() {
     try {
       const res = await apiClient.post('/auth/forgot-password', { email })
       setSubmitting(false)
-      showToast(res.message || 'Reset link generated successfully.', 'success')
+      showToast(res.message || t('Reset link generated successfully.'), 'success')
       if (res.data?.resetToken) {
         setResetToken(res.data.resetToken)
       }
       setStep('reset')
     } catch (err) {
       setSubmitting(false)
-      setError(err.message || 'Failed to process request.')
-      showToast(err.message || 'Failed to process request.', 'error')
+      setError(err.message || t('Failed to process request.'))
+      showToast(err.message || t('Failed to process request.'), 'error')
     }
   }
 
   const handleResetSubmit = async (event) => {
     event.preventDefault()
     if (!resetToken.trim()) {
-      setError('Reset token is required.')
+      setError(t('Reset token is required.'))
       return
     }
     if (!newPassword || newPassword.length < 6) {
-      setError('Password must be at least 6 characters.')
+      setError(t('Password must be at least 6 characters.'))
       return
     }
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.')
+      setError(t('Passwords do not match.'))
       return
     }
 
@@ -84,12 +86,12 @@ function ForgotPassword() {
         password: newPassword,
       })
       setSubmitting(false)
-      showToast(res.message || 'Password reset successfully! Please log in.', 'success')
+      showToast(res.message || t('Password reset successfully! Please log in.'), 'success')
       setStep('success')
     } catch (err) {
       setSubmitting(false)
-      setError(err.message || 'Failed to reset password.')
-      showToast(err.message || 'Failed to reset password.', 'error')
+      setError(err.message || t('Failed to reset password.'))
+      showToast(err.message || t('Failed to reset password.'), 'error')
     }
   }
 
@@ -103,7 +105,7 @@ function ForgotPassword() {
             className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl object-cover shadow-lg"
           />
           <h1 className="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold text-white">{schoolName}</h1>
-          <p className="mt-1 text-xs sm:text-sm text-indigo-200">School Management System</p>
+          <p className="mt-1 text-xs sm:text-sm text-indigo-200">{t('School Management System')}</p>
         </div>
 
         <div className="rounded-2xl bg-white p-5 sm:p-8 shadow-2xl">
@@ -111,7 +113,7 @@ function ForgotPassword() {
             to="/login"
             className="mb-4 sm:mb-5 inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-slate-500 transition hover:text-indigo-600"
           >
-            <ArrowLeft size={16} /> Back to login
+            <ArrowLeft size={16} /> {t('Back to login')}
           </Link>
 
           {step === 'success' ? (
@@ -119,64 +121,63 @@ function ForgotPassword() {
               <div className="mx-auto flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-emerald-100">
                 <CheckCircle size={28} className="text-emerald-600" />
               </div>
-              <h2 className="mt-4 text-lg sm:text-xl font-bold text-slate-900">Password Reset Successful!</h2>
+              <h2 className="mt-4 text-lg sm:text-xl font-bold text-slate-900">{t('Password Reset Successful!')}</h2>
               <p className="mt-2 text-xs sm:text-sm text-slate-500">
-                Your password has been changed successfully. You can now sign in with your new password.
+                {t('Your password has been changed successfully. You can now sign in with your new password.')}
               </p>
               <Link to="/login" className="mt-6 block">
                 <Button variant="primary" className="w-full">
-                  Return to Sign In
+                  {t('Return to Sign In')}
                 </Button>
               </Link>
             </div>
           ) : step === 'reset' ? (
             <>
-              <h2 className="text-lg sm:text-xl font-bold text-slate-900">Set New Password</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">{t('Set New Password')}</h2>
               <p className="mt-1 text-xs sm:text-sm text-slate-500">
-                Enter your reset token and your new account password.
+                {t('Enter your reset token and your new account password.')}
               </p>
               <form onSubmit={handleResetSubmit} className="mt-5 space-y-4" noValidate>
                 <Input
-                  label="Reset Token"
+                  label={t('Reset Token')}
                   type="text"
                   value={resetToken}
                   onChange={(event) => setResetToken(event.target.value)}
-                  placeholder="Paste reset token here"
+                  placeholder={t('Paste reset token here')}
                   icon={KeyRound}
                   required
                 />
                 <Input
-                  label="New Password"
+                  label={t('New Password')}
                   type="password"
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
-                  placeholder="Minimum 6 characters"
+                  placeholder={t('Minimum 6 characters')}
                   required
                 />
                 <Input
-                  label="Confirm Password"
+                  label={t('Confirm Password')}
                   type="password"
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
-                  placeholder="Re-enter new password"
+                  placeholder={t('Re-enter new password')}
                   required
                 />
                 {error && <p className="text-xs text-rose-500">{error}</p>}
                 <Button type="submit" size="lg" loading={submitting} className="w-full">
-                  Reset Password
+                  {t('Reset Password')}
                 </Button>
               </form>
             </>
           ) : (
             <>
-              <h2 className="text-lg sm:text-xl font-bold text-slate-900">Forgot your password?</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900">{t('Forgot your password?')}</h2>
               <p className="mt-1 text-xs sm:text-sm text-slate-500">
-                Enter your registered email address and we will send you a link to reset your
-                password.
+                {t('Enter your registered email address and we will send you a link to reset your password.')}
               </p>
               <form onSubmit={handleForgotSubmit} className="mt-5 sm:mt-6 space-y-4" noValidate>
                 <Input
-                  label="Email Address"
+                  label={t('Email Address')}
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
@@ -185,7 +186,7 @@ function ForgotPassword() {
                   error={error}
                 />
                 <Button type="submit" size="lg" loading={submitting} className="w-full">
-                  <Send size={16} /> Send Reset Link
+                  <Send size={16} /> {t('Send Reset Link')}
                 </Button>
               </form>
             </>

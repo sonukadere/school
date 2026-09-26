@@ -792,6 +792,10 @@ export const api = {
     return apiClient.get(`/payments/student/${studentId}`)
   },
 
+  getStudentFeeRecords: async (params = {}) => {
+    return apiClient.get('/payments/student-fee-records', params)
+  },
+
   getFeeStructures: async (params = {}) => {
     return apiClient.get('/payments/fee-structures', params)
   },

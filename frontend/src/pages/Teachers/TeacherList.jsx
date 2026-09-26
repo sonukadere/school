@@ -10,12 +10,14 @@ import ConfirmDialog from '../../components/common/ConfirmDialog'
 import Select from '../../components/common/Select'
 import { api } from '../../services/api'
 import { useToast } from '../../context/ToastContext'
+import { useTranslation } from '../../i18n'
 import { STATUS_STYLES, formatDate, formatCurrency } from '../../utils/helpers'
 
 const SUBJECT_OPTIONS = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'History', 'Computer Science', 'Physical Education', 'Geography']
 
 function TeacherList() {
   const { showToast } = useToast()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [teachers, setTeachers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -44,14 +46,14 @@ function TeacherList() {
     await api.deleteTeacher(deleteTarget.id)
     setDeleting(false)
     setDeleteTarget(null)
-    showToast(`Teacher ${deleteTarget.name} deleted`, 'success')
+    showToast(t('Teacher {name} deleted').replace('{name}', deleteTarget.name), 'success')
     loadTeachers()
   }
 
   const columns = [
     {
       key: 'teacher',
-      header: 'Teacher',
+      header: t('Teacher'),
       searchValue: (teacher) => `${teacher.name} ${teacher.id} ${teacher.email} ${teacher.subject} ${teacher.phone}`,
       render: (teacher) => (
         <div className="flex items-center gap-3">
@@ -67,45 +69,45 @@ function TeacherList() {
         </div>
       ),
     },
-    { key: 'subject', header: 'Subject', render: (teacher) => (
+    { key: 'subject', header: t('Subject'), render: (teacher) => (
       <Badge variant="primary">{teacher.subject}</Badge>
     ) },
-    { key: 'qualification', header: 'Qualification', render: (teacher) => (
+    { key: 'qualification', header: t('Qualification'), render: (teacher) => (
       <span className="text-slate-700 text-sm font-medium">{teacher.qualification || '—'}</span>
     ) },
-    { key: 'contact', header: 'Contact', render: (teacher) => (
+    { key: 'contact', header: t('Contact'), render: (teacher) => (
       <div>
         <p className="text-slate-700 text-xs font-medium">{teacher.phone || '—'}</p>
         <p className="text-[11px] text-slate-400">{teacher.email}</p>
       </div>
     ) },
-    { key: 'salary', header: 'Salary', render: (teacher) => (
+    { key: 'salary', header: t('Salary'), render: (teacher) => (
       <span className="font-mono text-xs font-semibold text-slate-800 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded">
         {formatCurrency(teacher.salary)}
       </span>
     ) },
-    { key: 'joiningDate', header: 'Joined', render: (teacher) => (
+    { key: 'joiningDate', header: t('Joined'), render: (teacher) => (
       <span className="text-xs text-slate-500">{formatDate(teacher.joiningDate)}</span>
     ) },
-    { key: 'gender', header: 'Gender', render: (teacher) => (
-      <Badge className={STATUS_STYLES[teacher.gender]}>{teacher.gender}</Badge>
+    { key: 'gender', header: t('Gender'), render: (teacher) => (
+      <Badge className={STATUS_STYLES[teacher.gender]}>{t(teacher.gender)}</Badge>
     ) },
     {
       key: 'actions',
-      header: 'Actions',
+      header: t('Actions'),
       className: 'text-right',
       render: (teacher) => (
         <div className="flex items-center justify-end gap-1.5" onClick={(event) => event.stopPropagation()}>
           <Link
             to={`/teachers/${teacher.id}`}
-            title="View Details"
+            title={t('View Details')}
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-sky-300 hover:bg-sky-50/60 hover:text-sky-600"
           >
             <Eye size={14} />
           </Link>
           <Link
             to={`/teachers/edit/${teacher.id}`}
-            title="Edit Teacher"
+            title={t('Edit Teacher')}
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-600"
           >
             <Pencil size={14} />

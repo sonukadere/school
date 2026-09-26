@@ -771,7 +771,6 @@ function StudentForm({ initialValues = {}, onSubmit, submitting, submitLabel = '
                       required
                       options={sectionOptions}
                       placeholder="Select section"
-                      helper="Section A (1–50 students). Sections B, C auto-scale when count exceeds 50."
                     />
                     <Input
                       label="Roll Number (रोल नंबर)"

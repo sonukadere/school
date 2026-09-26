@@ -13,8 +13,6 @@ import {
   Users2,
   Sun,
   Moon,
-  Globe,
-  ChevronDown,
   Shield,
   UserCheck,
   BookOpenCheck,
@@ -23,116 +21,15 @@ import { useAuth } from '../../context/AuthContext'
 import { useAppConfig } from '../../context/AppConfigContext'
 import { useSettings } from '../../context/SettingsContext'
 import { useToast } from '../../context/ToastContext'
-
-const translations = {
-  en: {
-    tagline: 'School Management System',
-    heroLine1: 'Empowering',
-    heroLine2: 'Education for a',
-    heroLine3: 'Brighter Tomorrow',
-    heroDesc:
-      'A complete school management system to simplify administration, enhance learning, and build a better future.',
-    f1Title: 'Manage Students',
-    f1Sub: 'Admissions & academics',
-    f2Title: 'Simplify Admin',
-    f2Sub: 'All tools in one place',
-    f3Title: 'Track Attendance',
-    f3Sub: 'Real-time updates',
-    f4Title: 'Secure & Reliable',
-    f4Sub: 'Safe encrypted data',
-    quote: 'Education is the key to unlocking a brighter future.',
-    schoolBanner1: 'Better Students',
-    schoolBanner2: 'Brighter Futures',
-    welcomeBack: 'Welcome Back',
-    loginSubtitle: 'Login to your school account',
-    emailLabel: 'Email / Username',
-    emailPlaceholder: 'Enter your email or username',
-    passwordLabel: 'Password',
-    passwordPlaceholder: 'Enter your password',
-    rememberMe: 'Remember me',
-    forgotPassword: 'Forgot Password?',
-    signIn: 'Sign In',
-    signingIn: 'Signing in...',
-    or: 'OR',
-    demoHint: 'Select a demo account to autofill:',
-    roleSuperAdmin: 'Super Admin',
-    roleAdmin: 'Admin',
-    roleTeacher: 'Teacher',
-    roleStudent: 'Student',
-    needHelp: 'Need help?',
-    contactAdmin: 'Contact School Admin',
-    footerMotto: 'Learn • Grow • Achieve',
-    allRightsReserved: 'All rights reserved.',
-    emailRequired: 'Email or Username is required',
-    passwordRequired: 'Password is required',
-    loggedIn: 'Logged in successfully',
-    themeDark: 'Dark mode',
-    themeLight: 'Light mode',
-    showPassword: 'Show password',
-    hidePassword: 'Hide password',
-    language: 'Language',
-    english: 'English',
-    hindi: 'हिंदी',
-  },
-  hi: {
-    tagline: 'स्कूल प्रबंधन प्रणाली',
-    heroLine1: 'शिक्षा को',
-    heroLine2: 'सशक्त बनाना,',
-    heroLine3: 'उज्जवल भविष्य की ओर',
-    heroDesc:
-      'प्रशासन को सरल बनाने, अधिगम को बेहतर बनाने और बेहतर भविष्य बनाने के लिए एक संपूर्ण स्कूल प्रबंधन प्रणाली।',
-    f1Title: 'छात्र प्रबंधन',
-    f1Sub: 'प्रवेश और शैक्षणिक',
-    f2Title: 'आसान प्रशासन',
-    f2Sub: 'सभी उपकरण एक जगह',
-    f3Title: 'उपस्थिति ट्रैकिंग',
-    f3Sub: 'रीयल-टाइम अपडेट',
-    f4Title: 'सुरक्षित और भरोसेमंद',
-    f4Sub: 'सुरक्षित एन्क्रिप्टेड डेटा',
-    quote: 'शिक्षा उज्जवल भविष्य के द्वार खोलने की कुंजी है।',
-    schoolBanner1: 'बेहतर छात्र',
-    schoolBanner2: 'उज्जवल भविष्य',
-    welcomeBack: 'वापसी पर स्वागत है',
-    loginSubtitle: 'अपने स्कूल खाते में लॉगिन करें',
-    emailLabel: 'ईमेल / उपयोगकर्ता नाम',
-    emailPlaceholder: 'अपना ईमेल या उपयोगकर्ता नाम दर्ज करें',
-    passwordLabel: 'पासवर्ड',
-    passwordPlaceholder: 'अपना पासवर्ड दर्ज करें',
-    rememberMe: 'मुझे याद रखें',
-    forgotPassword: 'पासवर्ड भूल गए?',
-    signIn: 'साइन इन करें',
-    signingIn: 'साइन इन हो रहा है...',
-    or: 'या',
-    demoHint: 'ऑटोफिल के लिए डेमो खाता चुनें:',
-    roleSuperAdmin: 'सुपर एडमिन',
-    roleAdmin: 'एडमिन',
-    roleTeacher: 'शिक्षक',
-    roleStudent: 'छात्र',
-    needHelp: 'सहायता चाहिए?',
-    contactAdmin: 'स्कूल एडमिन से संपर्क करें',
-    footerMotto: 'सीखें • बढ़ें • सफल हों',
-    allRightsReserved: 'सर्वाधिकार सुरक्षित।',
-    emailRequired: 'ईमेल या उपयोगकर्ता नाम आवश्यक है',
-    passwordRequired: 'पासवर्ड आवश्यक है',
-    loggedIn: 'सफलतापूर्वक लॉगिन हुआ',
-    themeDark: 'डार्क मोड',
-    themeLight: 'लाइट मोड',
-    showPassword: 'पासवर्ड दिखाएं',
-    hidePassword: 'पासवर्ड छुपाएं',
-    language: 'भाषा',
-    english: 'English',
-    hindi: 'हिंदी',
-  },
-}
+import { useTranslation } from '../../i18n'
 
 export default function Login() {
   const { login, isAuthenticated } = useAuth()
-  const { isDark, toggleTheme, language, setLanguage } = useAppConfig()
+  const { isDark, toggleTheme } = useAppConfig()
   const { settings } = useSettings()
   const { showToast } = useToast()
+  const { t } = useTranslation()
   const navigate = useNavigate()
-
-  const t = (key) => translations[language][key] ?? translations.en[key] ?? key
 
   const schoolName = settings?.schoolName || 'EduSchool'
 
@@ -143,14 +40,13 @@ export default function Login() {
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [selectedDemoRole, setSelectedDemoRole] = useState(null)
-  const [langOpen, setLangOpen] = useState(false)
 
   if (isAuthenticated) return <Navigate to="/dashboard" replace />
 
   const validate = () => {
     const nextErrors = {}
-    if (!email.trim()) nextErrors.email = t('emailRequired')
-    if (!password) nextErrors.password = t('passwordRequired')
+    if (!email.trim()) nextErrors.email = t('Email or Username is required')
+    if (!password) nextErrors.password = t('Password is required')
     return nextErrors
   }
 
@@ -165,7 +61,7 @@ export default function Login() {
     setSubmitting(false)
 
     if (result.ok) {
-      showToast(t('loggedIn'), 'success')
+      showToast(t('Logged in successfully'), 'success')
       navigate('/dashboard')
     } else {
       showToast(result.error, 'error')
@@ -182,8 +78,6 @@ export default function Login() {
 
   const selectorBg =
     'bg-white/90 border-slate-200/80 text-slate-700 hover:bg-white dark:bg-slate-800/90 dark:border-slate-700/80 dark:text-slate-200 dark:hover:bg-slate-800'
-  const optionBg =
-    'bg-white hover:bg-slate-50 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200'
 
   return (
     <div className="min-h-screen min-h-[100dvh] w-full bg-[#f4f8fd] bg-gradient-to-br from-[#eff5fc] via-[#f4f8fd] to-[#eaf2fb] text-slate-800 dark:bg-[#0b1220] dark:from-[#0b1220] dark:via-[#0f172a] dark:to-[#0b1220] dark:text-slate-200 flex flex-col justify-between relative overflow-x-hidden overflow-y-auto font-sans selection:bg-indigo-500 selection:text-white">
@@ -205,11 +99,11 @@ export default function Login() {
             <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
               {schoolName}
             </h1>
-            <p className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-slate-400">{t('tagline')}</p>
+            <p className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-slate-400">{t('School Management System')}</p>
           </div>
         </div>
 
-        {/* Top Right Controls: Theme Toggle & Language Dropdown */}
+        {/* Top Right Controls: Theme Toggle */}
         <div className="flex items-center gap-2 sm:gap-2.5">
           <button
             type="button"
@@ -217,56 +111,11 @@ export default function Login() {
             className={`h-8 w-8 rounded-full ${selectorBg} shadow-xs flex items-center justify-center transition-all cursor-pointer ${
               isDark ? 'text-amber-400 hover:text-amber-300' : 'text-amber-500 hover:text-amber-600'
             }`}
-            title={isDark ? t('themeLight') : t('themeDark')}
-            aria-label={isDark ? t('themeLight') : t('themeDark')}
+            title={isDark ? t('Light mode') : t('Dark mode')}
+            aria-label={isDark ? t('Light mode') : t('Dark mode')}
           >
             {isDark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
-
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setLangOpen((prev) => !prev)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${selectorBg} shadow-xs text-xs font-semibold cursor-pointer transition-all`}
-              aria-label={t('language')}
-            >
-              <Globe size={13} className="text-slate-500 dark:text-slate-400" />
-              <span>{language === 'hi' ? t('hindi') : t('english')}</span>
-              <ChevronDown size={12} className={`text-slate-400 ml-0.5 transition-transform ${langOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {langOpen && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setLangOpen(false)} />
-                <div className={`absolute right-0 top-full mt-1.5 w-32 rounded-xl border shadow-lg py-1 z-20 animate-scale-in ${optionBg} border-slate-200/80 dark:border-slate-700/80 text-xs`}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLanguage('en')
-                      setLangOpen(false)
-                    }}
-                    className={`w-full text-left px-3 py-1.5 font-semibold cursor-pointer transition ${
-                      language === 'en' ? 'text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-500/10' : ''
-                    }`}
-                  >
-                    English
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLanguage('hi')
-                      setLangOpen(false)
-                    }}
-                    className={`w-full text-left px-3 py-1.5 font-semibold cursor-pointer transition ${
-                      language === 'hi' ? 'text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-500/10' : ''
-                    }`}
-                  >
-                    हिंदी
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
         </div>
       </header>
 
@@ -278,14 +127,14 @@ export default function Login() {
           <div className="lg:col-span-6 xl:col-span-7 flex flex-col justify-center space-y-3 sm:space-y-4 lg:space-y-5">
             <div className="space-y-1.5 sm:space-y-2 max-w-xl">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
-                {t('heroLine1')} <br />
-                {t('heroLine2')} <br />
+                {t('Empowering')} <br />
+                {t('Education for a')} <br />
                 <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
-                  {t('heroLine3')}
+                  {t('Brighter Tomorrow')}
                 </span>
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal line-clamp-2">
-                {t('heroDesc')}
+                {t('A complete school management system to simplify administration, enhance learning, and build a better future.')}
               </p>
             </div>
 
@@ -297,8 +146,8 @@ export default function Login() {
                   <Users2 size={16} />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{t('f1Title')}</h3>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{t('f1Sub')}</p>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{t('Manage Students')}</h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{t('Admissions & academics')}</p>
                 </div>
               </div>
 
@@ -308,8 +157,8 @@ export default function Login() {
                   <BarChart3 size={16} />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{t('f2Title')}</h3>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{t('f2Sub')}</p>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{t('Simplify Admin')}</h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{t('All tools in one place')}</p>
                 </div>
               </div>
 
@@ -319,8 +168,8 @@ export default function Login() {
                   <CalendarCheck2 size={16} />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{t('f3Title')}</h3>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{t('f3Sub')}</p>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{t('Track Attendance')}</h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{t('Real-time updates')}</p>
                 </div>
               </div>
 
@@ -330,8 +179,8 @@ export default function Login() {
                   <ShieldCheck size={16} />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{t('f4Title')}</h3>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{t('f4Sub')}</p>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">{t('Secure & Reliable')}</h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{t('Safe encrypted data')}</p>
                 </div>
               </div>
             </div>
@@ -407,10 +256,10 @@ export default function Login() {
                 {/* Center School Banner */}
                 <rect x="250" y="152" width="100" height="18" rx="3" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1" />
                 <text x="300" y="161" textAnchor="middle" fontSize="6.5" fontWeight="700" fill="#1e40af">
-                  {t('schoolBanner1')}
+                  {t('Better Students')}
                 </text>
                 <text x="300" y="167.5" textAnchor="middle" fontSize="5.5" fontWeight="600" fill="#3b82f6">
-                  {t('schoolBanner2')}
+                  {t('Brighter Futures')}
                 </text>
 
                 {/* Center Entrance Double Door */}
@@ -435,7 +284,7 @@ export default function Login() {
 
               {/* Quote below campus illustration */}
               <p className="mt-1 text-[11px] italic font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                <span>&ldquo;{t('quote')}&rdquo;</span>
+                <span>&ldquo;{t('Education is the key to unlocking a brighter future.')}&rdquo;</span>
               </p>
             </div>
           </div>
@@ -447,10 +296,10 @@ export default function Login() {
               {/* Card Header */}
               <div className="text-center mb-3 sm:mb-4">
                 <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  {t('welcomeBack')}
+                  {t('Welcome Back')}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-normal">
-                  {t('loginSubtitle')}
+                  {t('Login to your school account')}
                 </p>
               </div>
 
@@ -459,7 +308,7 @@ export default function Login() {
                 {/* Email / Username Field */}
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    {t('emailLabel')}
+                    {t('Email / Username')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -469,7 +318,7 @@ export default function Login() {
                       type="text"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder={t('emailPlaceholder')}
+                      placeholder={t('Enter your email or username')}
                       className={`w-full pl-9 pr-3.5 py-2 bg-white border dark:bg-slate-800 ${
                         errors.email ? 'border-rose-400 focus:ring-rose-200' : 'border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-100'
                       } rounded-xl text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-2xs focus:outline-hidden focus:ring-3 transition`}
@@ -482,7 +331,7 @@ export default function Login() {
                 {/* Password Field */}
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                    {t('passwordLabel')}
+                    {t('Password')}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -492,7 +341,7 @@ export default function Login() {
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder={t('passwordPlaceholder')}
+                      placeholder={t('Enter your password')}
                       className={`w-full pl-9 pr-10 py-2 bg-white border dark:bg-slate-800 ${
                         errors.password ? 'border-rose-400 focus:ring-rose-200' : 'border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:ring-blue-100'
                       } rounded-xl text-xs sm:text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-2xs focus:outline-hidden focus:ring-3 transition`}
@@ -502,7 +351,7 @@ export default function Login() {
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
                       className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition"
-                      aria-label={showPassword ? t('hidePassword') : t('showPassword')}
+                      aria-label={showPassword ? t('Hide password') : t('Show password')}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -519,14 +368,14 @@ export default function Login() {
                       onChange={(e) => setRememberMe(e.target.checked)}
                       className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/30"
                     />
-                    <span>{t('rememberMe')}</span>
+                    <span>{t('Remember me')}</span>
                   </label>
 
                   <Link
                     to="/forgot-password"
                     className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
                   >
-                    {t('forgotPassword')}
+                    {t('Forgot Password?')}
                   </Link>
                 </div>
 
@@ -549,11 +398,11 @@ export default function Login() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                       </svg>
-                      {t('signingIn')}
+                      {t('Signing in...')}
                     </span>
                   ) : (
                     <>
-                      <span>{t('signIn')}</span>
+                      <span>{t('Sign In')}</span>
                       <ArrowRight size={15} />
                     </>
                   )}
@@ -573,7 +422,7 @@ export default function Login() {
               {/* Quick Role Switcher / Demo Role Cards */}
               <div>
                 <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 text-center mb-1.5">
-                  {t('demoHint')}
+                  {t('Select a demo account to autofill:')}
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                   {/* Super Admin */}
@@ -589,7 +438,7 @@ export default function Login() {
                     <div className="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-blue-600 text-white flex items-center justify-center mb-1 shadow-2xs group-hover:scale-105 transition">
                       <Shield size={13} />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{t('roleSuperAdmin')}</span>
+                    <span className="text-[10px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{t('Super Admin')}</span>
                   </button>
 
                   {/* Admin */}
@@ -605,7 +454,7 @@ export default function Login() {
                     <div className="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-emerald-600 text-white flex items-center justify-center mb-1 shadow-2xs group-hover:scale-105 transition">
                       <UserCheck size={13} />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{t('roleAdmin')}</span>
+                    <span className="text-[10px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{t('Admin')}</span>
                   </button>
 
                   {/* Teacher */}
@@ -621,7 +470,7 @@ export default function Login() {
                     <div className="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-amber-500 text-white flex items-center justify-center mb-1 shadow-2xs group-hover:scale-105 transition">
                       <BookOpenCheck size={13} />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{t('roleTeacher')}</span>
+                    <span className="text-[10px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{t('Teacher')}</span>
                   </button>
 
                   {/* Student */}
@@ -637,19 +486,19 @@ export default function Login() {
                     <div className="h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-purple-600 text-white flex items-center justify-center mb-1 shadow-2xs group-hover:scale-105 transition">
                       <GraduationCap size={13} />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{t('roleStudent')}</span>
+                    <span className="text-[10px] font-bold text-slate-800 dark:text-slate-200 leading-tight">{t('Student')}</span>
                   </button>
                 </div>
               </div>
 
               {/* Card Footer Help Link */}
               <div className="mt-2.5 text-center text-[11px] text-slate-500 dark:text-slate-400">
-                {t('needHelp')}{' '}
+                {t('Need help?')}{' '}
                 <a
                   href="mailto:admin@school.com"
                   className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
                 >
-                  {t('contactAdmin')}
+                  {t('Contact School Admin')}
                 </a>
               </div>
 
@@ -661,9 +510,9 @@ export default function Login() {
 
       {/* Page Footer */}
       <footer className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 sm:py-2 flex flex-col sm:flex-row items-center justify-between gap-1 text-[11px] text-slate-500 dark:text-slate-400 shrink-0">
-        <p>© {new Date().getFullYear()} {schoolName}. {t('allRightsReserved')}</p>
+        <p>© {new Date().getFullYear()} {schoolName}. {t('All rights reserved.')}</p>
         <div className="flex items-center gap-3 font-medium">
-          <span>{t('footerMotto')}</span>
+          <span>{t('Learn • Grow • Achieve')}</span>
         </div>
       </footer>
     </div>

@@ -43,6 +43,7 @@ const AddClass = lazyRetry(() => import('../pages/Classes/AddClass'), 'add_class
 const EditClass = lazyRetry(() => import('../pages/Classes/EditClass'), 'edit_class')
 const SubjectList = lazyRetry(() => import('../pages/Subjects/SubjectList'), 'subject_list')
 const AddSubject = lazyRetry(() => import('../pages/Subjects/AddSubject'), 'add_subject')
+const EditSubject = lazyRetry(() => import('../pages/Subjects/EditSubject'), 'edit_subject')
 const Attendance = lazyRetry(() => import('../pages/Attendance/Attendance'), 'attendance')
 const StudentAttendance = lazyRetry(() => import('../pages/Attendance/StudentAttendance'), 'student_attendance')
 const TeacherAttendance = lazyRetry(() => import('../pages/Attendance/TeacherAttendance'), 'teacher_attendance')
@@ -273,6 +274,7 @@ function AppRoutes() {
 
         <Route path="/subjects" element={<Suspense fallback={<Loader fullScreen label="Loading subjects..." />}><SubjectList /></Suspense>} />
         <Route path="/subjects/add" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><AddSubject /></Suspense>} />
+        <Route path="/subjects/edit/:id" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><EditSubject /></Suspense>} />
 
         {/* Attendance & Timetable */}
         <Route path="/attendance" element={<Suspense fallback={<Loader fullScreen label="Loading page..." />}><Attendance /></Suspense>} />

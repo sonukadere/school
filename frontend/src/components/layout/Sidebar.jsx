@@ -4,11 +4,13 @@ import { LogOut, X } from 'lucide-react'
 import { MENU_ITEMS } from '../../utils/constants'
 import { useAuth } from '../../context/AuthContext'
 import { useSettings } from '../../context/SettingsContext'
+import { useTranslation } from '../../i18n'
 import { cn } from '../../utils/helpers'
 
 function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
   const { user, logout, hasPermission, hasAnyPermission, initializing } = useAuth()
   const { settings } = useSettings()
+  const { t } = useTranslation()
 
   const filteredMenuItems = useMemo(() => {
     if (!user) return []
@@ -58,16 +60,16 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           let label = item.label
           let path = item.path
           if (user?.role === 'Student' || user?.isStudent) {
-            if (item.path === '/fees') label = 'My Fees'
-            if (item.path === '/marks') { label = 'My Results'; path = '/marks/results' }
-            if (item.path === '/subjects') label = 'My Subjects'
-            if (item.path === '/timetable') label = 'My Timetable'
-            if (item.path === '/attendance') label = 'My Attendance'
-            if (item.path === '/exams') label = 'My Exams'
+            if (item.path === '/fees') label = t('My Fees')
+            if (item.path === '/marks') { label = t('My Results'); path = '/marks/results' }
+            if (item.path === '/subjects') label = t('My Subjects')
+            if (item.path === '/timetable') label = t('My Timetable')
+            if (item.path === '/attendance') label = t('My Attendance')
+            if (item.path === '/exams') label = t('My Exams')
           } else if (user?.role === 'Parent' || user?.isParent) {
-            if (item.path === '/fees') label = 'Fee Payments'
-            if (item.path === '/marks') { label = 'Child Results'; path = '/marks/results' }
-            if (item.path === '/timetable') label = 'Class Timetable'
+            if (item.path === '/fees') label = t('Fee Payments')
+            if (item.path === '/marks') { label = t('Child Results'); path = '/marks/results' }
+            if (item.path === '/timetable') label = t('Class Timetable')
           }
 
           return { ...item, label, path, children: authorizedChildren }
@@ -76,7 +78,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
 
       return { ...group, items }
     }).filter((group) => group.items.length > 0)
-  }, [user, hasPermission, hasAnyPermission])
+  }, [user, hasPermission, hasAnyPermission, t])
 
   const { activeStyle, indicatorColor } = useMemo(() => {
     const roleUpper = (user?.role || '').toUpperCase()
@@ -132,7 +134,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
         key={item.path}
         to={item.path}
         onClick={onCloseMobile}
-        aria-label={item.label}
+        aria-label={t(item.label)}
         className={cn(
           'group relative flex items-center gap-3 py-2.5 text-sm font-medium transition-all duration-150',
           collapsed && !mobileOpen ? 'justify-center px-0 w-11 h-11 mx-auto rounded-xl' : 'px-3.5 rounded-xl',
@@ -140,7 +142,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
             ? activeStyle
             : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-100',
         )}
-        title={collapsed && !mobileOpen ? item.label : undefined}
+        title={collapsed && !mobileOpen ? t(item.label) : undefined}
       >
         {isActive && (!collapsed || mobileOpen) && (
           <span
@@ -159,7 +161,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           )}
         />
         {(!collapsed || mobileOpen) && (
-          <span className="truncate text-xs font-medium tracking-tight">{item.label}</span>
+          <span className="truncate text-xs font-medium tracking-tight">{t(item.label)}</span>
         )}
       </NavLink>
     )
@@ -201,7 +203,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
             {(!collapsed || mobileOpen) && (
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold text-white">{settings.schoolName}</p>
-                <p className="truncate text-[11px] text-slate-400">School Management</p>
+                <p className="truncate text-[11px] text-slate-400">{t('School Management')}</p>
               </div>
             )}
           </div>
@@ -209,7 +211,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
             type="button"
             onClick={onCloseMobile}
             className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white lg:hidden"
-            aria-label="Close sidebar"
+            aria-label={t('Close sidebar')}
           >
             <X size={18} />
           </button>
@@ -230,7 +232,7 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
               <div key={group.heading} className={cn(collapsed && !mobileOpen ? 'mb-2' : 'mb-4')}>
                 {(!collapsed || mobileOpen) && (
                   <p className="mb-2 px-3 text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
-                    {group.heading}
+                    {t(group.heading)}
                   </p>
                 )}
                 <div className="flex flex-col gap-1">{group.items.map(renderLink)}</div>
@@ -243,15 +245,15 @@ function Sidebar({ collapsed, mobileOpen, onCloseMobile }) {
           <button
             type="button"
             onClick={logout}
-            aria-label="Logout"
+            aria-label={t('Logout')}
             className={cn(
               'flex w-full items-center gap-3 rounded-lg py-2.5 text-sm font-medium text-slate-400 transition-all duration-200 hover:bg-rose-600/10 hover:text-rose-400',
               collapsed && !mobileOpen ? 'justify-center px-0' : 'px-3',
             )}
-            title={collapsed && !mobileOpen ? 'Logout' : undefined}
+            title={collapsed && !mobileOpen ? t('Logout') : undefined}
           >
             <LogOut size={20} className="shrink-0" />
-            {(!collapsed || mobileOpen) && <span>Logout</span>}
+            {(!collapsed || mobileOpen) && <span>{t('Logout')}</span>}
           </button>
         </div>
       </aside>
